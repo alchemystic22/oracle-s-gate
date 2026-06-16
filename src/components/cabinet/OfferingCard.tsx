@@ -46,7 +46,7 @@ export function OfferingCard({
       }}
       className="relative cabinet-card group disabled:cursor-default"
       style={{ transformStyle: "preserve-3d", perspective: 1200 }}
-      aria-label={interactable ? `Offering ${index + 1}` : undefined}
+      aria-label={interactable ? `Transmission ${index + 1}` : undefined}
     >
       {/* Face down side */}
       <div
