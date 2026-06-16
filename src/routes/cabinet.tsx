@@ -85,9 +85,13 @@ function Cabinet() {
   }, [triad]);
 
   function chooseCard(idx: number) {
-    if (!triad || phase !== "awaiting") return;
-    setChosenIdx(idx);
-    setPhase("flipped");
+    if (!triad) return;
+    if (phase === "awaiting") {
+      setChosenIdx(idx);
+      setPhase("flipped");
+    } else if (phase === "illuminated" && idx === chosenIdx) {
+      setPhase("flipped");
+    }
   }
 
   function saveReflection(text: string, stored: boolean) {
