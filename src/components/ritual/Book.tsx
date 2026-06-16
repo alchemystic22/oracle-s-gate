@@ -130,14 +130,6 @@ export function BookEmergence({ onOpen, ready }: { onOpen: () => void; ready: bo
         A hidden page has opened.
       </p>
       <RitualButton onClick={onOpen} disabled={!ready}>Open the Book</RitualButton>
-      <a
-        href={GRIMOIRE_SRC}
-        download="grimoire.jpg"
-        className="mt-6 text-sm underline-offset-4 hover:underline"
-        style={{ fontFamily: "'Cormorant Garamond', serif", color: "hsl(43 35% 72%)" }}
-      >
-        Download grimoire image
-      </a>
     </motion.div>
   );
 }
