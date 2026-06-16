@@ -9,38 +9,138 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SovereignRouteImport } from './routes/sovereign'
+import { Route as GatesRouteImport } from './routes/gates'
+import { Route as CabinetRouteImport } from './routes/cabinet'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as GatesIndexRouteImport } from './routes/gates.index'
+import { Route as GatesGateIdRouteImport } from './routes/gates.$gateId'
 
+const SovereignRoute = SovereignRouteImport.update({
+  id: '/sovereign',
+  path: '/sovereign',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GatesRoute = GatesRouteImport.update({
+  id: '/gates',
+  path: '/gates',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CabinetRoute = CabinetRouteImport.update({
+  id: '/cabinet',
+  path: '/cabinet',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GatesIndexRoute = GatesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => GatesRoute,
+} as any)
+const GatesGateIdRoute = GatesGateIdRouteImport.update({
+  id: '/$gateId',
+  path: '/$gateId',
+  getParentRoute: () => GatesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/cabinet': typeof CabinetRoute
+  '/gates': typeof GatesRouteWithChildren
+  '/sovereign': typeof SovereignRoute
+  '/gates/$gateId': typeof GatesGateIdRoute
+  '/gates/': typeof GatesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/cabinet': typeof CabinetRoute
+  '/sovereign': typeof SovereignRoute
+  '/gates/$gateId': typeof GatesGateIdRoute
+  '/gates': typeof GatesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/cabinet': typeof CabinetRoute
+  '/gates': typeof GatesRouteWithChildren
+  '/sovereign': typeof SovereignRoute
+  '/gates/$gateId': typeof GatesGateIdRoute
+  '/gates/': typeof GatesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/cabinet'
+    | '/gates'
+    | '/sovereign'
+    | '/gates/$gateId'
+    | '/gates/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/admin' | '/cabinet' | '/sovereign' | '/gates/$gateId' | '/gates'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/cabinet'
+    | '/gates'
+    | '/sovereign'
+    | '/gates/$gateId'
+    | '/gates/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
+  CabinetRoute: typeof CabinetRoute
+  GatesRoute: typeof GatesRouteWithChildren
+  SovereignRoute: typeof SovereignRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sovereign': {
+      id: '/sovereign'
+      path: '/sovereign'
+      fullPath: '/sovereign'
+      preLoaderRoute: typeof SovereignRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gates': {
+      id: '/gates'
+      path: '/gates'
+      fullPath: '/gates'
+      preLoaderRoute: typeof GatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cabinet': {
+      id: '/cabinet'
+      path: '/cabinet'
+      fullPath: '/cabinet'
+      preLoaderRoute: typeof CabinetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +148,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/gates/': {
+      id: '/gates/'
+      path: '/'
+      fullPath: '/gates/'
+      preLoaderRoute: typeof GatesIndexRouteImport
+      parentRoute: typeof GatesRoute
+    }
+    '/gates/$gateId': {
+      id: '/gates/$gateId'
+      path: '/$gateId'
+      fullPath: '/gates/$gateId'
+      preLoaderRoute: typeof GatesGateIdRouteImport
+      parentRoute: typeof GatesRoute
+    }
   }
 }
 
+interface GatesRouteChildren {
+  GatesGateIdRoute: typeof GatesGateIdRoute
+  GatesIndexRoute: typeof GatesIndexRoute
+}
+
+const GatesRouteChildren: GatesRouteChildren = {
+  GatesGateIdRoute: GatesGateIdRoute,
+  GatesIndexRoute: GatesIndexRoute,
+}
+
+const GatesRouteWithChildren = GatesRoute._addFileChildren(GatesRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
+  CabinetRoute: CabinetRoute,
+  GatesRoute: GatesRouteWithChildren,
+  SovereignRoute: SovereignRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
