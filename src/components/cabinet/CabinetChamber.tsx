@@ -27,7 +27,7 @@ export function CabinetChamber({
       {/* Photographic chamber — full bleed base layer */}
       <div className="fixed inset-0 -z-10">
         <img
-          src={chamberImage}
+          src={CHAMBER_IMAGE}
           alt=""
           className="w-full h-full object-cover"
           aria-hidden
