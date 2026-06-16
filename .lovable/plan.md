@@ -1,45 +1,66 @@
-# Replace SVG art with rich generated imagery
+## Goal
 
-Inventory pass found three real "SVG-as-art" surfaces still in the app. The grimoire and the gate threshold already use generated images and stay as-is. The book's noise-filter SVGs are texture (not art) and stay. The constellation seam lines are diagram, not decoration, and stay.
+Elevate the title sequence from a soft opacity crossfade into a cinematic, Matrix-aligned ritual that ends by quietly tugging the viewer's eye down to the **I am ready to begin** button — an unspoken invitation that The Seven Gates await their choice.
 
-What gets replaced:
+---
 
-## 1. Corrective stance glyphs — `CrackedSun` & `BrokenCompass`
-**Where:** `src/components/ritual/RitualPrimitives.tsx` (exported), rendered in `src/routes/gate.$gateId.tsx` line 441 on every corrective page (False Arrival → cracked sun; Splintered Trust → broken compass), 96×96 inside a gold-lit panel.
+## 1. New transition: per-letter glitch-scramble
 
-**Replacement:**
-- Generate two ~768×768 painterly artifact images (PNG, transparent background) at premium tier, sized to a circular medallion frame:
-  - `false-arrival.png` — a cracked, tarnished gilded sun-disc artifact: weathered brass radiating sunburst with a deep fracture across the face, alchemical engravings on the rim, sitting against pure black. No eye motif. No symmetrical pyramids. Reads as "the promise that split."
-  - `splintered-trust.png` — a shattered antique brass mariner's compass: cracked glass face, bent needle pointing askew, verdigris patina, rosette engraving partially worn. Reads as "the bearing that broke."
-- Save to `public/assets/correctives/`.
-- Swap `CrackedSun` / `BrokenCompass` JSX bodies for `<img>` tags pointing at the new files; keep the breathing motion wrapper and gold drop-shadow filter so they still feel summoned. Same 96px container — no layout change.
+Replace the 600ms opacity fade on the tail word(s) with a Matrix-style scramble that visually rhymes with the typewriter above it.
 
-## 2. Constellation gate nodes
-**Where:** `src/routes/gates.index.tsx` `GateNode` function (lines 115–148). Currently each gate is a colored CSS circle (`bg-gold` / `bg-bronze`).
+- New component `ScrambleText` (in `src/components/ScrambleText.tsx`) renders a target string and, whenever the target changes, animates each character through ~6–10 random glyphs from a curated set (Latin caps, digits, a few alchemical/runic glyphs: ☿ ☉ ☽ ✦ † ⌖) before locking to the final character.
+- Per-letter stagger: ~25ms between letters starting their scramble; each letter settles after ~350–500ms. Total transition ≈ 600–900ms depending on word length.
+- While scrambling, glyphs render in a slightly desaturated gold; on lock-in they snap to full `text-gold` with a one-frame brightness pulse — feels like the word "decides" itself.
+- "The " stays governed by `hideThe` as today (instant visibility toggle), so the S anchor never shifts.
+- Respect `prefers-reduced-motion`: skip scrambling, just swap text instantly.
 
-**Replacement:**
-- Generate one shared `gate-seal.png` artifact (~512×512, transparent): an ornate gilded medallion — circular brass seal with concentric engraved rings, sacred geometry filigree, no figurative imagery, no eye. Reads as "a sealed gate."
-- Render at 3 visual states purely through filters:
-  - **active** (next gate): full opacity, warm gold drop-shadow, gentle scale-breathe
-  - **sealed** (completed): smaller, bronze hue-rotate, no glow
-  - **locked**: heavily desaturated + low opacity (so it reads as "not yours yet")
-- Seam lines between gates stay as inline `<svg>` (those are diagram lines, not art).
+## 2. Breathing pacing
 
-## 3. Skip / keep
-- **Backdrop `SacredGeometry`** — currently at 6% opacity behind the BookShell. It reads as a faint cosmic etching, not as a placeholder. Keep.
-- **`CornerBrackets`** — 4 plain bordered spans, not SVG. Keep.
-- **Book grain filters** — `feTurbulence` noise; this is texture, not art. Keep.
-- **Constellation seam lines** — diagram, not decoration. Keep.
+Re-tune `TITLE_SEQUENCE` waits so the reveal accelerates into the personal turn, then hesitates:
 
-## Constraints honored
-- No eye / "all-seeing eye" motif in any new generation (per your note).
-- All new imagery generated at premium tier for legibility at small sizes.
-- Tech overlays (glow, scan, breathe) stay around the imagery, never on top of it.
-- No new dependencies; all changes confined to existing components and `public/assets/`.
+| Step | Text | Wait | Why |
+|---|---|---|---|
+| 0 | The Seven Gates | 20s | unchanged — matches Matrix completion beat |
+| 1 | _Seven Gates_ (The hidden) | **8s** | longer hold; viewer registers "something changed" |
+| 2 | One Outcome | 3s | tight — momentum building |
+| 3 | One Blueprint | 3s | tight |
+| 4 | **YOUR** Blueprint | **6s** | emotional payload, deserves room |
+| 4.5 | _(blank tail, "The" hidden)_ | **1.2s** | **the hesitation** — a held breath before the return |
+| 5 | The Seven Gates | — | snap back; the ritual completes |
 
-## Files touched
-- `public/assets/correctives/false-arrival.png` *(new)*
-- `public/assets/correctives/splintered-trust.png` *(new)*
-- `public/assets/constellation/gate-seal.png` *(new)*
-- `src/components/ritual/RitualPrimitives.tsx` *(swap `CrackedSun` / `BrokenCompass` bodies)*
-- `src/routes/gates.index.tsx` *(swap `GateNode` dot for medallion image with state filters)*
+The 1.2s blank is implemented as a sixth sequence entry with `tail: ""` so the scrambler animates letters _away_ into nothing, then back in for step 5.
+
+## 3. Emphasis on YOUR
+
+- "YOUR" renders inside its own span with a one-shot animation on entry: scale 1 → 1.06 → 1.0 over 700ms, plus a brief gold drop-shadow pulse (`filter: drop-shadow(0 0 14px hsl(43 85% 60% / 0.7))` fading to 0).
+- Letter-spacing widens by ~0.04em while emphasized, then relaxes. Makes the personal pivot unmistakable without being loud.
+
+## 4. Subliminal button pull at the end
+
+The real payoff: as the title returns to "The Seven Gates" (step 5), attention should drift downward to the CTA.
+
+- Add a `titleCycleDone` state, set true when step 5 lands.
+- When true, `RitualButton` receives a `summoning` prop that enables:
+  - A slow gold breathing pulse: `box-shadow` / outer glow oscillating between `0 0 0` and `0 0 28px hsl(43 85% 60% / 0.45)` on a 2.6s ease-in-out loop.
+  - A barely-perceptible 1.0 → 1.015 → 1.0 scale on the same cadence.
+  - A single-pass shimmer sweep (diagonal gold gradient) across the button face every ~6s.
+- All pulse effects are gated by `prefers-reduced-motion` (replaced by a static, slightly brighter border).
+- The pulse never stops while the user remains on the page — it is the unspoken reminder that the Gates await their choice.
+
+## 5. Files touched
+
+- **new** `src/components/ScrambleText.tsx` — the per-letter scrambler (props: `value: string`, `className?`, `charPool?`, `onSettled?`).
+- **edit** `src/routes/index.tsx`
+  - Insert step 4.5 (`tail: ""`, 1.2s) into `TITLE_SEQUENCE`; retune waits as above.
+  - Replace the inline tail `<span>` with `<ScrambleText value={current.tail} />`.
+  - Wrap `YOUR ` detection inside `ScrambleText`'s render so that token gets the emphasis treatment when present.
+  - Track `titleCycleDone` and pass `summoning={titleCycleDone}` to `RitualButton`.
+- **edit** `src/components/RitualButton.tsx` — accept `summoning?: boolean`; when true, apply the breathing-glow + shimmer classes.
+- **edit** `src/styles.css` — add keyframes: `summon-breath`, `summon-shimmer`, `your-pulse`; add `.summoning` utility; honor `@media (prefers-reduced-motion)`.
+
+## 6. Technical notes
+
+- Scrambler uses a single `requestAnimationFrame` loop keyed to `value`; on unmount or value change mid-flight it cancels cleanly. Each character holds its own `{ settled: boolean, remaining: number }` state in a ref array — no per-char React renders.
+- Char pool excludes whitespace; spaces in the target string stay as spaces throughout the animation so word shape is preserved.
+- The S-anchor invariant (no horizontal jitter when "The " hides) is preserved because `ScrambleText` only governs the tail span; the `hideThe` visibility toggle stays on the leading "The " span exactly as today.
+- No business-logic / route / state changes beyond the title sequence and button visual prop.
