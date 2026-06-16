@@ -74,36 +74,28 @@ export function SectionTitle({ children }: { children: ReactNode }) {
   );
 }
 
+function Artifact({ src, alt }: { src: string; alt: string }) {
+  return (
+    <motion.img
+      src={src}
+      alt={alt}
+      loading="lazy"
+      draggable={false}
+      className="h-full w-full select-none object-contain"
+      style={{
+        filter:
+          "drop-shadow(0 0 22px hsl(43 85% 60% / 0.55)) drop-shadow(0 0 6px hsl(48 95% 80% / 0.35))",
+      }}
+      animate={{ opacity: [0.85, 1, 0.85], scale: [1, 1.015, 1] }}
+      transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+    />
+  );
+}
+
 export const CrackedSun = () => (
-  <svg viewBox="0 0 120 120" className="h-full w-full" aria-hidden>
-    <defs>
-      <radialGradient id="csg" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stopColor="hsl(43 80% 82%)" stopOpacity="0.9" />
-        <stop offset="70%" stopColor="hsl(43 80% 60%)" stopOpacity="0.4" />
-        <stop offset="100%" stopColor="hsl(43 60% 35%)" stopOpacity="0" />
-      </radialGradient>
-    </defs>
-    <circle cx="60" cy="60" r="46" fill="url(#csg)" />
-    <circle cx="60" cy="60" r="40" fill="none" stroke="hsl(43 80% 60%)" strokeWidth="1.2" opacity="0.9" />
-    <path d="M60 20 L58 60 L66 78 L62 100" fill="none" stroke="hsl(43 80% 82%)" strokeWidth="1.4" strokeLinecap="round" />
-    <path d="M40 30 L55 58" fill="none" stroke="hsl(43 80% 82%)" strokeWidth="0.8" opacity="0.7" />
-  </svg>
+  <Artifact src="/assets/correctives/false-arrival.png" alt="A cracked gilded sun-disc, the promise that split" />
 );
 
 export const BrokenCompass = () => (
-  <svg viewBox="0 0 120 120" className="h-full w-full" aria-hidden>
-    <defs>
-      <radialGradient id="bcg" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stopColor="hsl(43 80% 82%)" stopOpacity="0.5" />
-        <stop offset="100%" stopColor="hsl(43 60% 35%)" stopOpacity="0" />
-      </radialGradient>
-    </defs>
-    <circle cx="60" cy="60" r="46" fill="url(#bcg)" />
-    <circle cx="60" cy="60" r="40" fill="none" stroke="hsl(43 40% 55%)" strokeWidth="1" strokeDasharray="3 4" />
-    <path d="M60 24 L62 58 L60 96" fill="none" stroke="hsl(43 80% 60%)" strokeWidth="1.3" strokeLinecap="round" />
-    <path d="M28 60 L92 60" fill="none" stroke="hsl(43 40% 55%)" strokeWidth="0.6" opacity="0.5" />
-    <line x1="60" y1="60" x2="78" y2="34" stroke="hsl(220 30% 80%)" strokeWidth="1.6" strokeLinecap="round" />
-    <circle cx="78" cy="34" r="2" fill="hsl(220 40% 90%)" />
-    <circle cx="60" cy="60" r="2.5" fill="hsl(43 80% 82%)" />
-  </svg>
+  <Artifact src="/assets/correctives/splintered-trust.png" alt="A shattered antique compass, the bearing that broke" />
 );
