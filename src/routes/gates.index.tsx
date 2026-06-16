@@ -22,11 +22,11 @@ function Constellation() {
   const nextUnlockable = nextGateId(state);
 
   return (
-    <main className="min-h-screen text-parchment px-6 py-12">
-      <header className="max-w-3xl mx-auto text-center mb-10">
-        <p className="text-parchment-dim text-xs tracking-[0.4em] uppercase">The Constellation</p>
-        <h1 className="mt-2 text-2xl md:text-3xl text-gold">Seven Gates</h1>
-        <p className="mt-4 text-parchment-dim text-sm max-w-md mx-auto leading-relaxed">
+    <main className="min-h-screen text-parchment px-6 py-16">
+      <header className="max-w-3xl mx-auto text-center mb-14">
+        <p className="text-parchment-dim text-sm tracking-[0.4em] uppercase">The Constellation</p>
+        <h1 className="mt-4 text-4xl md:text-5xl text-gold" style={{ fontFamily: "'Cinzel', serif" }}>Seven Gates</h1>
+        <p className="mt-6 text-parchment-dim text-lg md:text-xl max-w-xl mx-auto leading-relaxed" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
           Only the next gate is yours. The others wait. They are not hidden from you — they are not yet relevant.
         </p>
       </header>
