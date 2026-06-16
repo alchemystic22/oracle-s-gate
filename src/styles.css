@@ -275,4 +275,115 @@
     .ritual-button.summoning::before { display: none; }
     .your-emphasis { animation: none; }
   }
+
+  /* ── Cabinet recess (low candle-lit table cavity) ─────────────────── */
+  .cabinet-recess {
+    background:
+      radial-gradient(ellipse 70% 50% at 50% 65%, color-mix(in oklab, var(--gold-aged) 16%, transparent) 0%, transparent 70%),
+      linear-gradient(180deg, color-mix(in oklab, var(--obsidian-deep) 90%, transparent) 0%, color-mix(in oklab, var(--obsidian) 95%, transparent) 100%);
+    border: 1px solid color-mix(in oklab, var(--gold-aged) 18%, transparent);
+    box-shadow:
+      inset 0 30px 60px -30px rgba(0,0,0,0.85),
+      inset 0 -10px 40px -20px color-mix(in oklab, var(--gold-aged) 25%, transparent),
+      0 0 60px -20px color-mix(in oklab, var(--gold-aged) 30%, transparent);
+  }
+  .cabinet-card {
+    width: clamp(80px, 22vw, 150px);
+    aspect-ratio: 2 / 3;
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+  .cabinet-card-face {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+  .cabinet-card-inner {
+    position: absolute; inset: 0;
+    border-radius: 4px;
+    background:
+      radial-gradient(ellipse at 50% 30%, color-mix(in oklab, var(--leather) 75%, transparent) 0%, transparent 75%),
+      linear-gradient(180deg, color-mix(in oklab, var(--obsidian) 92%, transparent) 0%, color-mix(in oklab, var(--obsidian-deep) 100%, transparent) 100%);
+    border: 1px solid color-mix(in oklab, var(--gold-aged) 35%, transparent);
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, var(--seam) 25%, transparent),
+      0 8px 20px -10px rgba(0,0,0,0.85);
+    overflow: hidden;
+  }
+  .cabinet-card:hover:not(:disabled) .cabinet-card-inner {
+    border-color: color-mix(in oklab, var(--gold) 60%, transparent);
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, var(--seam) 45%, transparent),
+      0 12px 30px -10px rgba(0,0,0,0.9),
+      0 0 20px -4px color-mix(in oklab, var(--gold) 35%, transparent);
+  }
+
+  /* ── Ledger (Sovereign Action Layer parchment page) ──────────────── */
+  .ledger-page {
+    position: relative;
+    background:
+      linear-gradient(90deg,
+        color-mix(in oklab, var(--gold-aged) 55%, transparent) 0px,
+        color-mix(in oklab, var(--gold-aged) 30%, transparent) 3px,
+        transparent 4px),
+      repeating-linear-gradient(180deg,
+        transparent 0px,
+        transparent 26px,
+        color-mix(in oklab, var(--gold-aged) 10%, transparent) 27px,
+        transparent 28px),
+      linear-gradient(180deg,
+        color-mix(in oklab, var(--leather) 70%, transparent) 0%,
+        color-mix(in oklab, var(--obsidian) 92%, transparent) 100%);
+    border: 1px solid color-mix(in oklab, var(--gold-aged) 22%, transparent);
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, var(--seam) 18%, transparent),
+      0 20px 40px -25px rgba(0,0,0,0.8);
+  }
+
+  .witness-card {
+    position: relative;
+    padding: 1.25rem 1.5rem;
+    background:
+      linear-gradient(90deg,
+        color-mix(in oklab, var(--gold-aged) 35%, transparent) 0px,
+        color-mix(in oklab, var(--gold-aged) 18%, transparent) 2px,
+        transparent 3px),
+      linear-gradient(180deg,
+        color-mix(in oklab, var(--leather) 65%, transparent) 0%,
+        color-mix(in oklab, var(--obsidian) 92%, transparent) 100%);
+    border: 1px solid color-mix(in oklab, var(--gold-aged) 22%, transparent);
+    border-radius: 3px;
+    box-shadow: 0 12px 24px -18px rgba(0,0,0,0.8);
+    transition: border-color 600ms ease, box-shadow 600ms ease;
+  }
+  .witness-card[data-sealed="true"] {
+    border-color: color-mix(in oklab, var(--gold) 60%, transparent);
+    box-shadow:
+      0 12px 24px -18px rgba(0,0,0,0.8),
+      0 0 24px -8px color-mix(in oklab, var(--gold) 35%, transparent);
+  }
+
+  .field-card {
+    background:
+      linear-gradient(180deg,
+        color-mix(in oklab, var(--leather) 65%, transparent) 0%,
+        color-mix(in oklab, var(--obsidian) 92%, transparent) 100%);
+    border: 1px solid color-mix(in oklab, var(--gold-aged) 22%, transparent);
+    border-radius: 3px;
+    box-shadow: 0 10px 22px -16px rgba(0,0,0,0.85);
+  }
+
+  .ledger-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid color-mix(in oklab, var(--bronze) 50%, transparent);
+    color: var(--parchment);
+    font-size: 0.875rem;
+    padding: 0.25rem 0;
+  }
+  .ledger-input::placeholder { color: color-mix(in oklab, var(--parchment-dim) 70%, transparent); }
+  .ledger-input:focus { outline: none; border-bottom-color: var(--gold-aged); }
 }
