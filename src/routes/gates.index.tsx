@@ -22,11 +22,11 @@ function Constellation() {
   const nextUnlockable = nextGateId(state);
 
   return (
-    <main className="min-h-screen text-parchment px-6 py-12">
-      <header className="max-w-3xl mx-auto text-center mb-10">
-        <p className="text-parchment-dim text-xs tracking-[0.4em] uppercase">The Constellation</p>
-        <h1 className="mt-2 text-2xl md:text-3xl text-gold">Seven Gates</h1>
-        <p className="mt-4 text-parchment-dim text-sm max-w-md mx-auto leading-relaxed">
+    <main className="min-h-screen text-parchment px-6 py-16">
+      <header className="max-w-3xl mx-auto text-center mb-14">
+        <p className="text-parchment-dim text-sm tracking-[0.4em] uppercase">The Constellation</p>
+        <h1 className="mt-4 text-4xl md:text-5xl text-gold" style={{ fontFamily: "'Cinzel', serif" }}>Seven Gates</h1>
+        <p className="mt-6 text-parchment-dim text-lg md:text-xl max-w-xl mx-auto leading-relaxed" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
           Only the next gate is yours. The others wait. They are not hidden from you — they are not yet relevant.
         </p>
       </header>
@@ -117,19 +117,32 @@ function GateNode({ gate, locked, completed, timeLockUntil }: { gate: typeof GAT
   const accessible = !locked && !lockHrs && !completed;
   const dot = (
     <div className="flex flex-col items-center select-none">
-      <div className={`w-4 h-4 rounded-full border ${
-        completed ? "bg-bronze border-bronze" :
-        accessible ? "bg-gold border-gold seam-breathe" :
-        "bg-transparent border-parchment-dim opacity-40"
+      {accessible && (
+        <div
+          aria-hidden
+          className="absolute -z-10 rounded-full"
+          style={{
+            width: "8rem", height: "8rem",
+            transform: "translate(-50%, -50%)",
+            left: "50%", top: "8px",
+            background: "radial-gradient(circle, hsl(43 90% 60% / 0.35) 0%, hsl(43 90% 60% / 0.08) 40%, transparent 70%)",
+            filter: "blur(6px)",
+          }}
+        />
+      )}
+      <div className={`rounded-full border ${
+        completed ? "bg-bronze border-bronze w-4 h-4" :
+        accessible ? "bg-gold border-gold seam-breathe w-6 h-6 shadow-[0_0_30px_hsl(43_90%_60%/0.8)]" :
+        "bg-transparent border-parchment-dim opacity-40 w-3 h-3"
       }`} />
-      <div className="mt-2 text-[10px] tracking-[0.3em] text-parchment-dim">
+      <div className={`mt-2 tracking-[0.3em] ${accessible ? "text-sm text-gold" : "text-[10px] text-parchment-dim"}`}>
         {accessible || completed ? `GATE ${gate.id}` : "·"}
       </div>
       {(accessible || completed) && (
-        <div className="text-[11px] text-parchment-dim italic mt-0.5 max-w-[120px] text-center">{gate.epithet}</div>
+        <div className={`italic mt-1 max-w-[180px] text-center ${accessible ? "text-sm text-parchment" : "text-[11px] text-parchment-dim"}`} style={{ fontFamily: "'Cormorant Garamond', serif" }}>{gate.epithet}</div>
       )}
     </div>
   );
-  if (accessible) return <Link to="/gate/$gateId" params={{ gateId: String(gate.id) }}>{dot}</Link>;
-  return dot;
+  if (accessible) return <Link to="/gate/$gateId" params={{ gateId: String(gate.id) }} className="relative block">{dot}</Link>;
+  return <div className="relative">{dot}</div>;
 }

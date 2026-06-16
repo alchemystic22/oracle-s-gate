@@ -16,10 +16,10 @@ export const Route = createFileRoute("/")({
 });
 
 const PARAGRAPHS = [
-  "You have arrived at a threshold. Not a course. Not a dashboard. Not a place that will hurry you.",
-  "Seven gates wait. You will only see the one in front of you. The others are not hidden from you — they are not yet relevant to you.",
-  "There will be silences. There will be pauses you cannot skip. The pacing is the work.",
-  "If you are here to be entertained, leave now, kindly. If you are here to be witnessed, enter slowly.",
+  "What you are entering is not an experience. It is a structure that has held seekers for as long as there have been seekers. The Codex does not unfold at the speed of devices. It unfolds at the speed of the soul.",
+  "Move forward at the pace your heart whispers, not as your mind may loudly declare.",
+  "The Gates are not levels. They are thresholds. Some Avatars cross one in an hour. Some cross one in a year. Both are right. Neither is delay.",
+  "Begin only when you are willing to walk this without performance. Otherwise, return when you are.",
 ];
 
 function Invocation() {
@@ -34,11 +34,11 @@ function Invocation() {
 
   return (
     <main className="min-h-screen text-parchment flex items-center justify-center px-6 py-20">
-      <div className="max-w-2xl w-full">
-        <header className="mb-12 text-center">
-          <p className="text-parchment-dim text-xs tracking-[0.4em] uppercase">Alchemystic Oracle</p>
-          <h1 className="mt-3 text-3xl md:text-4xl text-gold tracking-wide">The Seven Gates</h1>
-          <div className="mt-6 h-px w-24 mx-auto bg-gold-aged opacity-50" />
+      <div className="max-w-3xl w-full">
+        <header className="mb-16 text-center">
+          <p className="text-parchment-dim text-sm tracking-[0.4em] uppercase">Alchemystic Oracle</p>
+          <h1 className="mt-4 text-5xl md:text-6xl text-gold tracking-wide" style={{ fontFamily: "'Cinzel', serif" }}>The Seven Gates</h1>
+          <div className="mt-8 h-px w-32 mx-auto bg-gold-aged opacity-50" />
         </header>
 
         <MeasuredReveal
@@ -46,7 +46,7 @@ function Invocation() {
           step={1500}
           tail={5000}
           onComplete={() => setReady(true)}
-          className="text-parchment"
+          className="text-parchment text-xl md:text-2xl leading-relaxed space-y-7"
         />
 
         <div className="mt-16 flex flex-col items-center">

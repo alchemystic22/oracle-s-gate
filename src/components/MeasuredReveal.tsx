@@ -32,8 +32,8 @@ export function MeasuredReveal({ paragraphs, step = 1400, tail = 5000, onComplet
       {paragraphs.map((p, i) => (
         <p
           key={i}
-          className="measured-fade mb-6 leading-relaxed text-lg md:text-xl"
-          style={{ animationDelay: `${i * step}ms`, visibility: i < shown ? "visible" : "hidden" }}
+          className="measured-fade mb-8 leading-relaxed text-xl md:text-2xl"
+          style={{ animationDelay: `${i * step}ms`, visibility: i < shown ? "visible" : "hidden", fontFamily: "'Cormorant Garamond', serif" }}
         >
           {p}
         </p>

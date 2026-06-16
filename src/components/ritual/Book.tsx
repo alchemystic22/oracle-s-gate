@@ -51,50 +51,97 @@ export function BookEmergence({ onOpen, ready }: { onOpen: () => void; ready: bo
           }}
         />
         <div
-          className="relative h-64 w-48"
+          className="relative h-80 w-60 md:h-96 md:w-72"
           style={{
             background:
-              "linear-gradient(135deg, hsl(28 18% 16%) 0%, hsl(25 22% 10%) 45%, hsl(20 18% 6%) 100%)",
-            border: "1px solid hsl(43 30% 55% / 0.5)",
-            borderRadius: "3px",
+              "linear-gradient(135deg, hsl(28 22% 18%) 0%, hsl(25 24% 11%) 45%, hsl(20 20% 5%) 100%)",
+            border: "1px solid hsl(43 35% 55% / 0.55)",
+            borderRadius: "4px",
             boxShadow:
-              "0 0 100px -15px hsl(43 80% 60% / 0.28), inset 0 1px 0 hsl(45 30% 60% / 0.12), inset 0 -40px 60px hsl(20 30% 2% / 0.7), 0 40px 70px -20px hsl(240 30% 0% / 0.8)",
+              "0 0 120px -15px hsl(43 80% 60% / 0.35), inset 0 2px 0 hsl(45 40% 65% / 0.18), inset 0 -50px 80px hsl(20 30% 2% / 0.85), inset 0 0 0 1px hsl(20 30% 3% / 0.6), 0 50px 90px -20px hsl(240 30% 0% / 0.9)",
           }}
         >
+          {/* leather grain (stronger) */}
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 opacity-[0.15] mix-blend-overlay"
+            className="pointer-events-none absolute inset-0 opacity-[0.35] mix-blend-overlay"
             style={{
+              borderRadius: "4px",
               backgroundImage:
-                "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.4' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>\")",
+                "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.18  0 0 0 0 0.12  0 0 0 0 0.07  0 0 0 1 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>\")",
+            }}
+          />
+          {/* secondary fine grain */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 opacity-[0.25] mix-blend-soft-light"
+            style={{
+              borderRadius: "4px",
+              backgroundImage:
+                "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='2.4' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>\")",
+            }}
+          />
+          {/* engraved inner border — double-stroke */}
+          <div
+            aria-hidden
+            className="absolute inset-4 rounded-[2px]"
+            style={{
+              border: "1px solid hsl(43 40% 60% / 0.5)",
+              boxShadow:
+                "inset 0 0 0 1px hsl(20 30% 2% / 0.8), inset 0 0 28px hsl(20 30% 2% / 0.7), 0 0 0 1px hsl(20 30% 2% / 0.5)",
             }}
           />
           <div
             aria-hidden
-            className="absolute inset-3 rounded-[2px]"
-            style={{ border: "1px solid hsl(43 30% 55% / 0.35)", boxShadow: "inset 0 0 20px hsl(20 30% 2% / 0.6)" }}
+            className="absolute inset-6 rounded-[1px]"
+            style={{ border: "1px solid hsl(43 30% 50% / 0.25)" }}
           />
+          {/* small corner glyphs */}
+          {[
+            { top: "1rem", left: "1rem" },
+            { top: "1rem", right: "1rem" },
+            { bottom: "1rem", left: "1rem" },
+            { bottom: "1rem", right: "1rem" },
+          ].map((pos, i) => (
+            <div
+              key={i}
+              aria-hidden
+              className="absolute h-2 w-2 rotate-45"
+              style={{ ...pos, border: "1px solid hsl(43 50% 65% / 0.55)" }}
+            />
+          ))}
+          {/* breathing lock */}
           <motion.div
             animate={{ opacity: [0.55, 1, 0.55] }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
             style={{ filter: "drop-shadow(0 0 18px hsl(43 80% 60% / 0.7))" }}
           >
-            <BookLock className="h-12 w-12" strokeWidth={1.2} style={{ color: "hsl(43 80% 82%)" }} />
+            <BookLock className="h-16 w-16 md:h-20 md:w-20" strokeWidth={1.2} style={{ color: "hsl(43 85% 84%)" }} />
           </motion.div>
+          {/* spine seam — wider, with highlight */}
           <div
             aria-hidden
             className="absolute left-1/2 top-3 bottom-3 -translate-x-1/2"
             style={{
-              width: "1px",
-              background: "linear-gradient(180deg, transparent, hsl(43 30% 55% / 0.2) 50%, transparent)",
+              width: "3px",
+              background:
+                "linear-gradient(180deg, transparent, hsl(20 30% 2% / 0.75) 10%, hsl(20 30% 2% / 0.75) 90%, transparent)",
+              boxShadow:
+                "1px 0 0 hsl(43 40% 55% / 0.18), -1px 0 0 hsl(20 30% 2% / 0.7)",
             }}
+          />
+          {/* top edge highlight */}
+          <div
+            aria-hidden
+            className="absolute inset-x-0 top-0 h-[2px]"
+            style={{ background: "linear-gradient(90deg, transparent, hsl(45 50% 70% / 0.45), transparent)" }}
           />
         </div>
       </motion.div>
       <p
-        className="mb-10 text-xl italic"
-        style={{ fontFamily: "'Cormorant Garamond', serif", color: "hsl(43 30% 80%)" }}
+        className="mb-10 text-2xl md:text-3xl italic"
+        style={{ fontFamily: "'Cormorant Garamond', serif", color: "hsl(43 35% 82%)" }}
       >
         A hidden page has opened.
       </p>
