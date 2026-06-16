@@ -38,7 +38,7 @@ function Constellation() {
           const completed = !!state.gates[g.id]?.completedAt;
           return (
             <li key={g.id}>
-              <GateCell gate={g} locked={locked} completed={completed} timeLockUntil={state.gates[g.id]?.nextUnlockAt} />
+              <GateCell gate={g} locked={locked} completed={completed} timeLockUntil={undefined} />
             </li>
           );
         })}
@@ -62,7 +62,7 @@ function Constellation() {
           return (
             <div key={g.id} className="absolute -translate-x-1/2 -translate-y-1/2"
                  style={{ left: `${g.pos.x}%`, top: `${g.pos.y}%` }}>
-              <GateNode gate={g} locked={locked} completed={completed} timeLockUntil={state.gates[g.id]?.nextUnlockAt} />
+              <GateNode gate={g} locked={locked} completed={completed} timeLockUntil={undefined} />
             </div>
           );
         })}
@@ -108,7 +108,7 @@ function GateCell({ gate, locked, completed, timeLockUntil }: { gate: typeof GAT
       {(accessible || completed) && <div className="mt-1 text-parchment-dim text-sm italic">{gate.epithet}</div>}
     </div>
   );
-  if (accessible) return <Link to="/gates/$gateId" params={{ gateId: String(gate.id) }}>{inner}</Link>;
+  if (accessible) return <Link to="/gate/$gateId" params={{ gateId: String(gate.id) }}>{inner}</Link>;
   return inner;
 }
 
@@ -130,6 +130,6 @@ function GateNode({ gate, locked, completed, timeLockUntil }: { gate: typeof GAT
       )}
     </div>
   );
-  if (accessible) return <Link to="/gates/$gateId" params={{ gateId: String(gate.id) }}>{dot}</Link>;
+  if (accessible) return <Link to="/gate/$gateId" params={{ gateId: String(gate.id) }}>{dot}</Link>;
   return dot;
 }
