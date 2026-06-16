@@ -38,7 +38,7 @@ function Constellation() {
           const completed = !!state.gates[g.id]?.completedAt;
           return (
             <li key={g.id}>
-              <GateCell gate={g} locked={locked} completed={completed} timeLockUntil={state.gates[g.id]?.nextUnlockAt} />
+              <GateCell gate={g} locked={locked} completed={completed} timeLockUntil={undefined} />
             </li>
           );
         })}
@@ -62,7 +62,7 @@ function Constellation() {
           return (
             <div key={g.id} className="absolute -translate-x-1/2 -translate-y-1/2"
                  style={{ left: `${g.pos.x}%`, top: `${g.pos.y}%` }}>
-              <GateNode gate={g} locked={locked} completed={completed} timeLockUntil={state.gates[g.id]?.nextUnlockAt} />
+              <GateNode gate={g} locked={locked} completed={completed} timeLockUntil={undefined} />
             </div>
           );
         })}
