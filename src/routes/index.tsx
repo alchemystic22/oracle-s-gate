@@ -3,27 +3,24 @@ import { createFileRoute } from "@tanstack/react-router";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Your App" },
-      { name: "description", content: "Replace this with a one-sentence description of your app." },
-      { property: "og:title", content: "Your App" },
-      { property: "og:description", content: "Replace this with a one-sentence description of your app." },
+      { title: "Alchemystic Oracle's 7 Gates" },
+      { name: "description", content: "Alchemystic Oracle's 7 Gates — initializing." },
+      { property: "og:title", content: "Alchemystic Oracle's 7 Gates" },
+      { property: "og:description", content: "Alchemystic Oracle's 7 Gates — initializing." },
     ],
   }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
   return (
-    <div
+    <main
       className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
+      style={{ backgroundColor: "#0a0a0b", color: "#e8e6df" }}
     >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+      <h1 className="text-xl tracking-wide">
+        Alchemystic Oracle's 7 Gates — initializing.
+      </h1>
+    </main>
   );
 }
