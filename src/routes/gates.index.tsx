@@ -117,19 +117,32 @@ function GateNode({ gate, locked, completed, timeLockUntil }: { gate: typeof GAT
   const accessible = !locked && !lockHrs && !completed;
   const dot = (
     <div className="flex flex-col items-center select-none">
-      <div className={`w-4 h-4 rounded-full border ${
-        completed ? "bg-bronze border-bronze" :
-        accessible ? "bg-gold border-gold seam-breathe" :
-        "bg-transparent border-parchment-dim opacity-40"
+      {accessible && (
+        <div
+          aria-hidden
+          className="absolute -z-10 rounded-full"
+          style={{
+            width: "8rem", height: "8rem",
+            transform: "translate(-50%, -50%)",
+            left: "50%", top: "8px",
+            background: "radial-gradient(circle, hsl(43 90% 60% / 0.35) 0%, hsl(43 90% 60% / 0.08) 40%, transparent 70%)",
+            filter: "blur(6px)",
+          }}
+        />
+      )}
+      <div className={`rounded-full border ${
+        completed ? "bg-bronze border-bronze w-4 h-4" :
+        accessible ? "bg-gold border-gold seam-breathe w-6 h-6 shadow-[0_0_30px_hsl(43_90%_60%/0.8)]" :
+        "bg-transparent border-parchment-dim opacity-40 w-3 h-3"
       }`} />
-      <div className="mt-2 text-[10px] tracking-[0.3em] text-parchment-dim">
+      <div className={`mt-2 tracking-[0.3em] ${accessible ? "text-sm text-gold" : "text-[10px] text-parchment-dim"}`}>
         {accessible || completed ? `GATE ${gate.id}` : "·"}
       </div>
       {(accessible || completed) && (
-        <div className="text-[11px] text-parchment-dim italic mt-0.5 max-w-[120px] text-center">{gate.epithet}</div>
+        <div className={`italic mt-1 max-w-[180px] text-center ${accessible ? "text-sm text-parchment" : "text-[11px] text-parchment-dim"}`} style={{ fontFamily: "'Cormorant Garamond', serif" }}>{gate.epithet}</div>
       )}
     </div>
   );
-  if (accessible) return <Link to="/gate/$gateId" params={{ gateId: String(gate.id) }}>{dot}</Link>;
-  return dot;
+  if (accessible) return <Link to="/gate/$gateId" params={{ gateId: String(gate.id) }} className="relative block">{dot}</Link>;
+  return <div className="relative">{dot}</div>;
 }
