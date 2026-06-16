@@ -52,7 +52,7 @@ function GatePage() {
   const { state, update, hydrated } = useAppState();
 
   useEffect(() => {
-    if (hydrated && !state.invocationCompletedAt) nav({ to: "/" });
+    if (hydrated && !state.invocationCompletedAt && !isDev()) nav({ to: "/" });
   }, [hydrated, state.invocationCompletedAt, nav]);
 
   if (!gate) return <Locked text="No such gate." />;
