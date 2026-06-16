@@ -14,6 +14,7 @@ import { Route as GatesRouteImport } from './routes/gates'
 import { Route as CabinetRouteImport } from './routes/cabinet'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as GatesIndexRouteImport } from './routes/gates.index'
+import { Route as GateGateIdRouteImport } from './routes/gate.$gateId'
 
 const SovereignRoute = SovereignRouteImport.update({
   id: '/sovereign',
@@ -40,18 +41,25 @@ const GatesIndexRoute = GatesIndexRouteImport.update({
   path: '/',
   getParentRoute: () => GatesRoute,
 } as any)
+const GateGateIdRoute = GateGateIdRouteImport.update({
+  id: '/gate/$gateId',
+  path: '/gate/$gateId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/cabinet': typeof CabinetRoute
   '/gates': typeof GatesRouteWithChildren
   '/sovereign': typeof SovereignRoute
+  '/gate/$gateId': typeof GateGateIdRoute
   '/gates/': typeof GatesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cabinet': typeof CabinetRoute
   '/sovereign': typeof SovereignRoute
+  '/gate/$gateId': typeof GateGateIdRoute
   '/gates': typeof GatesIndexRoute
 }
 export interface FileRoutesById {
@@ -60,14 +68,28 @@ export interface FileRoutesById {
   '/cabinet': typeof CabinetRoute
   '/gates': typeof GatesRouteWithChildren
   '/sovereign': typeof SovereignRoute
+  '/gate/$gateId': typeof GateGateIdRoute
   '/gates/': typeof GatesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/cabinet' | '/gates' | '/sovereign' | '/gates/'
+  fullPaths:
+    | '/'
+    | '/cabinet'
+    | '/gates'
+    | '/sovereign'
+    | '/gate/$gateId'
+    | '/gates/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/cabinet' | '/sovereign' | '/gates'
-  id: '__root__' | '/' | '/cabinet' | '/gates' | '/sovereign' | '/gates/'
+  to: '/' | '/cabinet' | '/sovereign' | '/gate/$gateId' | '/gates'
+  id:
+    | '__root__'
+    | '/'
+    | '/cabinet'
+    | '/gates'
+    | '/sovereign'
+    | '/gate/$gateId'
+    | '/gates/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -75,6 +97,7 @@ export interface RootRouteChildren {
   CabinetRoute: typeof CabinetRoute
   GatesRoute: typeof GatesRouteWithChildren
   SovereignRoute: typeof SovereignRoute
+  GateGateIdRoute: typeof GateGateIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -114,6 +137,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GatesIndexRouteImport
       parentRoute: typeof GatesRoute
     }
+    '/gate/$gateId': {
+      id: '/gate/$gateId'
+      path: '/gate/$gateId'
+      fullPath: '/gate/$gateId'
+      preLoaderRoute: typeof GateGateIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -132,6 +162,7 @@ const rootRouteChildren: RootRouteChildren = {
   CabinetRoute: CabinetRoute,
   GatesRoute: GatesRouteWithChildren,
   SovereignRoute: SovereignRoute,
+  GateGateIdRoute: GateGateIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

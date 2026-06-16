@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Sparkles } from "lucide-react";
 
 import { gateById, GATES } from "../data/gates";
@@ -877,5 +877,3 @@ function Header({ epithet }: { epithet: string }) {
   );
 }
 
-// useRef import — required by RelockedPhase
-import { useRef } from "react";
