@@ -69,7 +69,7 @@ function Constellation() {
       </div>
 
       <div className="mt-12 text-center">
-        <Link to="/cabinet" className="text-xs tracking-widest uppercase text-parchment-dim hover:text-gold">the reading cabinet</Link>
+        <Link to="/cabinet" className="text-xs tracking-widest uppercase text-parchment-dim hover:text-gold">the ritual of resonant reading</Link>
         <span className="text-parchment-dim mx-3">·</span>
         <Link to="/sovereign" className="text-xs tracking-widest uppercase text-parchment-dim hover:text-gold">sovereign action</Link>
       </div>
