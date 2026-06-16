@@ -9,12 +9,13 @@ export function CabinetChamber({ children }: { children: ReactNode }) {
       <SacredGeometry className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[120vmin] h-[120vmin] opacity-15" />
       <div className="relative max-w-4xl mx-auto">
         <header className="text-center mb-12">
-          <motion.p
+          <motion.h1
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
-            className="text-parchment-dim text-[10px] tracking-[0.5em] uppercase"
+            className="text-gold text-4xl md:text-5xl"
+            style={{ fontFamily: "var(--font-serif)" }}
           >
             The Reading Cabinet
-          </motion.p>
+          </motion.h1>
           <motion.div
             initial={{ opacity: 0, scaleX: 0 }} animate={{ opacity: 0.5, scaleX: 1 }}
             transition={{ duration: 1.6, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}

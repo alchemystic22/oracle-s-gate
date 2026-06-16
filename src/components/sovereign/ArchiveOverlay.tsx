@@ -16,19 +16,19 @@ export function ArchiveOverlay({
       className="fixed inset-0 z-50 bg-obsidian-deep/85 backdrop-blur-sm overflow-y-auto"
     >
       <div className="max-w-2xl mx-auto px-4 py-12">
-        <header className="flex items-baseline justify-between mb-8">
-          <h2 className="text-gold text-xl tracking-wide" style={{ fontFamily: "var(--font-serif)" }}>Sealed Witness Cards</h2>
+        <header className="flex items-baseline justify-between mb-10 gap-4 flex-wrap">
+          <h2 className="text-gold text-3xl md:text-4xl" style={{ fontFamily: "var(--font-serif)" }}>Sealed Witness Cards</h2>
           <button
             onClick={onClose}
-            className="text-parchment-dim hover:text-parchment text-xs tracking-[0.3em] uppercase transition-colors duration-500"
+            className="text-parchment-dim hover:text-parchment text-sm tracking-[0.2em] uppercase transition-colors duration-500"
           >
             close
           </button>
         </header>
         {sealed.length === 0 ? (
-          <p className="text-parchment-dim italic text-sm">No witness has been sealed yet.</p>
+          <p className="text-parchment-dim italic text-lg" style={{ fontFamily: "var(--font-serif)" }}>No witness has been sealed yet.</p>
         ) : (
-          <ul className="space-y-4">
+          <ul className="space-y-5">
             {sealed.map((a) => <WitnessCard key={a.id} action={a} readOnly />)}
           </ul>
         )}

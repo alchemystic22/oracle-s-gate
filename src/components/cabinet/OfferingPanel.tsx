@@ -35,7 +35,7 @@ export function OfferingPanel({
           <motion.p
             initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1], delay: 0.6 }}
-            className="text-gold-aged text-[10px] tracking-[0.4em] uppercase mb-4 italic"
+            className="text-gold-aged text-sm tracking-[0.2em] uppercase mb-5 italic"
           >
             {offering.kind === "passage"
               ? "This passage has come to you before. Hear it again."
@@ -45,7 +45,7 @@ export function OfferingPanel({
         <motion.h2
           initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1], delay: 0.9 }}
-          className="text-2xl text-parchment mb-8"
+          className="text-3xl md:text-4xl text-parchment mb-10"
           style={{ fontFamily: "var(--font-serif)" }}
         >
           {offering.title}
@@ -58,7 +58,7 @@ export function OfferingPanel({
           step={1400}
           tail={1500}
           onComplete={onBodyComplete}
-          className="text-parchment text-left"
+          className="text-parchment text-left text-lg md:text-xl leading-relaxed"
         />
       ) : (
         bodySlot

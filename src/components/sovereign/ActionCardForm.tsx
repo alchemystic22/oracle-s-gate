@@ -16,7 +16,7 @@ export function ActionCardForm({
   const ready = principle.trim() && action.trim() && benefit.trim();
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-5">
       <FieldRow label="Principle">
         <input value={principle} onChange={(e) => setPrinciple(e.target.value)}
           placeholder="The principle this serves."
@@ -33,10 +33,10 @@ export function ActionCardForm({
           className="ledger-input" />
       </FieldRow>
       <FieldRow label="Scale">
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           {(["micro", "meso", "macro"] as ActionScale[]).map((s) => (
             <button key={s} onClick={() => setScale(s)}
-              className={`text-[10px] tracking-[0.3em] uppercase px-3 py-1 rounded-sm border transition-colors duration-500 ${
+              className={`text-sm tracking-[0.2em] uppercase px-4 py-2 rounded-sm border transition-colors duration-500 ${
                 scale === s ? "border-gold text-gold" : "border-bronze/30 text-parchment-dim hover:text-parchment"
               }`}>
               {s} · {s === "micro" ? 1 : s === "meso" ? 3 : 7}
@@ -60,7 +60,7 @@ export function ActionCardForm({
             onSubmit({ principle: principle.trim(), action: action.trim(), benefit: benefit.trim(), scale, domain });
             setPrinciple(""); setAction(""); setBenefit("");
           }}
-          className="ritual-button px-5 py-2 text-xs tracking-[0.3em] uppercase rounded-sm disabled:opacity-30"
+          className="ritual-button px-6 py-3 text-sm tracking-[0.2em] uppercase rounded-sm disabled:opacity-30"
         >
           submit to ledger
         </button>
@@ -71,9 +71,9 @@ export function ActionCardForm({
 
 function FieldRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-baseline gap-3">
-      <label className="text-gold-aged text-[10px] tracking-[0.3em] uppercase shrink-0 w-20">{label}</label>
-      <div className="flex-1">{children}</div>
+    <div>
+      <label className="block text-gold-aged text-xs tracking-[0.2em] uppercase mb-2">{label}</label>
+      <div>{children}</div>
     </div>
   );
 }
