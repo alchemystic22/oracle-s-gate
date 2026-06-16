@@ -168,17 +168,17 @@ function Sovereign() {
     <main className="relative min-h-screen text-parchment px-4 md:px-8 py-12 md:py-16">
       <div className="max-w-3xl mx-auto">
         {/* Locked banner */}
-        <div className="text-center mb-3">
-          <p className="text-[10px] tracking-[0.5em] uppercase text-gold-aged">
+        <div className="text-center mb-4">
+          <p className="text-sm md:text-base tracking-[0.2em] uppercase text-gold-aged">
             Sovereign Marks are earned · Grace Marks are received
           </p>
         </div>
-        <header className="text-center mb-10">
-          <p className="text-parchment-dim text-[10px] tracking-[0.4em] uppercase">Sovereign Action Layer</p>
-          <h1 className="mt-3 text-2xl text-gold" style={{ fontFamily: "var(--font-serif)" }}>
+        <header className="text-center mb-12">
+          <p className="text-parchment-dim text-sm tracking-[0.25em] uppercase">Sovereign Action Layer</p>
+          <h1 className="mt-4 text-4xl md:text-5xl text-gold" style={{ fontFamily: "var(--font-serif)" }}>
             Active Gate: {activeGateName(state.gates)}
           </h1>
-          <div className="mt-5 h-px w-20 mx-auto bg-gold-aged opacity-40" />
+          <div className="mt-6 h-px w-24 mx-auto bg-gold-aged opacity-40" />
         </header>
 
         {/* Quiet stat row */}
@@ -189,18 +189,18 @@ function Sovereign() {
         </div>
 
         {marksOpen && (
-          <p className="text-center text-parchment-dim italic text-xs mb-8">
+          <p className="text-center text-parchment-dim italic text-base mb-8" style={{ fontFamily: "var(--font-serif)" }}>
             1 mark per micro · 3 per meso · 7 per macro. Sealed when evidence is named.
           </p>
         )}
         {graceOpen && (
           <div className="mb-10">
             {state.sovereign.graceMessages.length === 0 ? (
-              <p className="text-center text-parchment-dim italic text-xs">No Grace Mark has been received yet.</p>
+              <p className="text-center text-parchment-dim italic text-base" style={{ fontFamily: "var(--font-serif)" }}>No Grace Mark has been received yet.</p>
             ) : (
               <ul className="space-y-2 max-w-md mx-auto">
                 {state.sovereign.graceMessages.map((m) => (
-                  <li key={m.id} className="text-center text-xs text-parchment-dim italic">
+                  <li key={m.id} className="text-center text-base text-parchment-dim italic" style={{ fontFamily: "var(--font-serif)" }}>
                     {new Date(m.receivedAt).toLocaleDateString()} · {m.text}
                   </li>
                 ))}
@@ -210,12 +210,12 @@ function Sovereign() {
         )}
 
         {/* Open witness cards */}
-        <section className="mb-12">
-          <h2 className="text-parchment-dim text-[10px] tracking-[0.4em] uppercase mb-4">Open witness</h2>
+        <section className="mb-14">
+          <h2 className="text-gold-aged text-xl md:text-2xl mb-5" style={{ fontFamily: "var(--font-serif)" }}>Open Witness</h2>
           {open.length === 0 ? (
-            <p className="text-parchment-dim italic text-sm">None yet.</p>
+            <p className="text-parchment-dim italic text-base">None yet.</p>
           ) : (
-            <ul className="space-y-4">
+            <ul className="space-y-5">
               {open.map((a) => (
                 <WitnessCard
                   key={a.id}
@@ -229,38 +229,38 @@ function Sovereign() {
         </section>
 
         {/* Domain Map */}
-        <section className="mb-12">
-          <h2 className="text-parchment-dim text-[10px] tracking-[0.4em] uppercase mb-4 text-center">Twelve Domains</h2>
+        <section className="mb-14">
+          <h2 className="text-gold-aged text-xl md:text-2xl mb-5 text-center" style={{ fontFamily: "var(--font-serif)" }}>Twelve Domains</h2>
           <LedgerShell>
             <DomainMap weights={domainWeights} highlight={recommendedDomain} />
-            <p className="mt-4 text-center text-parchment-dim italic text-xs">
+            <p className="mt-5 text-center text-parchment-dim italic text-base" style={{ fontFamily: "var(--font-serif)" }}>
               Quieter nodes are not asking. They are remembering you.
             </p>
           </LedgerShell>
         </section>
 
         {/* Recommended next action */}
-        <section className="mb-12">
-          <h2 className="text-parchment-dim text-[10px] tracking-[0.4em] uppercase mb-3">Recommended</h2>
-          <div className="text-center text-sm text-parchment-dim italic">
+        <section className="mb-14">
+          <h2 className="text-gold-aged text-xl md:text-2xl mb-4" style={{ fontFamily: "var(--font-serif)" }}>Recommended</h2>
+          <div className="text-center text-lg text-parchment-dim italic leading-relaxed" style={{ fontFamily: "var(--font-serif)" }}>
             Resonance suggests an action in <span className="text-gold not-italic">{DOMAINS.find((d) => d.id === recommendedDomain)?.name}</span>.
             The Field Manual below has one waiting. Ignore if it is not yours.
           </div>
         </section>
 
         {/* Field Manual */}
-        <section className="mb-12">
-          <h2 className="text-parchment-dim text-[10px] tracking-[0.4em] uppercase mb-4">Field Manual</h2>
+        <section className="mb-14">
+          <h2 className="text-gold-aged text-xl md:text-2xl mb-5" style={{ fontFamily: "var(--font-serif)" }}>Field Manual</h2>
           <FieldManualDeck onUse={(c) => addAction({ principle: c.principle, action: c.action, benefit: c.benefit, scale: "micro", domain: c.domain })} />
         </section>
 
         {/* Submit Action Card */}
-        <section className="mb-12">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-parchment-dim text-[10px] tracking-[0.4em] uppercase">Submit an Action Card</h2>
+        <section className="mb-14">
+          <div className="flex items-center justify-between mb-5 gap-4 flex-wrap">
+            <h2 className="text-gold-aged text-xl md:text-2xl" style={{ fontFamily: "var(--font-serif)" }}>Submit an Action Card</h2>
             <button
               onClick={() => setSubmitOpen((v) => !v)}
-              className="text-gold-aged hover:text-gold text-[10px] tracking-[0.3em] uppercase transition-colors duration-500"
+              className="text-gold-aged hover:text-gold text-sm tracking-[0.2em] uppercase transition-colors duration-500"
             >
               {submitOpen ? "close" : "open ledger entry"}
             </button>
@@ -269,7 +269,7 @@ function Sovereign() {
             <LedgerShell>
               <ActionCardForm onSubmit={addAction} />
               {isDev() && (
-                <p className="mt-3 text-[10px] text-parchment-dim/70 italic">
+                <p className="mt-4 text-xs text-parchment-dim/70 italic">
                   Founder review queue (dev only): submissions enter the open ledger immediately.
                 </p>
               )}
@@ -278,7 +278,7 @@ function Sovereign() {
         </section>
 
         <div className="text-center pt-4">
-          <Link to="/gates" className="text-xs tracking-[0.3em] uppercase text-parchment-dim hover:text-gold transition-colors duration-500">
+          <Link to="/gates" className="text-sm tracking-[0.2em] uppercase text-parchment-dim hover:text-gold transition-colors duration-500">
             return to the constellation
           </Link>
         </div>
@@ -295,10 +295,10 @@ function StatTile({ label, value, onClick }: { label: string; value: number; onC
   return (
     <button
       onClick={onClick}
-      className="ledger-page rounded-sm p-4 text-center hover:border-gold-aged/60 transition-colors duration-500"
+      className="ledger-page rounded-sm p-5 text-center hover:border-gold-aged/60 transition-colors duration-500"
     >
-      <div className="text-gold text-3xl" style={{ fontFamily: "var(--font-serif)" }}>{value}</div>
-      <div className="mt-1 text-parchment-dim text-[9px] tracking-[0.3em] uppercase">{label}</div>
+      <div className="text-gold text-4xl md:text-5xl" style={{ fontFamily: "var(--font-serif)" }}>{value}</div>
+      <div className="mt-2 text-parchment-dim text-xs md:text-sm tracking-[0.2em] uppercase">{label}</div>
     </button>
   );
 }

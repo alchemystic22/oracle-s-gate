@@ -68,12 +68,12 @@ export function VesselPlayer({
           href={audioSrc}
           download
           aria-label="Download vessel"
-          className="text-parchment-dim hover:text-gold text-xs tracking-[0.3em] uppercase transition-colors duration-500"
+          className="text-parchment-dim hover:text-gold text-sm tracking-[0.2em] uppercase transition-colors duration-500"
         >
           download
         </a>
       </div>
-      <p className="mt-6 text-parchment-dim text-xs italic">
+      <p className="mt-6 text-parchment-dim text-base italic" style={{ fontFamily: "var(--font-serif)" }}>
         {durationSec}s vessel · {openedReflection ? "the room has opened" : "listen"}
       </p>
       <AnimatePresence>
@@ -84,7 +84,7 @@ export function VesselPlayer({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             onClick={() => { setOpenedReflection(true); onReadyForReflection(); }}
-            className="mt-4 text-parchment-dim hover:text-gold-aged text-[10px] tracking-[0.4em] uppercase"
+            className="mt-5 text-parchment-dim hover:text-gold-aged text-sm tracking-[0.2em] uppercase"
           >
             open reflection now
           </motion.button>

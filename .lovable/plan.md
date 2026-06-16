@@ -1,50 +1,43 @@
-# Admin Access Shortcuts for Page Review
+# Readability Pass — Cabinet & Sovereign
 
-Goal: as an admin you should be able to land directly on any page (especially Gate 1's "Book of Spiral Fractures") without completing the invocation, without waiting on time-locks, and without clicking through Threshold → Encounter → Obstruction.
+Goal: keep the ritual / classy register, but stop the eye-strain. No layout, logic, or color changes — purely typographic scale, weight, and spacing.
 
-## Activate dev mode
+## Guiding scale (replaces the current micro-type)
 
-Append `?dev=1` to any URL once per browser session. Flag persists in `sessionStorage`.
+| Role | Current | New |
+|---|---|---|
+| Page H1 (serif) | `text-2xl` | `text-4xl md:text-5xl` |
+| Section H2 (eyebrow caps) | `text-[10px] tracking-[0.4em]` | `text-xs md:text-sm tracking-[0.25em]` |
+| Card title / passage body | `text-2xl` / `text-sm` | `text-3xl` / `text-lg leading-relaxed` |
+| Field-manual principle | `text-sm` | `text-xl` serif |
+| Field-manual action copy | `text-xs` | `text-base leading-relaxed` |
+| Witness card body (Principle/Action/Benefit) | `text-sm` w/ `text-[10px]` labels | `text-base` w/ `text-xs tracking-[0.2em]` labels stacked above value |
+| Inline labels in forms | `text-[10px]` w-20 inline | `text-xs` block above input, input `text-base` |
+| Status row stat value | `text-3xl` | `text-4xl` (keep) — label up to `text-xs` |
+| Banner / aphorism lines | `text-xs italic` | `text-base italic` |
+| Footer / nav links | `text-xs tracking-[0.3em]` | `text-sm tracking-[0.2em]` |
+| Caption / meta (timestamps, "· micro") | `text-[10px]` | `text-xs` |
 
-Preview base: `https://id-preview--ffd98a64-8826-492a-8639-19a60594037f.lovable.app`
+Tightening tracking from `0.4–0.5em` → `0.2–0.25em` on eyebrows so they read as words, not Morse.
 
-## Top-level routes
+## Files touched (presentation only)
 
-- `/?dev=1`             — landing / Matrix title sequence / invocation
-- `/gates?dev=1`        — constellation of 7 gates
-- `/cabinet?dev=1`      — Reading Cabinet (three-offering resonance ritual)
-- `/sovereign?dev=1`    — Sovereign Action Layer (ledger)
+- `src/routes/cabinet.tsx` — H1, return-state copy, footer links
+- `src/routes/sovereign.tsx` — H1, banner, stat row labels, every section eyebrow (`Open witness`, `Twelve Domains`, `Recommended`, `Field Manual`, `Submit an Action Card`), footer
+- `src/components/cabinet/OfferingCard.tsx` — glyph caption
+- `src/components/cabinet/OfferingPanel.tsx` — eyebrow + passage body to `text-lg`/`text-xl`
+- `src/components/cabinet/VesselPlayer.tsx` — control labels, helper line
+- `src/components/cabinet/ReflectionField.tsx` — prompt, textarea, action links
+- `src/components/cabinet/CabinetChamber.tsx` — chamber eyebrow
+- `src/components/sovereign/WitnessCard.tsx` — header chips, labels-above-value, textarea, action chips
+- `src/components/sovereign/FieldManualDeck.tsx` — principle, action, benefit, CTA
+- `src/components/sovereign/ActionCardForm.tsx` — scale chips, field labels, submit
+- `src/components/sovereign/ArchiveOverlay.tsx` — H2, list copy
+- `src/styles.css` — bump `.ledger-page` / `.cabinet-recess` base `font-size` floor to `1rem` and add `--text-eyebrow: 0.8125rem` token for consistent caps treatment
 
-## Cabinet — dev controls
+## Out of scope
 
-- `/cabinet?dev=1&mode=avatar_chose`    — force the Avatar-chose branch (all three cards stay face-down; click to flip)
-- `/cabinet?dev=1&mode=oracle_revealed` — force the Oracle-revealed branch (one card auto-illuminates after 6s stillness)
-
-## Sovereign — dev controls
-
-- `/sovereign?dev=1&seed=demo` — seed three sealed witness cards (body / relations / voice across micro/meso/macro), three open cards (craft scheduled, mind chosen, spirit chosen), 2 Grace Mark messages. Only seeds when the ledger is empty.
-
-## Gate stubs (sealed copy)
-
-- `/gate/2?dev=1` … `/gate/7?dev=1`
-
-## Gate 1 (Book of Spiral Fractures) — phase deep-links
-
-- `/gate/1?dev=1&phase=threshold`            — door / approach
-- `/gate/1?dev=1&phase=encounter`            — "Something promised you the world…"
-- `/gate/1?dev=1&phase=obstruction`          — two-response choice
-- `/gate/1?dev=1&phase=book_emergence`       — Book materializing
-- `/gate/1?dev=1&phase=page_open`            — Book of Spiral Fractures, open page
-- `/gate/1?dev=1&phase=corrective_gate_open` — corrective unlock
-- `/gate/1?dev=1&phase=relocked`             — relock screen
-- `/gate/1?dev=1&phase=completion`           — gate-complete screen
-
-## Reset, if state gets stuck
-
-In DevTools console on any preview page:
-
-```js
-localStorage.removeItem("alchemystic_state_v2"); location.reload();
-```
-
-(State key remains `_v2` for backwards compatibility; v3 schema is written in place via the migration on first load.)
+- Palette, gradients, geometry, motion, ritual copy wording
+- Sovereign sealing logic, resonance algorithm, state shape
+- Gate 1 / Book of Spiral Fractures — untouched
+- No new components, no removed components

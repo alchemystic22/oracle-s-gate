@@ -155,7 +155,7 @@ function Cabinet() {
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 1.2, ease: EXPO_OUT }}
-                  className="text-parchment-dim italic text-sm md:text-base max-w-lg mx-auto"
+                  className="text-parchment-dim italic text-lg md:text-xl max-w-xl mx-auto leading-relaxed"
                   style={{ fontFamily: "var(--font-serif)" }}
                 >
                   Three offerings have appeared. Choose by resonance, or wait for one to choose you.
@@ -166,7 +166,7 @@ function Cabinet() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 1.0, ease: EXPO_OUT }}
-                  className="text-gold italic text-sm md:text-base"
+                  className="text-gold italic text-lg md:text-xl"
                   style={{ fontFamily: "var(--font-serif)" }}
                 >
                   This one has come for you.
@@ -223,14 +223,14 @@ function Cabinet() {
             transition={{ duration: 1.0, ease: EXPO_OUT }}
             className="text-center py-12"
           >
-            <p className="text-parchment-dim italic text-sm">The Cabinet will offer again.</p>
-            <div className="mt-8 flex justify-center gap-8">
-              <Link to="/gates" className="text-xs tracking-[0.3em] uppercase text-parchment-dim hover:text-gold transition-colors duration-500">
+            <p className="text-parchment-dim italic text-lg md:text-xl" style={{ fontFamily: "var(--font-serif)" }}>The Cabinet will offer again.</p>
+            <div className="mt-8 flex flex-wrap justify-center gap-x-10 gap-y-3">
+              <Link to="/gates" className="text-sm tracking-[0.2em] uppercase text-parchment-dim hover:text-gold transition-colors duration-500">
                 return to the constellation
               </Link>
               <button
                 onClick={() => { setTriad(null); setChosenIdx(null); setPhase("rising"); }}
-                className="text-xs tracking-[0.3em] uppercase text-parchment-dim hover:text-gold transition-colors duration-500"
+                className="text-sm tracking-[0.2em] uppercase text-parchment-dim hover:text-gold transition-colors duration-500"
               >
                 approach again
               </button>

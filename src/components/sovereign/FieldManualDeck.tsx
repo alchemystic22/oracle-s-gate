@@ -19,21 +19,21 @@ export const FIELD_MANUAL: Card[] = [
 
 export function FieldManualDeck({ onUse }: { onUse: (card: Card) => void }) {
   return (
-    <div className="flex gap-3 overflow-x-auto pb-3 -mx-2 px-2 snap-x snap-mandatory">
+    <div className="flex gap-4 overflow-x-auto pb-4 -mx-2 px-2 snap-x snap-mandatory">
       {FIELD_MANUAL.map((c) => {
         const d = DOMAINS.find((x) => x.id === c.domain)!;
         return (
-          <article key={c.domain} className="snap-start min-w-[240px] max-w-[240px] field-card p-4">
-            <header className="flex items-center gap-2 mb-3">
-              <span className="text-gold-aged text-lg leading-none">{d.glyph}</span>
-              <span className="text-[10px] tracking-[0.3em] uppercase text-parchment-dim">{d.name}</span>
+          <article key={c.domain} className="snap-start min-w-[300px] max-w-[300px] field-card p-6 flex flex-col">
+            <header className="flex items-center gap-3 mb-4">
+              <span className="text-gold-aged text-2xl leading-none">{d.glyph}</span>
+              <span className="text-sm tracking-[0.2em] uppercase text-parchment-dim">{d.name}</span>
             </header>
-            <p className="text-parchment text-sm italic mb-2" style={{ fontFamily: "var(--font-serif)" }}>“{c.principle}”</p>
-            <p className="text-parchment-dim text-xs leading-relaxed mb-3">{c.action}</p>
-            <p className="text-gold-aged/80 text-[10px] tracking-widest uppercase mb-3">{c.benefit}</p>
+            <p className="text-parchment text-xl italic mb-3 leading-snug" style={{ fontFamily: "var(--font-serif)" }}>“{c.principle}”</p>
+            <p className="text-parchment-dim text-base leading-relaxed mb-4">{c.action}</p>
+            <p className="text-gold-aged/90 text-xs tracking-[0.2em] uppercase mb-5">{c.benefit}</p>
             <button
               onClick={() => onUse(c)}
-              className="text-gold-aged hover:text-gold text-[10px] tracking-[0.3em] uppercase transition-colors duration-500"
+              className="mt-auto self-start text-gold-aged hover:text-gold text-sm tracking-[0.2em] uppercase transition-colors duration-500"
             >
               draw into ledger
             </button>

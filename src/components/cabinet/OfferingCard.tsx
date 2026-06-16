@@ -66,7 +66,7 @@ export function OfferingCard({
           />
           <div className="relative h-full flex flex-col items-center justify-center">
             <span
-              className="text-3xl text-gold-aged group-hover:text-gold transition-colors duration-700"
+              className="text-5xl text-gold-aged group-hover:text-gold transition-colors duration-700"
               style={{
                 textShadow: state === "illuminated" ? "0 0 24px color-mix(in oklab, var(--gold) 70%, transparent)" : undefined,
                 fontFamily: isVessel ? "serif" : "var(--font-serif)",
@@ -74,7 +74,7 @@ export function OfferingCard({
             >
               {offering.glyph}
             </span>
-            <span className="mt-3 text-[9px] tracking-[0.5em] uppercase text-parchment-dim/50">
+            <span className="mt-4 text-xs tracking-[0.25em] uppercase text-parchment-dim/70">
               {isVessel ? "vessel" : "passage"}
             </span>
           </div>

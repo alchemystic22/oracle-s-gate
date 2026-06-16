@@ -381,8 +381,9 @@
     border: none;
     border-bottom: 1px solid color-mix(in oklab, var(--bronze) 50%, transparent);
     color: var(--parchment);
-    font-size: 0.875rem;
-    padding: 0.25rem 0;
+    font-size: 1rem;
+    line-height: 1.5;
+    padding: 0.5rem 0;
   }
   .ledger-input::placeholder { color: color-mix(in oklab, var(--parchment-dim) 70%, transparent); }
   .ledger-input:focus { outline: none; border-bottom-color: var(--gold-aged); }
