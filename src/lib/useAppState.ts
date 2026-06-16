@@ -18,5 +18,5 @@ export function useAppState() {
     });
   }, []);
 
-  return { state, update, hydrated };
+  return { state, update, hydrated, setState };
 }
