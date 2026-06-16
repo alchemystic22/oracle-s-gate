@@ -74,9 +74,6 @@ export function OfferingCard({
             >
               {offering.glyph}
             </span>
-            <span className="mt-4 text-xs tracking-[0.25em] uppercase text-parchment-dim/70">
-              {isVessel ? "vessel" : "passage"}
-            </span>
           </div>
         </div>
       </div>

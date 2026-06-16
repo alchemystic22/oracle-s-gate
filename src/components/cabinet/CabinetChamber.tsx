@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
 import { type ReactNode } from "react";
 import { SacredGeometry } from "../ritual/Backdrop";
-import chamberImage from "/assets/rooms/resonant-reading-chamber.jpg?url";
+
+const CHAMBER_IMAGE = "/assets/rooms/resonant-reading-chamber.jpg";
 
 /**
  * The chamber of The Ritual of Resonant Reading.
