@@ -22,14 +22,42 @@ const PARAGRAPHS = [
   "Begin only when you are willing to walk this without performance. Otherwise, return when you are.",
 ];
 
+// step 0: "The Seven Gates" | 1: " Seven Gates" (The hidden) | 2: "One Outcome" | 3: "One Blueprint" | 4: "YOUR Blueprint" | 5: back to "The Seven Gates"
+const TITLE_SEQUENCE: { hideThe: boolean; tail: string; wait: number }[] = [
+  { hideThe: false, tail: "Seven Gates", wait: 20000 },
+  { hideThe: true,  tail: "Seven Gates", wait: 5000 },
+  { hideThe: true,  tail: "One Outcome", wait: 3000 },
+  { hideThe: true,  tail: "One Blueprint", wait: 3000 },
+  { hideThe: true,  tail: "YOUR Blueprint", wait: 3000 },
+  { hideThe: false, tail: "Seven Gates", wait: 0 },
+];
+
 function Invocation() {
   const nav = useNavigate();
   const { state, update, hydrated } = useAppState();
   const [ready, setReady] = useState(false);
+  const [titleStep, setTitleStep] = useState(0);
 
   useEffect(() => { obs("invocation_open"); }, []);
 
+  useEffect(() => {
+    if (!ready) return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const advance = (i: number) => {
+      if (cancelled || i >= TITLE_SEQUENCE.length - 1) return;
+      timer = setTimeout(() => {
+        if (cancelled) return;
+        setTitleStep(i + 1);
+        advance(i + 1);
+      }, TITLE_SEQUENCE[i].wait);
+    };
+    advance(0);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [ready]);
+
   const alreadyEntered = hydrated && !!state.invocationCompletedAt;
+  const current = TITLE_SEQUENCE[titleStep];
 
   return (
     <>
@@ -37,7 +65,14 @@ function Invocation() {
         <div className="max-w-3xl w-full">
           <header className="mb-16 text-center">
             <p className="text-parchment-dim text-sm tracking-[0.4em] uppercase">Alchemystic Oracle</p>
-            <h1 className="mt-4 text-5xl md:text-6xl text-gold tracking-wide" style={{ fontFamily: "'Cinzel', serif" }}>The Seven Gates</h1>
+            <h1 className="mt-4 text-5xl md:text-6xl text-gold tracking-wide" style={{ fontFamily: "'Cinzel', serif" }}>
+              <span className="inline-block">
+                <span style={{ visibility: current.hideThe ? "hidden" : "visible" }}>The </span>
+                <span key={current.tail} style={{ display: "inline-block", transition: "opacity 600ms ease" }}>
+                  {current.tail}
+                </span>
+              </span>
+            </h1>
             <div className="mt-8 h-px w-32 mx-auto bg-gold-aged opacity-50" />
           </header>
 
@@ -46,6 +81,7 @@ function Invocation() {
             onComplete={() => setReady(true)}
             className="min-h-[14rem] md:min-h-[16rem]"
           />
+
 
           <div className="mt-16 flex flex-col items-center">
             <RitualButton
