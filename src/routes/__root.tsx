@@ -12,6 +12,8 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { syncAdminFromURL } from "../lib/admin";
+import { CosmicBackdrop } from "../components/ritual/Backdrop";
+import { AdminOverlay } from "../components/AdminOverlay";
 
 function NotFoundComponent() {
   return (
@@ -81,7 +83,9 @@ function RootComponent() {
   useEffect(() => { syncAdminFromURL(); }, []);
   return (
     <QueryClientProvider client={queryClient}>
+      <CosmicBackdrop />
       <Outlet />
+      <AdminOverlay />
     </QueryClientProvider>
   );
 }

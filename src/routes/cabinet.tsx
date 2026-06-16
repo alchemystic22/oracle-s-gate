@@ -4,8 +4,13 @@ import { drawNextPassageId, passageById } from "../data/cabinet";
 import { useAppState } from "../lib/useAppState";
 import { RitualButton } from "../components/RitualButton";
 import { MeasuredReveal } from "../components/MeasuredReveal";
-import { applyPrivacy } from "../lib/state";
 import { obs } from "../lib/observation";
+
+function applyPrivacy(text: string, mode: string): string | null {
+  if (mode === "completion_marker_only") return null;
+  if (mode === "do_not_store_after_refresh") return null;
+  return text;
+}
 
 export const Route = createFileRoute("/cabinet")({
   head: () => ({ meta: [{ title: "The Reading Cabinet" }] }),

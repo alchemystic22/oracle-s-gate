@@ -108,7 +108,7 @@ function GateCell({ gate, locked, completed, timeLockUntil }: { gate: typeof GAT
       {(accessible || completed) && <div className="mt-1 text-parchment-dim text-sm italic">{gate.epithet}</div>}
     </div>
   );
-  if (accessible) return <Link to="/gates/$gateId" params={{ gateId: String(gate.id) }}>{inner}</Link>;
+  if (accessible) return <Link to="/gate/$gateId" params={{ gateId: String(gate.id) }}>{inner}</Link>;
   return inner;
 }
 
@@ -130,6 +130,6 @@ function GateNode({ gate, locked, completed, timeLockUntil }: { gate: typeof GAT
       )}
     </div>
   );
-  if (accessible) return <Link to="/gates/$gateId" params={{ gateId: String(gate.id) }}>{dot}</Link>;
+  if (accessible) return <Link to="/gate/$gateId" params={{ gateId: String(gate.id) }}>{dot}</Link>;
   return dot;
 }
