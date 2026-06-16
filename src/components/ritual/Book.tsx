@@ -140,8 +140,8 @@ export function BookEmergence({ onOpen, ready }: { onOpen: () => void; ready: bo
         </div>
       </motion.div>
       <p
-        className="mb-10 text-xl italic"
-        style={{ fontFamily: "'Cormorant Garamond', serif", color: "hsl(43 30% 80%)" }}
+        className="mb-10 text-2xl md:text-3xl italic"
+        style={{ fontFamily: "'Cormorant Garamond', serif", color: "hsl(43 35% 82%)" }}
       >
         A hidden page has opened.
       </p>
