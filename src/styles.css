@@ -171,4 +171,46 @@
     background: linear-gradient(90deg, transparent 48%, color-mix(in oklab, var(--seam) 60%, transparent) 50%, transparent 52%);
     opacity: 0.5;
   }
+
+  /* ── Matrix terminal ─────────────────────────────────────────────── */
+  .matrix-text {
+    color: oklch(0.92 0.16 95);
+    text-shadow:
+      0 0 4px color-mix(in oklab, var(--gold) 70%, transparent),
+      0 0 12px color-mix(in oklab, var(--gold) 35%, transparent),
+      0 0 28px color-mix(in oklab, var(--gold-aged) 20%, transparent);
+    letter-spacing: 0.02em;
+    line-height: 1.55;
+    font-size: clamp(1.35rem, 2.2vw, 2rem);
+  }
+  .matrix-cursor {
+    display: inline-block;
+    margin-left: 2px;
+    color: oklch(0.92 0.16 95);
+    text-shadow: 0 0 8px color-mix(in oklab, var(--gold) 80%, transparent);
+    animation: matrix-blink 1s steps(1, end) infinite;
+  }
+  @keyframes matrix-blink {
+    0%, 50% { opacity: 1; }
+    50.01%, 100% { opacity: 0; }
+  }
+  .crt-scanlines {
+    pointer-events: none;
+    position: fixed; inset: 0;
+    z-index: 40;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,0) 0px,
+      rgba(0,0,0,0) 2px,
+      rgba(0,0,0,0.18) 3px,
+      rgba(0,0,0,0.18) 4px
+    );
+    mix-blend-mode: multiply;
+  }
+  .crt-vignette {
+    pointer-events: none;
+    position: fixed; inset: 0;
+    z-index: 39;
+    background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%);
+  }
 }
