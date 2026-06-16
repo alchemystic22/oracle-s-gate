@@ -42,7 +42,7 @@ function Cabinet() {
   const passage = currentId ? passageById(currentId) : null;
 
   return (
-    <main className="min-h-screen bg-obsidian-deep text-parchment px-6 py-16">
+    <main className="min-h-screen text-parchment px-6 py-16">
       <div className="max-w-2xl mx-auto">
         <header className="text-center mb-10">
           <p className="text-parchment-dim text-xs tracking-[0.4em] uppercase">The Reading Cabinet</p>
