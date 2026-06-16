@@ -2,7 +2,6 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { GATES } from "../data/gates";
 import { useAppState } from "../lib/useAppState";
-import { gateLockMs } from "../lib/state";
 import { obs } from "../lib/observation";
 
 export const Route = createFileRoute("/gates/")({
