@@ -23,28 +23,28 @@ export function ReflectionField({
       transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
       className="mt-10 pt-6 border-t border-gold-aged/20"
     >
-      <p className="text-gold-aged text-xs tracking-[0.3em] uppercase mb-3">What surfaced for you?</p>
+      <p className="text-gold-aged text-sm tracking-[0.2em] uppercase mb-4">What surfaced for you?</p>
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
         rows={4}
         placeholder="Optional. Spoken only to yourself."
-        className="w-full bg-obsidian/60 border border-bronze/40 rounded-sm p-3 text-parchment placeholder:text-parchment-dim/60 focus:outline-none focus:border-gold-aged text-sm"
+        className="w-full bg-obsidian/60 border border-bronze/40 rounded-sm p-4 text-parchment placeholder:text-parchment-dim/60 focus:outline-none focus:border-gold-aged text-base leading-relaxed"
       />
-      <div className="mt-4 flex items-center justify-between">
-        <span className="text-parchment-dim text-[10px] tracking-widest uppercase">
+      <div className="mt-5 flex items-center justify-between flex-wrap gap-3">
+        <span className="text-parchment-dim text-xs tracking-[0.2em] uppercase">
           privacy · {privacyMode.replace(/_/g, " ")}
         </span>
-        <div className="flex gap-5">
+        <div className="flex gap-6">
           <button
             onClick={onClose}
-            className="text-parchment-dim hover:text-parchment text-xs tracking-[0.3em] uppercase transition-colors duration-500"
+            className="text-parchment-dim hover:text-parchment text-sm tracking-[0.2em] uppercase transition-colors duration-500"
           >
             close
           </button>
           <button
             onClick={() => onSave(persistsText ? text.trim() : "", willStore && text.trim().length > 0)}
-            className="text-gold-aged hover:text-gold text-xs tracking-[0.3em] uppercase transition-colors duration-500"
+            className="text-gold-aged hover:text-gold text-sm tracking-[0.2em] uppercase transition-colors duration-500"
           >
             keep
           </button>
