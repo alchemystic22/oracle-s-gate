@@ -33,7 +33,7 @@ function Invocation() {
   const alreadyEntered = hydrated && !!state.invocationCompletedAt;
 
   return (
-    <main className="min-h-screen bg-obsidian-deep text-parchment flex items-center justify-center px-6 py-20">
+    <main className="min-h-screen text-parchment flex items-center justify-center px-6 py-20">
       <div className="max-w-2xl w-full">
         <header className="mb-12 text-center">
           <p className="text-parchment-dim text-xs tracking-[0.4em] uppercase">Alchemystic Oracle</p>

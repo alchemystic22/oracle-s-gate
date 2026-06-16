@@ -22,7 +22,7 @@ function Constellation() {
   const nextUnlockable = nextGateId(state);
 
   return (
-    <main className="min-h-screen bg-obsidian-deep text-parchment px-6 py-12">
+    <main className="min-h-screen text-parchment px-6 py-12">
       <header className="max-w-3xl mx-auto text-center mb-10">
         <p className="text-parchment-dim text-xs tracking-[0.4em] uppercase">The Constellation</p>
         <h1 className="mt-2 text-2xl md:text-3xl text-gold">Seven Gates</h1>
