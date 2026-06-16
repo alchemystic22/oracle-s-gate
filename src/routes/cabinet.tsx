@@ -74,17 +74,12 @@ function Cabinet() {
     if (triad.mode === "avatar_chose") {
       timers.push(window.setTimeout(() => setPhase("awaiting"), 4200));
     } else {
-      timers.push(window.setTimeout(() => setPhase("oracle_settle"), 4200));
-      // Oracle stillness ~6s, then auto-illuminate
+      // Oracle stillness ~6s, then auto-illuminate. Then the Avatar may click the illuminated card to engage.
       timers.push(window.setTimeout(() => {
         const idx = (triad.forced ?? 0) as 0 | 1 | 2;
         setChosenIdx(idx);
         setPhase("illuminated");
       }, 4200 + 6000));
-      // Auto-flip ~1s after illuminate so the avatar can take it in
-      timers.push(window.setTimeout(() => {
-        setPhase("flipped");
-      }, 4200 + 6000 + 1800));
     }
     return () => timers.forEach(clearTimeout);
   }, [triad]);
