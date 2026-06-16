@@ -115,6 +115,26 @@ function GateCell({ gate, locked, completed, timeLockUntil }: { gate: typeof GAT
 function GateNode({ gate, locked, completed, timeLockUntil }: { gate: typeof GATES[number]; locked: boolean; completed: boolean; timeLockUntil?: number }) {
   const lockHrs = lockStatus(timeLockUntil);
   const accessible = !locked && !lockHrs && !completed;
+
+  const seal = accessible
+    ? {
+        size: "5rem",
+        filter:
+          "drop-shadow(0 0 22px hsl(43 90% 60% / 0.75)) drop-shadow(0 0 6px hsl(48 95% 80% / 0.45))",
+        opacity: 1,
+      }
+    : completed
+    ? {
+        size: "3rem",
+        filter: "hue-rotate(-12deg) saturate(0.6) brightness(0.75)",
+        opacity: 0.85,
+      }
+    : {
+        size: "2.25rem",
+        filter: "grayscale(0.85) brightness(0.55)",
+        opacity: 0.35,
+      };
+
   const dot = (
     <div className="flex flex-col items-center select-none">
       {accessible && (
@@ -122,24 +142,33 @@ function GateNode({ gate, locked, completed, timeLockUntil }: { gate: typeof GAT
           aria-hidden
           className="absolute -z-10 rounded-full"
           style={{
-            width: "8rem", height: "8rem",
+            width: "10rem", height: "10rem",
             transform: "translate(-50%, -50%)",
-            left: "50%", top: "8px",
-            background: "radial-gradient(circle, hsl(43 90% 60% / 0.35) 0%, hsl(43 90% 60% / 0.08) 40%, transparent 70%)",
-            filter: "blur(6px)",
+            left: "50%", top: "2.5rem",
+            background: "radial-gradient(circle, hsl(43 90% 60% / 0.4) 0%, hsl(280 60% 50% / 0.1) 45%, transparent 75%)",
+            filter: "blur(10px)",
           }}
         />
       )}
-      <div className={`rounded-full border ${
-        completed ? "bg-bronze border-bronze w-4 h-4" :
-        accessible ? "bg-gold border-gold seam-breathe w-6 h-6 shadow-[0_0_30px_hsl(43_90%_60%/0.8)]" :
-        "bg-transparent border-parchment-dim opacity-40 w-3 h-3"
-      }`} />
+      <img
+        src="/assets/constellation/gate-seal.png"
+        alt=""
+        aria-hidden
+        loading="lazy"
+        draggable={false}
+        className={accessible ? "seam-breathe" : ""}
+        style={{
+          width: seal.size,
+          height: seal.size,
+          filter: seal.filter,
+          opacity: seal.opacity,
+        }}
+      />
       <div className={`mt-2 tracking-[0.3em] ${accessible ? "text-sm text-gold" : "text-[10px] text-parchment-dim"}`}>
         {accessible || completed ? `GATE ${gate.id}` : "·"}
       </div>
       {(accessible || completed) && (
-        <div className={`italic mt-1 max-w-[180px] text-center ${accessible ? "text-sm text-parchment" : "text-[11px] text-parchment-dim"}`} style={{ fontFamily: "'Cormorant Garamond', serif" }}>{gate.epithet}</div>
+        <div className={`italic mt-1 max-w-[200px] text-center ${accessible ? "text-sm text-parchment" : "text-[11px] text-parchment-dim"}`} style={{ fontFamily: "'Cormorant Garamond', serif" }}>{gate.epithet}</div>
       )}
     </div>
   );

@@ -1,31 +1,45 @@
-# Plan: Bundle Gate 1 verification screenshots as a downloadable zip
+# Replace SVG art with rich generated imagery
 
-## Goal
-Re-capture the full Gate 1 end-to-end verification sequence (desktop + mobile) and deliver as a single zipped artifact under 30 MB at `/mnt/documents/`.
+Inventory pass found three real "SVG-as-art" surfaces still in the app. The grimoire and the gate threshold already use generated images and stay as-is. The book's noise-filter SVGs are texture (not art) and stay. The constellation seam lines are diagram, not decoration, and stay.
 
-## Steps
+What gets replaced:
 
-1. **Desktop captures (1440x900)** via `browser--view_preview` + `browser--screenshot` for each state, navigating with `?dev=true` to bypass time-locks:
-   - `/` — Opening invocation
-   - `/gates` — Constellation
-   - `/gate/1` — Threshold
-   - `/gate/1` — Encounter (after "Approach the Gate")
-   - `/gate/1` — Layer 3 obstruction (both stance cards visible)
-   - `/gate/1` — Book emergence
-   - `/gate/1` — False Arrival corrective (full page)
-   - `/gate/1` — Splintered Trust corrective (full page)
-   - `/gate/1` — Unlock sequence (epigraph + seal)
-   - `/gate/1` — Completion screen
+## 1. Corrective stance glyphs — `CrackedSun` & `BrokenCompass`
+**Where:** `src/components/ritual/RitualPrimitives.tsx` (exported), rendered in `src/routes/gate.$gateId.tsx` line 441 on every corrective page (False Arrival → cracked sun; Splintered Trust → broken compass), 96×96 inside a gold-lit panel.
 
-2. **Mobile captures (390x844)** — same 10 states via `browser--set_viewport_size`.
+**Replacement:**
+- Generate two ~768×768 painterly artifact images (PNG, transparent background) at premium tier, sized to a circular medallion frame:
+  - `false-arrival.png` — a cracked, tarnished gilded sun-disc artifact: weathered brass radiating sunburst with a deep fracture across the face, alchemical engravings on the rim, sitting against pure black. No eye motif. No symmetrical pyramids. Reads as "the promise that split."
+  - `splintered-trust.png` — a shattered antique brass mariner's compass: cracked glass face, bent needle pointing askew, verdigris patina, rosette engraving partially worn. Reads as "the bearing that broke."
+- Save to `public/assets/correctives/`.
+- Swap `CrackedSun` / `BrokenCompass` JSX bodies for `<img>` tags pointing at the new files; keep the breathing motion wrapper and gold drop-shadow filter so they still feel summoned. Same 96px container — no layout change.
 
-3. **Save** each PNG to `/tmp/screenshots/{desktop|mobile}/NN-state.png`.
+## 2. Constellation gate nodes
+**Where:** `src/routes/gates.index.tsx` `GateNode` function (lines 115–148). Currently each gate is a colored CSS circle (`bg-gold` / `bg-bronze`).
 
-4. **Zip** with `cd /tmp/screenshots && zip -r /mnt/documents/gate-1-verification.zip .` and verify final size < 30 MB.
+**Replacement:**
+- Generate one shared `gate-seal.png` artifact (~512×512, transparent): an ornate gilded medallion — circular brass seal with concentric engraved rings, sacred geometry filigree, no figurative imagery, no eye. Reads as "a sealed gate."
+- Render at 3 visual states purely through filters:
+  - **active** (next gate): full opacity, warm gold drop-shadow, gentle scale-breathe
+  - **sealed** (completed): smaller, bronze hue-rotate, no glow
+  - **locked**: heavily desaturated + low opacity (so it reads as "not yours yet")
+- Seam lines between gates stay as inline `<svg>` (those are diagram lines, not art).
 
-5. **Deliver** via `<presentation-artifact path="gate-1-verification.zip" mime_type="application/zip">`, plus the written confirmation block (auto-fail conditions false, aesthetic match, etc.) inline in the chat reply.
+## 3. Skip / keep
+- **Backdrop `SacredGeometry`** — currently at 6% opacity behind the BookShell. It reads as a faint cosmic etching, not as a placeholder. Keep.
+- **`CornerBrackets`** — 4 plain bordered spans, not SVG. Keep.
+- **Book grain filters** — `feTurbulence` noise; this is texture, not art. Keep.
+- **Constellation seam lines** — diagram, not decoration. Keep.
 
-## Notes
-- No code changes. Pure capture + bundling.
-- If any state requires interaction (button clicks) the desktop pass uses `browser--act`; admin overlay phase-jumps where available shortcut the flow.
-- If zip exceeds 30 MB, re-encode PNGs at reduced dimensions and re-zip.
+## Constraints honored
+- No eye / "all-seeing eye" motif in any new generation (per your note).
+- All new imagery generated at premium tier for legibility at small sizes.
+- Tech overlays (glow, scan, breathe) stay around the imagery, never on top of it.
+- No new dependencies; all changes confined to existing components and `public/assets/`.
+
+## Files touched
+- `public/assets/correctives/false-arrival.png` *(new)*
+- `public/assets/correctives/splintered-trust.png` *(new)*
+- `public/assets/constellation/gate-seal.png` *(new)*
+- `src/components/ritual/RitualPrimitives.tsx` *(swap `CrackedSun` / `BrokenCompass` bodies)*
+- `src/routes/gates.index.tsx` *(swap `GateNode` dot for medallion image with state filters)*
