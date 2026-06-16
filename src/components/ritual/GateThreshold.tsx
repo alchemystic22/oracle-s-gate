@@ -13,7 +13,7 @@ export function GateThreshold({
 }) {
   const [imgUrl, setImgUrl] = useState<string | null>(null);
   useEffect(() => {
-    const url = "/assets/gates/gate-1/threshold.png";
+    const url = "/assets/gates/gate-1/threshold.jpg";
     const img = new Image();
     img.onload = () => setImgUrl(url);
     img.onerror = () => setImgUrl(null);
