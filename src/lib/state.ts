@@ -2,7 +2,7 @@
 
 import type { DomainId } from "../data/domains";
 
-const KEY = "alchemystic_state_v2"; // legacy key, still used for v2/v3 reads (we migrate in place)
+const KEY = "alchemystic_state_v2"; // legacy key, still used for v2/v3/v4 reads (we migrate in place)
 
 export type GateId = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
@@ -51,6 +51,7 @@ export type CabinetEncounter = {
   mode: "avatar_chose" | "oracle_revealed";
   reflection?: string;         // may be omitted by privacy mode
   reflectionStored: boolean;
+  markedLyrics: string[];      // lines marked during a vessel reception; [] for passages
 };
 
 // ── Gate 1 ─────────────────────────────────────────────────────────────────
@@ -88,7 +89,7 @@ export type Gate1State = {
 // ── Root state ─────────────────────────────────────────────────────────────
 
 export type AppState = {
-  version: 3;
+  version: 4;
   createdAt: number;
   invocationCompletedAt?: number;
   privacyMode: PrivacyMode;
@@ -142,7 +143,7 @@ export function defaultGate1(): Gate1State {
 export function defaultState(): AppState {
   const emptyGate = () => ({});
   return {
-    version: 3,
+    version: 4,
     createdAt: Date.now(),
     privacyMode: "completion_marker_only",
     gates: { 1: emptyGate(), 2: emptyGate(), 3: emptyGate(), 4: emptyGate(), 5: emptyGate(), 6: emptyGate(), 7: emptyGate() },
@@ -167,7 +168,15 @@ type V2State = Omit<AppState, "version" | "cabinet" | "sovereign"> & {
   };
 };
 
-function migrateV2toV3(v2: V2State): AppState {
+type V3State = Omit<AppState, "version" | "cabinet"> & {
+  version: 3;
+  cabinet: {
+    encounters: Array<Omit<CabinetEncounter, "markedLyrics"> & { markedLyrics?: string[] }>;
+    recentTriads: string[][];
+  };
+};
+
+function migrateV2toV3(v2: V2State): V3State {
   const statusMap: Record<string, ActionStatusV3> = {
     declared: "chosen",
     in_progress: "scheduled",
@@ -205,6 +214,21 @@ function migrateV2toV3(v2: V2State): AppState {
   };
 }
 
+// ── v3 → v4 migration: backfill markedLyrics on every cabinet encounter ───
+function migrateV3toV4(v3: V3State): AppState {
+  return {
+    ...v3,
+    version: 4,
+    cabinet: {
+      encounters: (v3.cabinet?.encounters ?? []).map((e) => ({
+        ...e,
+        markedLyrics: e.markedLyrics ?? [],
+      })),
+      recentTriads: v3.cabinet?.recentTriads ?? [],
+    },
+  };
+}
+
 export function loadState(): AppState {
   if (typeof window === "undefined") return defaultState();
   try {
@@ -222,19 +246,28 @@ export function loadState(): AppState {
       return defaultState();
     }
     const parsed = JSON.parse(raw);
-    if (parsed.version === 3) {
-      // Defensive backfills
+    if (parsed.version === 4) {
       if (!parsed.gate1) parsed.gate1 = defaultGate1();
       if (!parsed.cabinet) parsed.cabinet = { encounters: [], recentTriads: [] };
       if (!parsed.cabinet.encounters) parsed.cabinet.encounters = [];
       if (!parsed.cabinet.recentTriads) parsed.cabinet.recentTriads = [];
+      // Defensive markedLyrics backfill (in case an encounter slipped in pre-migration).
+      parsed.cabinet.encounters = parsed.cabinet.encounters.map((e: CabinetEncounter) => ({
+        ...e,
+        markedLyrics: Array.isArray(e.markedLyrics) ? e.markedLyrics : [],
+      }));
       if (!parsed.sovereign) parsed.sovereign = { actions: [], graceMarks: 0, graceMessages: [] };
       if (!parsed.sovereign.graceMessages) parsed.sovereign.graceMessages = [];
       if (typeof parsed.sovereign.graceMarks !== "number") parsed.sovereign.graceMarks = 0;
       return parsed as AppState;
     }
+    if (parsed.version === 3) {
+      const migrated = migrateV3toV4(parsed as V3State);
+      saveState(migrated);
+      return migrated;
+    }
     if (parsed.version === 2) {
-      const migrated = migrateV2toV3(parsed as V2State);
+      const migrated = migrateV3toV4(migrateV2toV3(parsed as V2State));
       saveState(migrated);
       return migrated;
     }
