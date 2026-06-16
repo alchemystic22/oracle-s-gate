@@ -52,7 +52,7 @@ function GatePage() {
   const { state, update, hydrated } = useAppState();
 
   useEffect(() => {
-    if (hydrated && !state.invocationCompletedAt) nav({ to: "/" });
+    if (hydrated && !state.invocationCompletedAt && !isDev()) nav({ to: "/" });
   }, [hydrated, state.invocationCompletedAt, nav]);
 
   if (!gate) return <Locked text="No such gate." />;
@@ -124,6 +124,21 @@ function GateOne({ state, update }: { state: AppState; update: (u: (s: AppState)
     obs("gate1_phase", { phase });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
+
+  // Admin: ?phase=<name> jumps Gate 1 directly to that phase (dev only)
+  useEffect(() => {
+    if (!isDev() || typeof window === "undefined") return;
+    const p = new URLSearchParams(window.location.search).get("phase");
+    const valid: Gate1State["phase"][] = [
+      "threshold", "encounter", "obstruction",
+      "book_emergence", "page_open",
+      "corrective_gate_open", "relocked", "completion",
+    ];
+    if (p && valid.includes(p as Gate1State["phase"]) && p !== g1.phase) {
+      setPhase(p as Gate1State["phase"]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const setPhase = (next: Gate1State["phase"]) =>
     update((s) => ({ ...s, gate1: { ...s.gate1, phase: next, anchors: { ...s.gate1.anchors, [next]: s.gate1.anchors[next] ?? Date.now() } } }));
