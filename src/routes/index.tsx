@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { MatrixTypewriter } from "../components/MatrixTypewriter";
 import { RitualButton } from "../components/RitualButton";
+import { ScrambleText } from "../components/ScrambleText";
 import { useAppState } from "../lib/useAppState";
 import { obs } from "../lib/observation";
 
@@ -22,14 +23,15 @@ const PARAGRAPHS = [
   "Begin only when you are willing to walk this without performance. Otherwise, return when you are.",
 ];
 
-// step 0: "The Seven Gates" | 1: " Seven Gates" (The hidden) | 2: "One Outcome" | 3: "One Blueprint" | 4: "YOUR Blueprint" | 5: back to "The Seven Gates"
+// Title sequence — last entry's `wait` is unused; the cycle ends on it.
 const TITLE_SEQUENCE: { hideThe: boolean; tail: string; wait: number }[] = [
-  { hideThe: false, tail: "Seven Gates", wait: 20000 },
-  { hideThe: true,  tail: "Seven Gates", wait: 5000 },
-  { hideThe: true,  tail: "One Outcome", wait: 3000 },
-  { hideThe: true,  tail: "One Blueprint", wait: 3000 },
-  { hideThe: true,  tail: "YOUR Blueprint", wait: 3000 },
-  { hideThe: false, tail: "Seven Gates", wait: 0 },
+  { hideThe: false, tail: "Seven Gates",   wait: 20000 }, // 0 — The Seven Gates
+  { hideThe: true,  tail: "Seven Gates",   wait: 8000  }, // 1 — Seven Gates (The hidden)
+  { hideThe: true,  tail: "One Outcome",   wait: 3000  }, // 2
+  { hideThe: true,  tail: "One Blueprint", wait: 3000  }, // 3
+  { hideThe: true,  tail: "YOUR Blueprint",wait: 6000  }, // 4 — emphasis
+  { hideThe: true,  tail: "",              wait: 1200  }, // 5 — hesitation
+  { hideThe: false, tail: "Seven Gates",   wait: 0     }, // 6 — return
 ];
 
 function Invocation() {
@@ -37,6 +39,7 @@ function Invocation() {
   const { state, update, hydrated } = useAppState();
   const [ready, setReady] = useState(false);
   const [titleStep, setTitleStep] = useState(0);
+  const [titleCycleDone, setTitleCycleDone] = useState(false);
 
   useEffect(() => { obs("invocation_open"); }, []);
 
@@ -45,11 +48,19 @@ function Invocation() {
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
     const advance = (i: number) => {
-      if (cancelled || i >= TITLE_SEQUENCE.length - 1) return;
+      if (cancelled || i >= TITLE_SEQUENCE.length - 1) {
+        if (!cancelled) setTitleCycleDone(true);
+        return;
+      }
       timer = setTimeout(() => {
         if (cancelled) return;
-        setTitleStep(i + 1);
-        advance(i + 1);
+        const next = i + 1;
+        setTitleStep(next);
+        if (next === TITLE_SEQUENCE.length - 1) {
+          // landed on final step — begin the subliminal pull
+          setTitleCycleDone(true);
+        }
+        advance(next);
       }, TITLE_SEQUENCE[i].wait);
     };
     advance(0);
@@ -68,9 +79,7 @@ function Invocation() {
             <h1 className="mt-4 text-5xl md:text-6xl text-gold tracking-wide" style={{ fontFamily: "'Cinzel', serif" }}>
               <span className="inline-block">
                 <span style={{ visibility: current.hideThe ? "hidden" : "visible" }}>The </span>
-                <span key={current.tail} style={{ display: "inline-block", transition: "opacity 600ms ease" }}>
-                  {current.tail}
-                </span>
+                <ScrambleText value={current.tail} emphasizeToken="YOUR" />
               </span>
             </h1>
             <div className="mt-8 h-px w-32 mx-auto bg-gold-aged opacity-50" />
@@ -86,6 +95,7 @@ function Invocation() {
           <div className="mt-16 flex flex-col items-center">
             <RitualButton
               disabled={!ready}
+              summoning={ready && titleCycleDone}
               onClick={() => {
                 const now = Date.now();
                 update((s) => ({ ...s, invocationCompletedAt: s.invocationCompletedAt ?? now }));

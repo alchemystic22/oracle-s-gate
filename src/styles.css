@@ -213,4 +213,66 @@
     z-index: 39;
     background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%);
   }
+
+  /* ── YOUR emphasis pulse ─────────────────────────────────────────── */
+  .your-emphasis {
+    display: inline-block;
+    animation: your-pulse 900ms ease-out 1;
+    letter-spacing: 0.04em;
+  }
+  @keyframes your-pulse {
+    0%   { transform: scale(1);    filter: drop-shadow(0 0 0 transparent); }
+    35%  { transform: scale(1.07); filter: drop-shadow(0 0 16px hsl(43 85% 60% / 0.75)); }
+    100% { transform: scale(1);    filter: drop-shadow(0 0 0 transparent); }
+  }
+
+  /* ── Summoning button (post-title-cycle subliminal pull) ─────────── */
+  .ritual-button.summoning {
+    position: relative;
+    overflow: hidden;
+    animation: summon-breath 2.6s ease-in-out infinite;
+    border-color: color-mix(in oklab, var(--gold) 70%, transparent);
+  }
+  .ritual-button.summoning::before {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(
+      115deg,
+      transparent 30%,
+      color-mix(in oklab, var(--gold) 55%, transparent) 48%,
+      color-mix(in oklab, var(--parchment) 60%, transparent) 50%,
+      color-mix(in oklab, var(--gold) 55%, transparent) 52%,
+      transparent 70%
+    );
+    transform: translateX(-120%);
+    animation: summon-shimmer 6s ease-in-out infinite;
+    pointer-events: none;
+    mix-blend-mode: screen;
+    opacity: 0.7;
+  }
+  @keyframes summon-breath {
+    0%, 100% {
+      box-shadow: 0 0 0 0 transparent;
+      transform: scale(1);
+    }
+    50% {
+      box-shadow: 0 0 28px -2px color-mix(in oklab, var(--gold) 55%, transparent);
+      transform: scale(1.015);
+    }
+  }
+  @keyframes summon-shimmer {
+    0%, 70% { transform: translateX(-120%); }
+    85%     { transform: translateX(120%); }
+    100%    { transform: translateX(120%); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ritual-button.summoning {
+      animation: none;
+      transform: none;
+      box-shadow: 0 0 14px -4px color-mix(in oklab, var(--gold) 45%, transparent);
+    }
+    .ritual-button.summoning::before { display: none; }
+    .your-emphasis { animation: none; }
+  }
 }
