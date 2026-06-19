@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <defs>
+    <radialGradient id="mirror4v" cx="0.5" cy="0.5" r="0.6">
+      <stop offset="0" stop-color="#171420" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#05050a" stop-opacity="1"/>
+    </radialGradient>
+    <linearGradient id="veil4" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#c9c2dc" stop-opacity="0.55"/>
+      <stop offset="0.5" stop-color="#9a8fb4" stop-opacity="0.42"/>
+      <stop offset="1" stop-color="#5a4f76" stop-opacity="0.55"/>
+    </linearGradient>
+    <linearGradient id="seam4" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#f0d27a"/>
+      <stop offset="1" stop-color="#7a5a1f"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Dark mirror -->
+  <ellipse cx="100" cy="100" rx="78" ry="84" fill="url(#mirror4v)" stroke="#7e6128" stroke-width="1.1" opacity="0.95"/>
+  <ellipse cx="100" cy="100" rx="74" ry="80" fill="none" stroke="#a98432" stroke-width="0.45" opacity="0.55"/>
+
+  <!-- Faint reflective geometry -->
+  <path d="M 40 100 Q 100 72 160 100" stroke="#b08838" stroke-width="0.3" opacity="0.3" fill="none"/>
+  <path d="M 40 100 Q 100 128 160 100" stroke="#b08838" stroke-width="0.3" opacity="0.3" fill="none"/>
+
+  <!-- Translucent veil (curtain) before mirror -->
+  <path d="M 44 38
+           C 60 60, 56 92, 60 120
+           C 64 144, 58 162, 50 178
+           L 100 178
+           L 150 178
+           C 142 162, 136 144, 140 120
+           C 144 92, 140 60, 156 38
+           Z"
+        fill="url(#veil4)" stroke="#bfb5d6" stroke-width="0.5" opacity="0.85"/>
+
+  <!-- Veil folds -->
+  <path d="M 70 44 C 68 80, 72 130, 68 176" stroke="#d6cfe6" stroke-width="0.35" opacity="0.45" fill="none"/>
+  <path d="M 86 42 C 84 80, 88 130, 84 178" stroke="#d6cfe6" stroke-width="0.35" opacity="0.45" fill="none"/>
+  <path d="M 114 42 C 116 80, 112 130, 116 178" stroke="#d6cfe6" stroke-width="0.35" opacity="0.45" fill="none"/>
+  <path d="M 130 44 C 132 80, 128 130, 132 176" stroke="#d6cfe6" stroke-width="0.35" opacity="0.45" fill="none"/>
+
+  <!-- Single gold seam splitting the veil -->
+  <line x1="100" y1="38" x2="100" y2="178" stroke="url(#seam4)" stroke-width="0.9" opacity="0.95"/>
+  <line x1="100" y1="38" x2="100" y2="178" stroke="#fff1c2" stroke-width="0.25" opacity="0.7"/>
+
+  <!-- Black pearl fastener at the top -->
+  <circle cx="100" cy="40" r="4.2" fill="#0a0810" stroke="#7e6128" stroke-width="0.5"/>
+  <circle cx="98.6" cy="38.6" r="1.2" fill="#3a2f50" opacity="0.7"/>
+  <circle cx="100" cy="40" r="5.6" fill="none" stroke="#b08838" stroke-width="0.3" opacity="0.6"/>
+</svg>
