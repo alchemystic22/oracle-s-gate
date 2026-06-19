@@ -21,7 +21,7 @@ import { RitualButton, Section, SectionTitle, Glyph } from "../components/ritual
 import { GateThreshold } from "../components/ritual/GateThreshold";
 import { BookEmergence, BookShell } from "../components/ritual/Book";
 import { useTimeLock } from "../lib/timelock";
-import { detectSafetyConcern, SAFETY_COPY } from "../lib/safety";
+import { detectSafetyConcern, SAFETY_COPY, detectFlameTier, type FlameTier } from "../lib/safety";
 import { ORACLE_CATEGORIES, oracleResponse, type OracleCategory } from "../lib/oracle";
 import { obs } from "../lib/observation";
 import { isDev } from "../lib/admin";
@@ -463,6 +463,23 @@ function PagePhase({
   }, [safety, gs.safetyLocked, id, patchGate]);
 
   const safetyLocked = gs.safetyLocked || safety;
+
+  // Flame tier — Gate 2+ corrective routes only
+  const flameTier: FlameTier | null = route.safetyTiers
+    ? detectFlameTier(
+        gs.encounterAnswer,
+        gs.journal,
+        gs.actionBlock.principle,
+        gs.actionBlock.action,
+        gs.actionBlock.benefit,
+        gs.actionBlock.visibleEvidence,
+        ...Object.values(gs.answers),
+      )
+    : null;
+  const activeTier = flameTier && route.safetyTiers
+    ? route.safetyTiers.find((t) => t.id === flameTier) ?? null
+    : null;
+  const flameBlocksUnlock = activeTier?.blocksUnlock ?? false;
 
   const askOracle = () => {
     const a = oracleResponse(routeId, oracleCat, oracleQ);
