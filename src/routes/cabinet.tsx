@@ -6,7 +6,7 @@ import { obs } from "../lib/observation";
 import { isDev } from "../lib/admin";
 import { drawTriad, pushRecentTriad, type SelectionMode, type Triad } from "../lib/resonance";
 import { CabinetChamber } from "../components/cabinet/CabinetChamber";
-import { OfferingCard } from "../components/cabinet/OfferingCard";
+import { TransmissionObject, type TransmissionState } from "../components/cabinet/TransmissionObject";
 import { OfferingPanel } from "../components/cabinet/OfferingPanel";
 import { LyricsScroll } from "../components/cabinet/LyricsScroll";
 import { ReflectionField } from "../components/cabinet/ReflectionField";
@@ -95,6 +95,7 @@ function Cabinet() {
   const [invocationDone, setInvocationDone] = useState(false);
   const [showBegin, setShowBegin] = useState(false);
   const [markedLyrics, setMarkedLyrics] = useState<string[]>([]);
+  const [openingIdx, setOpeningIdx] = useState<number | null>(null);
 
   // Reveal the Begin button 5s after the invocation completes.
   useEffect(() => {
@@ -136,13 +137,20 @@ function Cabinet() {
   }, [triad, phase]);
 
   function chooseCard(idx: number) {
-    if (!triad || phase !== "ascertainment") return;
-    if (triad.mode === "avatar_chose") {
-      setChosenIdx(idx);
+    if (!triad || phase !== "ascertainment" || openingIdx !== null) return;
+    const isAvatarPick = triad.mode === "avatar_chose";
+    const isOracleConfirm = triad.mode === "oracle_revealed" && chosenIdx !== null && idx === chosenIdx;
+    if (!isAvatarPick && !isOracleConfirm) return;
+    // Set chosen now so it's stable for the panel mount; play the object's gesture
+    // before the reception view replaces the triad. Vessels get a longer gesture
+    // (~1.8s) than passages (~0.9s) — the object's gesture IS the transition.
+    setChosenIdx(idx);
+    setOpeningIdx(idx);
+    const gestureMs = triad.triad[idx].kind === "vessel" ? 1800 : 900;
+    window.setTimeout(() => {
       setPhase("reception");
-    } else if (chosenIdx !== null && idx === chosenIdx) {
-      setPhase("reception");
-    }
+      setOpeningIdx(null);
+    }, gestureMs);
   }
 
   function saveReflection(text: string, stored: boolean) {
