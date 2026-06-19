@@ -76,7 +76,7 @@ function Invocation() {
         <div className="max-w-3xl w-full">
           <header className="mb-16 text-center">
             <p className="text-parchment-dim text-sm tracking-[0.4em] uppercase">Alchemystic Oracle</p>
-            <h1 className="mt-4 text-5xl md:text-6xl text-gold tracking-wide" style={{ fontFamily: "'Cinzel', serif" }}>
+            <h1 className="mt-4 text-[4.5rem] md:text-[5.625rem] leading-tight text-gold tracking-wide" style={{ fontFamily: "'Cinzel', serif" }}>
               <span className="inline-block">
                 <span style={{ visibility: current.hideThe ? "hidden" : "visible" }}>The </span>
                 <ScrambleText value={current.tail} emphasizeToken="YOUR" />
