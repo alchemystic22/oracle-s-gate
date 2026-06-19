@@ -2,34 +2,22 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import type { Offering, ObjectArchetype, MistColor } from "../../data/cabinet";
 
-import leatherBook from "/assets/cabinet/objects/leather-book.png?url";
-import stoneTablet from "/assets/cabinet/objects/stone-tablet.png?url";
-import openCodex from "/assets/cabinet/objects/open-codex.png?url";
-import bookOnSide from "/assets/cabinet/objects/book-on-side.png?url";
-import scroll from "/assets/cabinet/objects/scroll.png?url";
-import lectern from "/assets/cabinet/objects/lectern.png?url";
-import abaloneShell from "/assets/cabinet/objects/abalone-shell.png?url";
-import brassBowl from "/assets/cabinet/objects/brass-bowl.png?url";
-import tuningFork from "/assets/cabinet/objects/tuning-fork.png?url";
-import glassVial from "/assets/cabinet/objects/glass-vial.png?url";
-import glassVialStopper from "/assets/cabinet/objects/glass-vial-stopper.png?url";
-import boneFlute from "/assets/cabinet/objects/bone-flute.png?url";
-import bronzeBell from "/assets/cabinet/objects/bronze-bell.png?url";
-
+const BASE = "/assets/cabinet/objects";
 const ARCHETYPE_SRC: Record<ObjectArchetype, string> = {
-  "leather-book": leatherBook,
-  "stone-tablet": stoneTablet,
-  "open-codex": openCodex,
-  "book-on-side": bookOnSide,
-  "scroll": scroll,
-  "lectern": lectern,
-  "abalone-shell": abaloneShell,
-  "brass-bowl": brassBowl,
-  "tuning-fork": tuningFork,
-  "glass-vial": glassVial,
-  "bone-flute": boneFlute,
-  "bronze-bell": bronzeBell,
+  "leather-book":  `${BASE}/leather-book.png`,
+  "stone-tablet":  `${BASE}/stone-tablet.png`,
+  "open-codex":    `${BASE}/open-codex.png`,
+  "book-on-side":  `${BASE}/book-on-side.png`,
+  "scroll":        `${BASE}/scroll.png`,
+  "lectern":       `${BASE}/lectern.png`,
+  "abalone-shell": `${BASE}/abalone-shell.png`,
+  "brass-bowl":    `${BASE}/brass-bowl.png`,
+  "tuning-fork":   `${BASE}/tuning-fork.png`,
+  "glass-vial":    `${BASE}/glass-vial.png`,
+  "bone-flute":    `${BASE}/bone-flute.png`,
+  "bronze-bell":   `${BASE}/bronze-bell.png`,
 };
+const VIAL_STOPPER_SRC = `${BASE}/glass-vial-stopper.png`;
 
 const MIST_COLOR: Record<MistColor, string> = {
   rose:   "oklch(0.78 0.13 18)",
