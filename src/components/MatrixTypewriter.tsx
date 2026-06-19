@@ -16,9 +16,8 @@ type Props = {
 /**
  * Matrix-style terminal typewriter.
  * - Types one char at a time with uneven cadence.
- * - Pauses on sentence punctuation.
- * - Holds the finished phrase, clears the screen, then types the next.
- * - Cursor blinks uniformly throughout (typing AND pauses).
+ * - A single luminous stroke sweeps across each phrase as it's typed.
+ * - When a phrase finishes, a white blinking caret holds at the end.
  */
 export function MatrixTypewriter({
   paragraphs,
@@ -31,6 +30,7 @@ export function MatrixTypewriter({
 }: Props) {
   const [text, setText] = useState("");
   const [phraseIdx, setPhraseIdx] = useState(0);
+  const [typing, setTyping] = useState(true);
   const [done, setDone] = useState(false);
   const cancelled = useRef(false);
 
@@ -41,9 +41,11 @@ export function MatrixTypewriter({
     const typePhrase = (phrase: string, onPhraseDone: () => void) => {
       let i = 0;
       setText("");
+      setTyping(true);
       const tick = () => {
         if (cancelled.current) return;
         if (i >= phrase.length) {
+          setTyping(false);
           timeout = window.setTimeout(onPhraseDone, holdMs);
           return;
         }
@@ -78,23 +80,25 @@ export function MatrixTypewriter({
   }, [paragraphs.length]);
 
   const visibleText = done ? paragraphs[paragraphs.length - 1] : text;
-  const lastTyped = visibleText.at(-1) ?? "";
-  const isBreak = !done && /[\s,.;:—!?]/.test(lastTyped);
-  const glowStart = isBreak ? Math.max(0, visibleText.length - 10) : visibleText.length;
-  const settledText = visibleText.slice(0, glowStart);
-  const illuminatedText = visibleText.slice(glowStart);
+  const phraseLen = Math.max(1, paragraphs[phraseIdx]?.length ?? 1);
+  // Sweep tracks the typing head and trails just behind it.
+  const sweepDurationMs = Math.round(
+    phraseLen * ((minKey + maxKey) / 2) + 600,
+  );
 
   return (
     <div className={className}>
       <pre
-        className="matrix-text whitespace-pre-wrap break-words m-0"
+        key={phraseIdx}
+        className={`matrix-text whitespace-pre-wrap break-words m-0${typing ? " matrix-text--sweeping" : ""}`}
         style={{
           fontFamily: "'Oswald', 'Inter', system-ui, sans-serif",
+          // @ts-expect-error CSS var
+          "--sweep-duration": `${sweepDurationMs}ms`,
         }}
       >
-        {settledText}
-        <span className={isBreak ? "matrix-illuminated-break" : undefined}>{illuminatedText}</span>
-        {!done && <span key={text.length} className={`matrix-glint${isBreak ? " matrix-glint--break" : ""}`} aria-hidden />}
+        {visibleText}
+        {!done && <span className="matrix-caret" aria-hidden />}
       </pre>
       <span className="sr-only">{paragraphs[phraseIdx]}</span>
     </div>
