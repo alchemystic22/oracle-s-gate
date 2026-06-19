@@ -248,17 +248,18 @@
   }
   @keyframes matrix-text-lustre {
     0% {
-      color: oklch(0.9 0.14 88);
+      color: oklch(0.98 0.005 240);
       text-shadow: none;
     }
     18% {
-      color: oklch(0.99 0.025 230);
+      color: oklch(1 0 0);
       text-shadow:
         0 0 0.18em oklch(0.98 0.025 230 / 0.82),
         0 0 0.44em oklch(0.82 0.085 232 / 0.44);
     }
     100% {
-      color: oklch(0.9 0.14 88);
+      color: oklch(0.98 0.005 240);
+
       text-shadow: none;
     }
   }
