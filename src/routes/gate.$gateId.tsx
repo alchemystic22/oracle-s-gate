@@ -584,6 +584,9 @@ function PagePhase({
           </div>
 
           <div className="md:col-span-7 mt-10 md:mt-0">
+            {activeTier && activeTier.id !== "green" && (
+              <FlameBanner tier={activeTier} />
+            )}
             {safetyLocked && (
               <div className="mb-10 border p-5 italic" style={{ borderColor: "hsl(43 60% 60% / 0.4)", background: "hsl(240 30% 8% / 0.6)", color: "hsl(43 30% 85%)", fontFamily: "'Cormorant Garamond', serif" }}>
                 {SAFETY_COPY}
@@ -667,6 +670,16 @@ function PagePhase({
                 )}
               </div>
             </Section>
+
+            {route.vesselSelector && (
+              <VesselSelectorBlock
+                title={route.vesselSelector.title}
+                options={route.vesselSelector.options}
+                value={gs.answers["vesselChoice"] || ""}
+                disabled={safetyLocked}
+                onChange={(v) => setAnswer("vesselChoice", v)}
+              />
+            )}
 
             {/* Sovereign Action Block */}
             <Section className="mt-10">
@@ -787,10 +800,15 @@ function PagePhase({
                 </div>
                 <RitualButton
                   onClick={() => setPhase("corrective_gate_open")}
-                  disabled={!allReady || safetyLocked}
+                  disabled={!allReady || safetyLocked || flameBlocksUnlock}
                 >
                   Open the Corrective Gate
                 </RitualButton>
+                {flameBlocksUnlock && activeTier && (
+                  <p className="mt-4 text-sm italic" style={{ fontFamily: "'Cormorant Garamond', serif", color: "hsl(12 65% 70%)" }}>
+                    {activeTier.oracleTone}
+                  </p>
+                )}
               </div>
             </Section>
 
