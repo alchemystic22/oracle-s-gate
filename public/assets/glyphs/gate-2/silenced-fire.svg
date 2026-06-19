@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none" stroke="hsl(43 70% 65%)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+  <defs>
+    <radialGradient id="sf-ember" cx="50%" cy="60%" r="40%">
+      <stop offset="0%" stop-color="hsl(43 95% 75%)" stop-opacity="0.9"/>
+      <stop offset="55%" stop-color="hsl(28 85% 50%)" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="hsl(20 60% 30%)" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- stopper / cork at top -->
+  <rect x="50" y="14" width="20" height="10" rx="1.5" fill="hsl(28 35% 30% / 0.35)"/>
+  <rect x="50" y="14" width="20" height="10" rx="1.5"/>
+  <line x1="48" y1="24" x2="72" y2="24"/>
+  <!-- neck of vial -->
+  <path d="M52 24 L52 34 L42 44"/>
+  <path d="M68 24 L68 34 L78 44"/>
+  <!-- bulb of vial -->
+  <path d="M42 44 Q22 64 30 86 Q40 110 60 110 Q80 110 90 86 Q98 64 78 44 Z" fill="hsl(220 20% 12% / 0.35)"/>
+  <!-- sealed flame inside -->
+  <g opacity="0.95">
+    <ellipse cx="60" cy="80" rx="22" ry="14" fill="url(#sf-ember)"/>
+    <path d="M60 88 Q52 76 56 64 Q58 56 60 50 Q62 56 64 64 Q68 76 60 88 Z" fill="hsl(28 80% 45% / 0.35)" stroke="hsl(43 90% 70%)" stroke-width="1"/>
+    <path d="M60 84 Q56 76 58 68 Q60 60 60 56 Q60 60 62 68 Q64 76 60 84 Z" fill="hsl(43 95% 70% / 0.45)" stroke="hsl(48 100% 80%)" stroke-width="0.7"/>
+  </g>
+  <!-- ember flecks visible through seal -->
+  <circle cx="50" cy="92" r="1.4" fill="hsl(28 90% 60%)" opacity="0.7"/>
+  <circle cx="70" cy="94" r="1.6" fill="hsl(28 85% 55%)" opacity="0.7"/>
+  <circle cx="58" cy="100" r="1.2" fill="hsl(43 90% 70%)" opacity="0.65"/>
+  <circle cx="66" cy="74" r="1.2" fill="hsl(43 90% 70%)" opacity="0.55"/>
+  <!-- faint smoke escaping past the stopper -->
+  <path d="M58 14 Q56 8 60 4 Q64 8 62 14" opacity="0.4"/>
+  <path d="M54 14 Q52 6 56 0" opacity="0.25"/>
+  <path d="M66 14 Q68 6 64 0" opacity="0.25"/>
+</svg>

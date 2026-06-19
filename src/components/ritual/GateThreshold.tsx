@@ -1,24 +1,43 @@
-import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+
 import { RitualButton } from "./RitualPrimitives";
 
-/* Gate 1 threshold: CSS placeholder by default; runtime-checks for /assets/gates/gate-1/threshold.png
-   and uses it without a broken-image flash. */
+
+/* Per-gate threshold. Image path comes from gate content; falls back to a CSS
+   placeholder if the asset is missing or fails to load. */
 export function GateThreshold({
+  numberLabel,
+  name,
+  subtitle,
+  inscription,
+  inscriptionTranslation,
+  imageSrc,
+  imageAspect,
+  thresholdCopy,
   onApproach,
   canApproach,
 }: {
+  numberLabel: string;
+  name: string;
+  subtitle: string;
+  inscription?: string;
+  inscriptionTranslation?: string;
+  imageSrc: string;
+  imageAspect: string;
+  thresholdCopy: string;
   onApproach: () => void;
   canApproach: boolean;
 }) {
   const [imgUrl, setImgUrl] = useState<string | null>(null);
   useEffect(() => {
-    const url = "/assets/gates/gate-1/threshold.jpg";
+    let alive = true;
     const img = new Image();
-    img.onload = () => setImgUrl(url);
-    img.onerror = () => setImgUrl(null);
-    img.src = url;
-  }, []);
+    img.onload = () => { if (alive) setImgUrl(imageSrc); };
+    img.onerror = () => { if (alive) setImgUrl(null); };
+    img.src = imageSrc;
+    return () => { alive = false; };
+  }, [imageSrc]);
 
   return (
     <motion.div
@@ -32,7 +51,7 @@ export function GateThreshold({
         className="mb-6 text-xs uppercase tracking-[0.5em]"
         style={{ fontFamily: "'Cinzel', serif", color: "hsl(43 50% 60%)" }}
       >
-        Gate 1
+        {numberLabel}
       </p>
       <h1
         className="mb-3 text-5xl md:text-6xl"
@@ -43,16 +62,34 @@ export function GateThreshold({
           textShadow: "0 0 60px hsl(43 80% 60% / 0.35)",
         }}
       >
-        The Broken Vow
+        {name}
       </h1>
       <p
-        className="mb-10 max-w-xl text-base italic"
+        className="mb-2 max-w-xl text-base italic"
         style={{ fontFamily: "'Cormorant Garamond', serif", color: "hsl(43 30% 75%)" }}
       >
-        Where the world's promise fractures, and the soul begins to see.
+        {subtitle}
       </p>
 
-      <div className="relative mb-14 mx-auto w-full max-w-[30rem]" style={{ aspectRatio: "1024 / 1536" }}>
+      {inscription && (
+        <p
+          className="mb-10 text-xs uppercase tracking-[0.4em]"
+          style={{ fontFamily: "'Cinzel', serif", color: "hsl(43 55% 62%)" }}
+        >
+          {inscription}
+          {inscriptionTranslation && (
+            <span
+              className="ml-3 italic normal-case tracking-[0.15em]"
+              style={{ color: "hsl(43 30% 60%)", fontFamily: "'Cormorant Garamond', serif" }}
+            >
+              — {inscriptionTranslation}
+            </span>
+          )}
+        </p>
+      )}
+      {!inscription && <div className="mb-10" />}
+
+      <div className="relative mb-14 mx-auto w-full max-w-[30rem]" style={{ aspectRatio: imageAspect }}>
         <div
           aria-hidden
           className="pointer-events-none absolute -inset-10"
@@ -61,7 +98,6 @@ export function GateThreshold({
             filter: "blur(20px)",
           }}
         />
-        {/* Gate body — image when available, CSS placeholder otherwise */}
         {imgUrl ? (
           <motion.img
             src={imgUrl}
@@ -92,7 +128,6 @@ export function GateThreshold({
               WebkitMaskImage: "radial-gradient(ellipse at 50% 50%, black 45%, rgba(0,0,0,0.55) 80%, transparent 100%)",
             }}
           >
-            {/* archway suggestion — two pillars + lintel via inset shadows */}
             <div
               aria-hidden
               className="absolute inset-x-[18%] top-[12%] bottom-[6%]"
@@ -105,7 +140,6 @@ export function GateThreshold({
                   "inset 0 0 40px hsl(0 0% 0% / 0.85), inset 0 2px 0 hsl(45 30% 35% / 0.2)",
               }}
             />
-            {/* central seam of light running down the gate */}
             <div
               aria-hidden
               className="absolute left-1/2 top-[14%] bottom-[8%] -translate-x-1/2"
@@ -118,7 +152,7 @@ export function GateThreshold({
             />
           </motion.div>
         )}
-        {/* violet→blue color overlay (always on, including with the canonical photo) */}
+        {/* violet→blue color overlay */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 z-[15]"
@@ -130,7 +164,6 @@ export function GateThreshold({
             WebkitMaskImage: "radial-gradient(ellipse at 50% 50%, black 45%, rgba(0,0,0,0.55) 80%, transparent 100%)",
           }}
         />
-        {/* ember pulse */}
         <motion.div
           aria-hidden
           className="pointer-events-none absolute left-1/2 top-[44%] z-20 -translate-x-1/2 -translate-y-1/2 rounded-full"
@@ -145,7 +178,6 @@ export function GateThreshold({
           animate={{ opacity: [0.35, 0.75, 0.35], scale: [1, 1.08, 1] }}
           transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
         />
-        {/* slow seam-light ring */}
         <motion.div
           aria-hidden
           className="pointer-events-none absolute left-1/2 top-[58%] z-20 -translate-x-1/2 -translate-y-1/2 rounded-full"
@@ -162,7 +194,6 @@ export function GateThreshold({
             rotate: { duration: 240, repeat: Infinity, ease: "linear" },
           }}
         />
-        {/* drifting scanline */}
         <motion.div
           aria-hidden
           className="pointer-events-none absolute inset-x-8 z-20 h-px"
@@ -174,7 +205,6 @@ export function GateThreshold({
           animate={{ top: ["10%", "90%"], opacity: [0, 0.6, 0] }}
           transition={{ duration: 9, repeat: Infinity, ease: "linear" }}
         />
-        {/* deep vignette */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 z-30"
@@ -185,7 +215,6 @@ export function GateThreshold({
         />
       </div>
 
-      {/* Stillness until the time-lock releases. Then the line and the action appear together. */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: canApproach ? 1 : 0 }}
@@ -196,9 +225,7 @@ export function GateThreshold({
           className="mb-10 whitespace-pre-line text-lg italic leading-loose"
           style={{ fontFamily: "'Cormorant Garamond', serif", color: "hsl(43 30% 82%)" }}
         >
-{`The Gate stands before you.
-It does not require haste.
-It requires arrival.`}
+          {thresholdCopy}
         </pre>
         <RitualButton onClick={onApproach} disabled={!canApproach}>Approach the Gate</RitualButton>
       </motion.div>

@@ -5,10 +5,19 @@ import { Sparkles } from "lucide-react";
 
 import { gateById, GATES } from "../data/gates";
 import { ROUTES, type RouteId } from "../data/correctives";
+import { gateContent } from "../data/gates-content";
+import type { GateContent } from "../data/gate-content";
 import { useAppState } from "../lib/useAppState";
-import { type AppState, type Gate1State, type ActionStatus, defaultGate1 } from "../lib/state";
+import {
+  type AppState,
+  type GateId,
+  type GatePhase,
+  type GateRuntimeState,
+  type ActionStatus,
+  defaultGateRuntime,
+} from "../lib/state";
 import { MeasuredReveal } from "../components/MeasuredReveal";
-import { RitualButton, Section, SectionTitle, CrackedSun, BrokenCompass } from "../components/ritual/RitualPrimitives";
+import { RitualButton, Section, SectionTitle, Glyph } from "../components/ritual/RitualPrimitives";
 import { GateThreshold } from "../components/ritual/GateThreshold";
 import { BookEmergence, BookShell } from "../components/ritual/Book";
 import { useTimeLock } from "../lib/timelock";
@@ -29,25 +38,11 @@ const STATUS_LABEL: Record<ActionStatus, string> = {
   completed: "Completed",
 };
 
-const ENCOUNTER_PARAS = [
-  "Something promised you the world.",
-  "Not the literal world — but a way the world would be if you obeyed its rules. A way it would be safe. A way it would reward you. A way it would not betray you if you stayed inside its lines.",
-  "That promise has broken.",
-  "Or it is breaking now.",
-];
-
-const OBSTRUCTION_PARAS = [
-  "The Gate stands closed.",
-  "Not because your answer was wrong. The Gate is not measuring correctness.",
-  "Something is asking to be seen before passage continues.",
-  "Two responses rise within you when a promise breaks. Both are honest.",
-  "Choose the one that is more true in this moment.",
-];
-
 function GatePage() {
   const { gateId } = Route.useParams();
-  const id = Number(gateId);
+  const id = Number(gateId) as GateId;
   const gate = gateById(id);
+  const content = gateContent(id);
   const nav = useNavigate();
   const { state, update, hydrated } = useAppState();
 
@@ -58,8 +53,7 @@ function GatePage() {
   if (!gate) return <Locked text="No such gate." />;
   if (!hydrated) return null;
 
-  // Per spec: no time-lock between gates. Gate accessibility is only "the next uncompleted gate"
-  // (or any gate in dev mode). No 24h cooldown is enforced.
+  // Sequence rule: only the next uncompleted gate is accessible (or any gate in dev mode).
   const accessible = (() => {
     if (isDev()) return true;
     for (const g of GATES) {
@@ -70,9 +64,10 @@ function GatePage() {
 
   if (!accessible) return <Locked text="This gate is not yet yours." />;
 
-  if (id !== 1) return <SealedGate id={id as 2|3|4|5|6|7} name={gate.name} />;
+  // Gates without authored content are sealed.
+  if (!content) return <SealedGate id={id} name={gate.name} />;
 
-  return <GateOne state={state} update={update} />;
+  return <GateOrchestrator id={id} content={content} state={state} update={update} />;
 }
 
 function Locked({ text }: { text: string }) {
@@ -88,7 +83,7 @@ function Locked({ text }: { text: string }) {
   );
 }
 
-function SealedGate({ id, name }: { id: 2|3|4|5|6|7; name: string }) {
+function SealedGate({ id, name }: { id: GateId; name: string }) {
   useEffect(() => { obs("gate_sealed_view", { id }); }, [id]);
   return (
     <main className="min-h-screen flex items-center justify-center px-6">
@@ -106,72 +101,103 @@ function SealedGate({ id, name }: { id: 2|3|4|5|6|7; name: string }) {
   );
 }
 
-/* ────────────── Gate 1 orchestrator ────────────── */
+/* ────────────── Gate orchestrator (content-driven) ────────────── */
 
-function GateOne({ state, update }: { state: AppState; update: (u: (s: AppState) => AppState) => void }) {
-  const g1 = state.gate1 ?? defaultGate1();
-  const phase = g1.phase;
+type OrchestratorProps = {
+  id: GateId;
+  content: GateContent;
+  state: AppState;
+  update: (u: (s: AppState) => AppState) => void;
+};
+
+function GateOrchestrator({ id, content, state, update }: OrchestratorProps) {
+  const gs = state.gateState[id] ?? defaultGateRuntime();
+  const phase = gs.phase;
 
   // Anchor the current phase on first entry so time-locks survive refresh.
   useEffect(() => {
-    if (!g1.anchors[phase]) {
-      update((s) => ({ ...s, gate1: { ...s.gate1, anchors: { ...s.gate1.anchors, [phase]: Date.now() } } }));
+    if (!gs.anchors[phase]) {
+      update((s) => ({
+        ...s,
+        gateState: {
+          ...s.gateState,
+          [id]: {
+            ...s.gateState[id],
+            anchors: { ...s.gateState[id].anchors, [phase]: Date.now() },
+          },
+        },
+      }));
     }
-    // Mark Gate 1 as visited
-    if (!state.gates[1]?.visitedAt) {
-      update((s) => ({ ...s, gates: { ...s.gates, 1: { ...s.gates[1], visitedAt: Date.now() } } }));
+    if (!state.gates[id]?.visitedAt) {
+      update((s) => ({ ...s, gates: { ...s.gates, [id]: { ...s.gates[id], visitedAt: Date.now() } } }));
     }
-    obs("gate1_phase", { phase });
+    obs("gate_phase", { id, phase });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
-  // Admin: ?phase=<name> jumps Gate 1 directly to that phase (dev only)
+  // Admin: ?phase=<name> jumps the active gate directly to that phase (dev only)
   useEffect(() => {
     if (!isDev() || typeof window === "undefined") return;
     const p = new URLSearchParams(window.location.search).get("phase");
-    const valid: Gate1State["phase"][] = [
+    const valid: GatePhase[] = [
       "threshold", "encounter", "obstruction",
       "book_emergence", "page_open",
       "corrective_gate_open", "relocked", "completion",
     ];
-    if (p && valid.includes(p as Gate1State["phase"]) && p !== g1.phase) {
-      setPhase(p as Gate1State["phase"]);
+    if (p && valid.includes(p as GatePhase) && p !== gs.phase) {
+      setPhase(p as GatePhase);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const setPhase = (next: Gate1State["phase"]) =>
-    update((s) => ({ ...s, gate1: { ...s.gate1, phase: next, anchors: { ...s.gate1.anchors, [next]: s.gate1.anchors[next] ?? Date.now() } } }));
+  const setPhase = (next: GatePhase) =>
+    update((s) => ({
+      ...s,
+      gateState: {
+        ...s.gateState,
+        [id]: {
+          ...s.gateState[id],
+          phase: next,
+          anchors: { ...s.gateState[id].anchors, [next]: s.gateState[id].anchors[next] ?? Date.now() },
+        },
+      },
+    }));
+
+  const patchGate = (patch: Partial<GateRuntimeState>) =>
+    update((s) => ({
+      ...s,
+      gateState: { ...s.gateState, [id]: { ...s.gateState[id], ...patch } },
+    }));
 
   return (
     <main className="min-h-screen px-6 py-12 md:py-16">
       <div className="mx-auto w-full max-w-[1080px]">
         <AnimatePresence mode="wait">
           {phase === "threshold" && (
-            <ThresholdPhase key="threshold" g1={g1} setPhase={setPhase} />
+            <ThresholdPhase key="threshold" content={content} gs={gs} setPhase={setPhase} />
           )}
           {phase === "encounter" && (
-            <EncounterPhase key="encounter" g1={g1} setPhase={setPhase} update={update} />
+            <EncounterPhase key="encounter" content={content} gs={gs} setPhase={setPhase} patchGate={patchGate} />
           )}
           {phase === "obstruction" && (
-            <ObstructionPhase key="obstruction" g1={g1} setPhase={setPhase} update={update} />
+            <ObstructionPhase key="obstruction" content={content} gs={gs} patchGate={patchGate} />
           )}
           {phase === "book_emergence" && (
             <motion.div key="emerge" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1.2 }}>
-              <BookEmergenceWrap g1={g1} setPhase={setPhase} />
+              <BookEmergenceWrap gs={gs} setPhase={setPhase} />
             </motion.div>
           )}
           {phase === "page_open" && (
-            <PagePhase key="page" g1={g1} update={update} setPhase={setPhase} />
+            <PagePhase key="page" id={id} content={content} gs={gs} patchGate={patchGate} setPhase={setPhase} />
           )}
           {phase === "corrective_gate_open" && (
-            <UnlockPhase key="unlock" g1={g1} setPhase={setPhase} />
+            <UnlockPhase key="unlock" gs={gs} setPhase={setPhase} />
           )}
           {phase === "relocked" && (
-            <RelockedPhase key="relocked" g1={g1} setPhase={setPhase} update={update} />
+            <RelockedPhase key="relocked" id={id} gs={gs} setPhase={setPhase} update={update} />
           )}
           {phase === "completion" && (
-            <CompletionPhase key="complete" />
+            <CompletionPhase key="complete" id={id} content={content} />
           )}
         </AnimatePresence>
       </div>
@@ -181,45 +207,68 @@ function GateOne({ state, update }: { state: AppState; update: (u: (s: AppState)
 
 /* ─── Threshold ─── */
 
-function ThresholdPhase({ g1, setPhase }: { g1: Gate1State; setPhase: (p: Gate1State["phase"]) => void }) {
-  const anchor = g1.anchors.threshold;
+function ThresholdPhase({ content, gs, setPhase }: { content: GateContent; gs: GateRuntimeState; setPhase: (p: GatePhase) => void }) {
+  const anchor = gs.anchors.threshold;
   const ready = useTimeLock(anchor, 30_000) || isDev();
   return (
-    <GateThreshold canApproach={ready} onApproach={() => setPhase("encounter")} />
+    <GateThreshold
+      numberLabel={content.numberLabel}
+      name={content.name}
+      subtitle={content.subtitle}
+      inscription={content.inscription}
+      inscriptionTranslation={content.inscriptionTranslation}
+      imageSrc={content.thresholdImage}
+      imageAspect={content.thresholdAspect}
+      thresholdCopy={content.thresholdCopy}
+      canApproach={ready}
+      onApproach={() => setPhase("encounter")}
+    />
   );
 }
 
 /* ─── Encounter ─── */
 
-function EncounterPhase({ g1, setPhase, update }: { g1: Gate1State; setPhase: (p: Gate1State["phase"]) => void; update: (u: (s: AppState) => AppState) => void }) {
-  const anchor = g1.anchors.encounter;
-  // copy reveals (~6s), then field appears after 20s from phase entry, submit after 30s
+function EncounterPhase({
+  content,
+  gs,
+  setPhase,
+  patchGate,
+}: {
+  content: GateContent;
+  gs: GateRuntimeState;
+  setPhase: (p: GatePhase) => void;
+  patchGate: (patch: Partial<GateRuntimeState>) => void;
+}) {
+  const anchor = gs.anchors.encounter;
   const [copyDone, setCopyDone] = useState(false);
   const fieldReady = useTimeLock(anchor, 20_000) || isDev();
   const submitReady = useTimeLock(anchor, 30_000) || isDev();
-  const [text, setText] = useState(g1.encounterAnswer);
+  const [text, setText] = useState(gs.encounterAnswer);
   const [submitted, setSubmitted] = useState(false);
 
   const safety = detectSafetyConcern(text);
 
   const onSubmit = () => {
-    update((s) => ({ ...s, gate1: { ...s.gate1, encounterAnswer: text, encounterSubmittedAt: Date.now(), safetyLocked: s.gate1.safetyLocked || safety } }));
-    obs("gate1_encounter_submit", { len: text.length });
+    patchGate({
+      encounterAnswer: text,
+      encounterSubmittedAt: Date.now(),
+      safetyLocked: gs.safetyLocked || safety,
+    });
+    obs("gate_encounter_submit", { id: content.id, len: text.length });
     setSubmitted(true);
-    // brief acknowledgement, then to obstruction
     window.setTimeout(() => setPhase("obstruction"), 2200);
   };
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1.2 }} className="mx-auto max-w-2xl">
-      <Header epithet="Gate 1 — The Broken Vow" />
-      <MeasuredReveal paragraphs={ENCOUNTER_PARAS} step={1600} tail={1200} onComplete={() => setCopyDone(true)} className="text-[hsl(43_30%_85%)]" />
+      <Header epithet={content.headerEpithet} />
+      <MeasuredReveal paragraphs={content.encounterParas} step={1600} tail={1200} onComplete={() => setCopyDone(true)} className="text-[hsl(43_30%_85%)]" />
 
       <AnimatePresence>
         {copyDone && fieldReady && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.2, ease: "easeOut" }} className="mt-12">
             <label className="block mb-3 text-base italic" style={{ fontFamily: "'Cormorant Garamond', serif", color: "hsl(43 30% 82%)" }}>
-              What promise of the world broke for you?
+              {content.encounterQuestion}
             </label>
             <textarea
               value={text}
@@ -233,7 +282,7 @@ function EncounterPhase({ g1, setPhase, update }: { g1: Gate1State; setPhase: (p
             <div className="mt-6 flex flex-col items-center">
               {submitReady ? (
                 <>
-                  <p className="mb-4 text-xs italic" style={{ color: "hsl(43 30% 60%)" }}>There is no answer here that is too small.</p>
+                  <p className="mb-4 text-xs italic" style={{ color: "hsl(43 30% 60%)" }}>{content.encounterSubmitHint}</p>
                   {!submitted ? (
                     <RitualButton onClick={onSubmit} disabled={text.trim().length < 1}>Submit Answer</RitualButton>
                   ) : (
@@ -253,9 +302,16 @@ function EncounterPhase({ g1, setPhase, update }: { g1: Gate1State; setPhase: (p
 
 /* ─── Obstruction / Layer 3 routing ─── */
 
-function ObstructionPhase({ g1, setPhase, update }: { g1: Gate1State; setPhase: (p: Gate1State["phase"]) => void; update: (u: (s: AppState) => AppState) => void }) {
-  const anchor = g1.anchors.obstruction;
-  // 3s pause before the copy, then ~8s reveal, then stance cards. Time-lock to clickable: 15s from phase entry.
+function ObstructionPhase({
+  content,
+  gs,
+  patchGate,
+}: {
+  content: GateContent;
+  gs: GateRuntimeState;
+  patchGate: (patch: Partial<GateRuntimeState>) => void;
+}) {
+  const anchor = gs.anchors.obstruction;
   const [copyShown, setCopyShown] = useState(false);
   const [copyDone, setCopyDone] = useState(false);
   const clickable = useTimeLock(anchor, 15_000) || isDev();
@@ -266,16 +322,20 @@ function ObstructionPhase({ g1, setPhase, update }: { g1: Gate1State; setPhase: 
   }, []);
 
   const choose = (route: RouteId) => {
-    update((s) => ({ ...s, gate1: { ...s.gate1, activeRoute: route, phase: "book_emergence", anchors: { ...s.gate1.anchors, book_emergence: Date.now() } } }));
-    obs("gate1_stance_chosen", { route });
+    patchGate({
+      activeRoute: route,
+      phase: "book_emergence",
+      anchors: { ...gs.anchors, book_emergence: Date.now() },
+    });
+    obs("gate_stance_chosen", { id: content.id, route });
   };
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1.2 }} className="mx-auto max-w-2xl text-center">
-      <Header epithet="Gate 1 — The Broken Vow" />
+      <Header epithet={content.headerEpithet} />
       {copyShown && (
         <MeasuredReveal
-          paragraphs={OBSTRUCTION_PARAS}
+          paragraphs={content.obstructionParas}
           step={1700}
           tail={800}
           onComplete={() => setCopyDone(true)}
@@ -284,20 +344,16 @@ function ObstructionPhase({ g1, setPhase, update }: { g1: Gate1State; setPhase: 
       )}
 
       <div className="mt-14 grid gap-6 md:grid-cols-2">
-        <StanceCard
-          delayMs={0}
-          visible={copyDone}
-          clickable={clickable}
-          onClick={() => choose("false_arrival")}
-          text="I see what was false. I am no longer bound by it."
-        />
-        <StanceCard
-          delayMs={150}
-          visible={copyDone}
-          clickable={clickable}
-          onClick={() => choose("splintered_trust")}
-          text="I see what was false. I cannot trust what comes next."
-        />
+        {content.stanceCards.map((card, i) => (
+          <StanceCard
+            key={card.route}
+            delayMs={i * 150}
+            visible={copyDone}
+            clickable={clickable}
+            onClick={() => choose(card.route)}
+            text={card.text}
+          />
+        ))}
       </div>
     </motion.div>
   );
@@ -336,18 +392,30 @@ function StanceCard({ visible, clickable, onClick, text, delayMs }: { visible: b
   );
 }
 
-/* ─── Book emergence wrap (handles open-ready time-lock) ─── */
+/* ─── Book emergence wrap ─── */
 
-function BookEmergenceWrap({ g1, setPhase }: { g1: Gate1State; setPhase: (p: Gate1State["phase"]) => void }) {
-  // Allow opening immediately after the 2.4s emergence animation
-  const ready = useTimeLock(g1.anchors.book_emergence, 3000) || isDev();
+function BookEmergenceWrap({ gs, setPhase }: { gs: GateRuntimeState; setPhase: (p: GatePhase) => void }) {
+  const ready = useTimeLock(gs.anchors.book_emergence, 3000) || isDev();
   return <BookEmergence onOpen={() => setPhase("page_open")} ready={ready} />;
 }
 
 /* ─── Page open — the corrective page ─── */
 
-function PagePhase({ g1, update, setPhase }: { g1: Gate1State; update: (u: (s: AppState) => AppState) => void; setPhase: (p: Gate1State["phase"]) => void }) {
-  const routeId = (g1.activeRoute ?? "false_arrival") as RouteId;
+function PagePhase({
+  id,
+  content,
+  gs,
+  patchGate,
+  setPhase,
+}: {
+  id: GateId;
+  content: GateContent;
+  gs: GateRuntimeState;
+  patchGate: (patch: Partial<GateRuntimeState>) => void;
+  setPhase: (p: GatePhase) => void;
+}) {
+  const fallbackRoute = content.stanceCards[0].route;
+  const routeId = (gs.activeRoute ?? fallbackRoute) as RouteId;
   const route = ROUTES[routeId];
 
   const [showScroll, setShowScroll] = useState(false);
@@ -357,7 +425,6 @@ function PagePhase({ g1, update, setPhase }: { g1: Gate1State; update: (u: (s: A
   // Per-answer time-locks: anchor = first focus on that answer field
   const [answerFocusedAt, setAnswerFocusedAt] = useState<Record<string, number>>({});
   const [journalFocusedAt, setJournalFocusedAt] = useState<number | undefined>();
-  // submit/save 30s locks
   const lastKey = route.answers[route.answers.length - 1]?.key;
   const lastFocusAnchor = lastKey ? answerFocusedAt[lastKey] : undefined;
   const answersSubmitReady = useTimeLock(lastFocusAnchor, 30_000) || isDev();
@@ -368,58 +435,59 @@ function PagePhase({ g1, update, setPhase }: { g1: Gate1State; update: (u: (s: A
   const [oracleQ, setOracleQ] = useState("");
   const [oracleA, setOracleA] = useState<string | null>(null);
 
-  // local mirrors of state (for snappier typing)
   const setAnswer = (k: string, v: string) =>
-    update((s) => ({ ...s, gate1: { ...s.gate1, answers: { ...s.gate1.answers, [k]: v } } }));
-  const setJournal = (v: string) =>
-    update((s) => ({ ...s, gate1: { ...s.gate1, journal: v } }));
-  const setAction = (patch: Partial<Gate1State["actionBlock"]>) =>
-    update((s) => ({ ...s, gate1: { ...s.gate1, actionBlock: { ...s.gate1.actionBlock, ...patch } } }));
+    patchGate({ answers: { ...gs.answers, [k]: v } });
+  const setJournal = (v: string) => patchGate({ journal: v });
+  const setAction = (patch: Partial<GateRuntimeState["actionBlock"]>) =>
+    patchGate({ actionBlock: { ...gs.actionBlock, ...patch } });
   const setReadiness = (i: number, v: boolean) =>
-    update((s) => ({ ...s, gate1: { ...s.gate1, readiness: { ...s.gate1.readiness, [i]: v } } }));
+    patchGate({ readiness: { ...gs.readiness, [i]: v } });
 
-  const allReady = route.readiness.every((_, i) => g1.readiness[i]);
+  const allReady = route.readiness.every((_, i) => gs.readiness[i]);
 
   // safety scan across all Avatar text
   const safety = detectSafetyConcern(
-    g1.encounterAnswer,
-    g1.journal,
-    g1.actionBlock.principle,
-    g1.actionBlock.action,
-    g1.actionBlock.benefit,
-    g1.actionBlock.visibleEvidence,
-    ...Object.values(g1.answers),
+    gs.encounterAnswer,
+    gs.journal,
+    gs.actionBlock.principle,
+    gs.actionBlock.action,
+    gs.actionBlock.benefit,
+    gs.actionBlock.visibleEvidence,
+    ...Object.values(gs.answers),
   );
   useEffect(() => {
-    if (safety && !g1.safetyLocked) {
-      update((s) => ({ ...s, gate1: { ...s.gate1, safetyLocked: true } }));
-      obs("gate1_safety_triggered");
+    if (safety && !gs.safetyLocked) {
+      patchGate({ safetyLocked: true });
+      obs("gate_safety_triggered", { id });
     }
-  }, [safety, g1.safetyLocked, update]);
+  }, [safety, gs.safetyLocked, id, patchGate]);
 
-  const safetyLocked = g1.safetyLocked || safety;
+  const safetyLocked = gs.safetyLocked || safety;
 
   const askOracle = () => {
     const a = oracleResponse(routeId, oracleCat, oracleQ);
     setOracleA(a);
-    update((s) => ({ ...s, gate1: { ...s.gate1, oracleHistory: [...s.gate1.oracleHistory, { cat: oracleCat, q: oracleQ, a, t: Date.now() }] } }));
-    obs("gate1_oracle", { cat: oracleCat });
+    patchGate({
+      oracleHistory: [...gs.oracleHistory, { cat: oracleCat, q: oracleQ, a, t: Date.now() }],
+    });
+    obs("gate_oracle", { id, cat: oracleCat });
   };
 
-  // Save reflection feedback
+  // First-visit vs return-visit Oracle line
+  const oracleLine =
+    route.oracleReturn && gs.oracleHistory.length > 0 ? route.oracleReturn : route.oracle;
+
   const [journalSaved, setJournalSaved] = useState(false);
 
-  // Action status -> completed without evidence: show quiet line
   const completedWithoutEvidence =
-    g1.actionBlock.status === "completed" && g1.actionBlock.visibleEvidence.trim().length === 0;
+    gs.actionBlock.status === "completed" && gs.actionBlock.visibleEvidence.trim().length === 0;
 
-  // Award marks when completed + evidence present
   useEffect(() => {
-    if (g1.actionBlock.status === "completed" && g1.actionBlock.visibleEvidence.trim().length > 0 && g1.actionBlock.marksAwarded === 0) {
-      update((s) => ({ ...s, gate1: { ...s.gate1, actionBlock: { ...s.gate1.actionBlock, marksAwarded: 1 } } }));
-      obs("gate1_mark_awarded");
+    if (gs.actionBlock.status === "completed" && gs.actionBlock.visibleEvidence.trim().length > 0 && gs.actionBlock.marksAwarded === 0) {
+      patchGate({ actionBlock: { ...gs.actionBlock, marksAwarded: 1 } });
+      obs("gate_mark_awarded", { id });
     }
-  }, [g1.actionBlock.status, g1.actionBlock.visibleEvidence, g1.actionBlock.marksAwarded, update]);
+  }, [gs.actionBlock.status, gs.actionBlock.visibleEvidence, gs.actionBlock.marksAwarded, id, patchGate, gs.actionBlock]);
 
   return (
     <motion.article
@@ -453,17 +521,17 @@ function PagePhase({ g1, update, setPhase }: { g1: Gate1State; update: (u: (s: A
         <div className="md:grid md:grid-cols-12 md:gap-12">
           <div className="md:col-span-5 md:sticky md:top-10 md:self-start">
             <div className="mx-auto mb-8 h-24 w-24 opacity-90">
-              {route.glyph === "cracked-sun" ? <CrackedSun /> : <BrokenCompass />}
+              <Glyph id={route.glyph} />
             </div>
             <Section className="border-t-0 pt-0">
-              <p
-                className="text-center text-xl md:text-2xl italic"
+              <pre
+                className="whitespace-pre-line text-center text-xl md:text-2xl italic leading-relaxed"
                 style={{ fontFamily: "'Cormorant Garamond', serif", color: "hsl(43 30% 88%)" }}
               >
                 {route.symbolic}
-              </p>
+              </pre>
               <p className="mt-5 text-center text-sm leading-relaxed" style={{ color: "hsl(43 30% 65%)" }}>
-                {route.oracle}
+                {oracleLine}
               </p>
               <button
                 onClick={() => setShowScroll((v) => !v)}
@@ -515,29 +583,49 @@ function PagePhase({ g1, update, setPhase }: { g1: Gate1State; update: (u: (s: A
                     </label>
                     <p className="mb-3 text-sm" style={{ color: "hsl(43 30% 70%)" }}>{f.prompt}</p>
                     <textarea
-                      value={g1.answers[f.key] || ""}
+                      value={gs.answers[f.key] || ""}
                       onChange={(e) => setAnswer(f.key, e.target.value)}
                       onFocus={() => setAnswerFocusedAt((a) => (a[f.key] ? a : { ...a, [f.key]: Date.now() }))}
                       placeholder={f.placeholder}
-                      rows={3}
+                      rows={route.answers.length === 1 ? 5 : 3}
                       className="w-full resize-y border bg-[hsl(240_30%_8%/0.5)] p-4 placeholder:italic focus:outline-none"
                       style={{ borderColor: "hsl(43 30% 55% / 0.3)", color: "hsl(43 30% 88%)" }}
                     />
                   </div>
                 ))}
-                <p className="text-xs italic" style={{ color: "hsl(43 30% 55%)" }}>
-                  {answersSubmitReady ? "Your witnessing is recorded as you write." : "The page receives. The submit will come."}
-                </p>
+                {route.submitHint && (
+                  <p className="text-xs italic" style={{ color: "hsl(43 30% 55%)" }}>
+                    {answersSubmitReady ? route.submitHint : "The page receives. The submit will come."}
+                  </p>
+                )}
+                {!route.submitHint && (
+                  <p className="text-xs italic" style={{ color: "hsl(43 30% 55%)" }}>
+                    {answersSubmitReady ? "Your witnessing is recorded as you write." : "The page receives. The submit will come."}
+                  </p>
+                )}
               </div>
             </Section>
 
+            {route.reflectionPrompts && (
+              <Section className="mt-10">
+                <SectionTitle>Fractured Reflections</SectionTitle>
+                <ol className="space-y-3 list-decimal pl-5" style={{ color: "hsl(43 30% 80%)" }}>
+                  {route.reflectionPrompts.map((p, i) => (
+                    <li key={i} className="text-base italic" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+                      {p}
+                    </li>
+                  ))}
+                </ol>
+              </Section>
+            )}
+
             <Section className="mt-10">
-              <SectionTitle>Private Reflection</SectionTitle>
+              <SectionTitle>{route.journalHeader ?? "Private Reflection"}</SectionTitle>
               <p className="mb-3 text-base italic" style={{ fontFamily: "'Cormorant Garamond', serif", color: "hsl(43 30% 80%)" }}>
                 {route.journalPrompt}
               </p>
               <textarea
-                value={g1.journal}
+                value={gs.journal}
                 onChange={(e) => { setJournal(e.target.value); setJournalSaved(false); }}
                 onFocus={() => setJournalFocusedAt((t) => t ?? Date.now())}
                 rows={5}
@@ -549,8 +637,8 @@ function PagePhase({ g1, update, setPhase }: { g1: Gate1State; update: (u: (s: A
                 {journalSaveReady ? (
                   <RitualButton
                     variant="ghost"
-                    disabled={!g1.journal.trim()}
-                    onClick={() => { update((s) => ({ ...s, gate1: { ...s.gate1, journalSavedAt: Date.now() } })); setJournalSaved(true); }}
+                    disabled={!gs.journal.trim()}
+                    onClick={() => { patchGate({ journalSavedAt: Date.now() }); setJournalSaved(true); }}
                   >
                     Save Reflection
                   </RitualButton>
@@ -566,14 +654,19 @@ function PagePhase({ g1, update, setPhase }: { g1: Gate1State; update: (u: (s: A
             {/* Sovereign Action Block */}
             <Section className="mt-10">
               <SectionTitle>{route.trackerTitle} — Sovereign Action</SectionTitle>
+              {route.actionPreamble && (
+                <p className="mb-4 text-base italic" style={{ fontFamily: "'Cormorant Garamond', serif", color: "hsl(43 30% 85%)" }}>
+                  {route.actionPreamble}
+                </p>
+              )}
               <p className="mb-4 text-sm" style={{ color: "hsl(43 30% 75%)" }}>{route.trackerCopy}</p>
               <div className="grid gap-4 md:grid-cols-3">
                 {(["principle","action","benefit"] as const).map((k) => (
                   <div key={k}>
                     <label className="block mb-1 text-xs uppercase tracking-[0.3em]" style={{ fontFamily: "'Cinzel', serif", color: "hsl(43 50% 60%)" }}>{k}</label>
                     <textarea
-                      value={g1.actionBlock[k]}
-                      onChange={(e) => setAction({ [k]: e.target.value } as Partial<Gate1State["actionBlock"]>)}
+                      value={gs.actionBlock[k]}
+                      onChange={(e) => setAction({ [k]: e.target.value } as Partial<GateRuntimeState["actionBlock"]>)}
                       rows={3}
                       disabled={safetyLocked}
                       placeholder={k === "principle" ? "Why this action?" : k === "action" ? "What exactly?" : "What changes in lived reality?"}
@@ -591,13 +684,13 @@ function PagePhase({ g1, update, setPhase }: { g1: Gate1State; update: (u: (s: A
                     disabled={safetyLocked}
                     onClick={() => setAction({ status: s })}
                     className={`border px-4 py-2 text-xs uppercase tracking-[0.2em] disabled:opacity-40 ${
-                      g1.actionBlock.status === s ? "text-white" : ""
+                      gs.actionBlock.status === s ? "text-white" : ""
                     }`}
                     style={{
                       fontFamily: "'Cinzel', serif",
-                      borderColor: g1.actionBlock.status === s ? "hsl(43 80% 70%)" : "hsl(43 30% 55% / 0.3)",
-                      color: g1.actionBlock.status === s ? "hsl(43 80% 82%)" : "hsl(43 50% 60%)",
-                      background: g1.actionBlock.status === s ? "hsl(43 80% 60% / 0.1)" : "transparent",
+                      borderColor: gs.actionBlock.status === s ? "hsl(43 80% 70%)" : "hsl(43 30% 55% / 0.3)",
+                      color: gs.actionBlock.status === s ? "hsl(43 80% 82%)" : "hsl(43 50% 60%)",
+                      background: gs.actionBlock.status === s ? "hsl(43 80% 60% / 0.1)" : "transparent",
                     }}
                   >
                     {STATUS_LABEL[s]}
@@ -608,7 +701,7 @@ function PagePhase({ g1, update, setPhase }: { g1: Gate1State; update: (u: (s: A
               <div className="mt-5">
                 <label className="block mb-1 text-xs uppercase tracking-[0.3em]" style={{ fontFamily: "'Cinzel', serif", color: "hsl(43 50% 60%)" }}>Visible evidence</label>
                 <textarea
-                  value={g1.actionBlock.visibleEvidence}
+                  value={gs.actionBlock.visibleEvidence}
                   onChange={(e) => setAction({ visibleEvidence: e.target.value })}
                   rows={2}
                   disabled={safetyLocked}
@@ -617,7 +710,7 @@ function PagePhase({ g1, update, setPhase }: { g1: Gate1State; update: (u: (s: A
                   style={{ borderColor: "hsl(43 30% 55% / 0.3)", color: "hsl(43 30% 88%)" }}
                 />
                 <div className="mt-2 text-xs italic">
-                  {g1.actionBlock.marksAwarded > 0 ? (
+                  {gs.actionBlock.marksAwarded > 0 ? (
                     <span style={{ color: "hsl(43 80% 75%)", letterSpacing: "0.15em" }}>✦ Sovereign Mark</span>
                   ) : completedWithoutEvidence ? (
                     <span style={{ color: "hsl(43 30% 60%)" }}>Marks are sealed when evidence is named.</span>
@@ -648,7 +741,7 @@ function PagePhase({ g1, update, setPhase }: { g1: Gate1State; update: (u: (s: A
                     <label className="flex cursor-pointer items-start gap-3 text-sm" style={{ color: "hsl(43 30% 85%)" }}>
                       <input
                         type="checkbox"
-                        checked={!!g1.readiness[i]}
+                        checked={!!gs.readiness[i]}
                         disabled={safetyLocked}
                         onChange={(e) => setReadiness(i, e.target.checked)}
                         className="mt-1 h-4 w-4 accent-[hsl(43_80%_60%)]"
@@ -766,9 +859,9 @@ function SafetyLine() {
 
 /* ─── Unlock / Seal ─── */
 
-function UnlockPhase({ g1, setPhase }: { g1: Gate1State; setPhase: (p: Gate1State["phase"]) => void }) {
-  const route = ROUTES[(g1.activeRoute ?? "false_arrival") as RouteId];
-  // Sequence: epigraph -> Corrective Gate line -> Seal line -> Seal the Page button (~6s)
+function UnlockPhase({ gs, setPhase }: { gs: GateRuntimeState; setPhase: (p: GatePhase) => void }) {
+  const fallback = (Object.keys(ROUTES) as RouteId[])[0];
+  const route = ROUTES[(gs.activeRoute ?? fallback) as RouteId];
   const [stage, setStage] = useState(0);
   useEffect(() => {
     const t1 = window.setTimeout(() => setStage(1), 2800);
@@ -822,7 +915,7 @@ function UnlockPhase({ g1, setPhase }: { g1: Gate1State; setPhase: (p: Gate1Stat
       )}
 
       {stage >= 2 && (
-        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.6 }} className="mb-12 max-w-xl text-xl italic leading-relaxed" style={{ fontFamily: "'Cormorant Garamond', serif", color: "hsl(43 80% 82%)" }}>
+        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.6 }} className="mb-12 max-w-xl text-xl italic leading-relaxed whitespace-pre-line" style={{ fontFamily: "'Cormorant Garamond', serif", color: "hsl(43 80% 82%)" }}>
           {route.sealLine}
         </motion.p>
       )}
@@ -836,19 +929,29 @@ function UnlockPhase({ g1, setPhase }: { g1: Gate1State; setPhase: (p: Gate1Stat
   );
 }
 
-function RelockedPhase({ g1, setPhase, update }: { g1: Gate1State; setPhase: (p: Gate1State["phase"]) => void; update: (u: (s: AppState) => AppState) => void }) {
-  // Mark Gate 1 complete on entry; then auto-transition to completion screen.
+function RelockedPhase({
+  id,
+  gs,
+  setPhase,
+  update,
+}: {
+  id: GateId;
+  gs: GateRuntimeState;
+  setPhase: (p: GatePhase) => void;
+  update: (u: (s: AppState) => AppState) => void;
+}) {
   const did = useRef(false);
   useEffect(() => {
     if (did.current) return;
     did.current = true;
     update((s) => ({
       ...s,
-      gates: { ...s.gates, 1: { ...s.gates[1], completedAt: s.gates[1]?.completedAt ?? Date.now(), routeTaken: g1.activeRoute } },
+      gates: { ...s.gates, [id]: { ...s.gates[id], completedAt: s.gates[id]?.completedAt ?? Date.now(), routeTaken: gs.activeRoute } },
     }));
-    obs("gate1_complete", { route: g1.activeRoute });
+    obs("gate_complete", { id, route: gs.activeRoute });
     const t = window.setTimeout(() => setPhase("completion"), 2800);
     return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1.4 }} className="flex min-h-[60vh] flex-col items-center justify-center text-center">
@@ -859,15 +962,12 @@ function RelockedPhase({ g1, setPhase, update }: { g1: Gate1State; setPhase: (p:
   );
 }
 
-function CompletionPhase() {
+function CompletionPhase({ id, content }: { id: GateId; content: GateContent }) {
+  void id;
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.6 }} className="flex min-h-[70vh] flex-col items-center justify-center text-center mx-auto max-w-xl">
       <pre className="mb-12 whitespace-pre-line text-xl italic leading-loose" style={{ fontFamily: "'Cormorant Garamond', serif", color: "hsl(43 30% 88%)" }}>
-{`Gate 1 has been crossed.
-
-The Book remembers. The Codex remembers. You may now return to the Sovereign Action Layer, or remain in stillness.
-
-The next threshold has opened. It does not require you to enter today.`}
+        {content.closingCopy}
       </pre>
       <div className="flex flex-col items-center gap-6">
         <Link to="/sovereign">
@@ -891,4 +991,3 @@ function Header({ epithet }: { epithet: string }) {
     </header>
   );
 }
-

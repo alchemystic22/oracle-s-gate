@@ -1,8 +1,9 @@
 // Single localStorage key. No analytics. No external calls.
 
 import type { DomainId } from "../data/domains";
+import type { RouteId } from "../data/correctives";
 
-const KEY = "alchemystic_state_v2"; // legacy key, still used for v2/v3/v4 reads (we migrate in place)
+const KEY = "alchemystic_state_v2"; // legacy key, still used for v2/v3/v4/v5 reads (we migrate in place)
 
 export type GateId = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
@@ -37,7 +38,7 @@ export type SovereignAction = {
 
 export type GraceMessage = { id: string; receivedAt: number; text: string };
 
-// ── Legacy action status (Gate 1) ─────────────────────────────────────────
+// ── Legacy action status (used inside the per-gate page state) ────────────
 export type ActionStatus = "not_chosen" | "chosen" | "scheduled" | "completed";
 
 // ── Cabinet ────────────────────────────────────────────────────────────────
@@ -54,20 +55,23 @@ export type CabinetEncounter = {
   markedLyrics: string[];      // lines marked during a vessel reception; [] for passages
 };
 
-// ── Gate 1 ─────────────────────────────────────────────────────────────────
+// ── Per-gate runtime state ────────────────────────────────────────────────
+// Generalised from the original Gate1State. Every gate uses the same shape.
 
-export type Gate1State = {
-  phase:
-    | "threshold"
-    | "encounter"
-    | "obstruction"
-    | "book_emergence"
-    | "page_open"
-    | "corrective_gate_open"
-    | "relocked"
-    | "completion";
-  activeRoute?: "false_arrival" | "splintered_trust";
-  anchors: Partial<Record<Gate1State["phase"], number>>;
+export type GatePhase =
+  | "threshold"
+  | "encounter"
+  | "obstruction"
+  | "book_emergence"
+  | "page_open"
+  | "corrective_gate_open"
+  | "relocked"
+  | "completion";
+
+export type GateRuntimeState = {
+  phase: GatePhase;
+  activeRoute?: RouteId;
+  anchors: Partial<Record<GatePhase, number>>;
   encounterAnswer: string;
   encounterSubmittedAt?: number;
   answers: Record<string, string>;
@@ -86,19 +90,23 @@ export type Gate1State = {
   safetyLocked: boolean;
 };
 
+/** Back-compat alias — old code may still import this name. */
+export type Gate1State = GateRuntimeState;
+
 // ── Root state ─────────────────────────────────────────────────────────────
 
 export type AppState = {
-  version: 4;
+  version: 5;
   createdAt: number;
   invocationCompletedAt?: number;
   privacyMode: PrivacyMode;
   gates: Record<GateId, {
     visitedAt?: number;
     completedAt?: number;
-    routeTaken?: "false_arrival" | "splintered_trust";
+    routeTaken?: RouteId;
   }>;
-  gate1: Gate1State;
+  /** Per-gate runtime state, keyed by gate id. */
+  gateState: Record<GateId, GateRuntimeState>;
   cabinet: {
     encounters: CabinetEncounter[];
     recentTriads: string[][];   // last 3 triads (newest first)
@@ -119,7 +127,7 @@ export function markValueForScale(s: ActionScale): number {
   return s === "micro" ? 1 : s === "meso" ? 3 : 7;
 }
 
-export function defaultGate1(): Gate1State {
+export function defaultGateRuntime(): GateRuntimeState {
   return {
     phase: "threshold",
     anchors: {},
@@ -140,14 +148,29 @@ export function defaultGate1(): Gate1State {
   };
 }
 
+/** Back-compat alias — old code may still import this name. */
+export const defaultGate1 = defaultGateRuntime;
+
+function emptyGateState(): Record<GateId, GateRuntimeState> {
+  return {
+    1: defaultGateRuntime(),
+    2: defaultGateRuntime(),
+    3: defaultGateRuntime(),
+    4: defaultGateRuntime(),
+    5: defaultGateRuntime(),
+    6: defaultGateRuntime(),
+    7: defaultGateRuntime(),
+  };
+}
+
 export function defaultState(): AppState {
   const emptyGate = () => ({});
   return {
-    version: 4,
+    version: 5,
     createdAt: Date.now(),
     privacyMode: "completion_marker_only",
     gates: { 1: emptyGate(), 2: emptyGate(), 3: emptyGate(), 4: emptyGate(), 5: emptyGate(), 6: emptyGate(), 7: emptyGate() },
-    gate1: defaultGate1(),
+    gateState: emptyGateState(),
     cabinet: { encounters: [], recentTriads: [] },
     sovereign: { actions: [], graceMarks: 0, graceMessages: [] },
     grace: { events: [] },
@@ -156,8 +179,13 @@ export function defaultState(): AppState {
 }
 
 // ── v2 → v3 migration ─────────────────────────────────────────────────────
-type V2State = Omit<AppState, "version" | "cabinet" | "sovereign"> & {
+type V2State = {
   version: 2;
+  createdAt: number;
+  invocationCompletedAt?: number;
+  privacyMode: PrivacyMode;
+  gates: AppState["gates"];
+  gate1: GateRuntimeState;
   cabinet?: { drawnPassageIds?: string[]; reflectionIds?: string[] };
   sovereign?: {
     actions: Array<{
@@ -166,14 +194,29 @@ type V2State = Omit<AppState, "version" | "cabinet" | "sovereign"> & {
       visibleEvidence: string; marksAwarded: number; completedAt?: number;
     }>;
   };
+  grace: AppState["grace"];
+  oracle: AppState["oracle"];
 };
 
-type V3State = Omit<AppState, "version" | "cabinet"> & {
+type V3State = {
   version: 3;
+  createdAt: number;
+  invocationCompletedAt?: number;
+  privacyMode: PrivacyMode;
+  gates: AppState["gates"];
+  gate1: GateRuntimeState;
   cabinet: {
     encounters: Array<Omit<CabinetEncounter, "markedLyrics"> & { markedLyrics?: string[] }>;
     recentTriads: string[][];
   };
+  sovereign: AppState["sovereign"];
+  grace: AppState["grace"];
+  oracle: AppState["oracle"];
+};
+
+type V4State = Omit<AppState, "version" | "gateState"> & {
+  version: 4;
+  gate1: GateRuntimeState;
 };
 
 function migrateV2toV3(v2: V2State): V3State {
@@ -215,10 +258,14 @@ function migrateV2toV3(v2: V2State): V3State {
 }
 
 // ── v3 → v4 migration: backfill markedLyrics on every cabinet encounter ───
-function migrateV3toV4(v3: V3State): AppState {
+function migrateV3toV4(v3: V3State): V4State {
   return {
-    ...v3,
     version: 4,
+    createdAt: v3.createdAt,
+    invocationCompletedAt: v3.invocationCompletedAt,
+    privacyMode: v3.privacyMode,
+    gates: v3.gates,
+    gate1: v3.gate1,
     cabinet: {
       encounters: (v3.cabinet?.encounters ?? []).map((e) => ({
         ...e,
@@ -226,7 +273,48 @@ function migrateV3toV4(v3: V3State): AppState {
       })),
       recentTriads: v3.cabinet?.recentTriads ?? [],
     },
+    sovereign: v3.sovereign,
+    grace: v3.grace,
+    oracle: v3.oracle,
   };
+}
+
+// ── v4 → v5 migration: lift state.gate1 into state.gateState[1] ───────────
+function migrateV4toV5(v4: V4State): AppState {
+  const fresh = emptyGateState();
+  fresh[1] = v4.gate1 ?? defaultGateRuntime();
+  return {
+    version: 5,
+    createdAt: v4.createdAt,
+    invocationCompletedAt: v4.invocationCompletedAt,
+    privacyMode: v4.privacyMode,
+    gates: v4.gates,
+    gateState: fresh,
+    cabinet: v4.cabinet,
+    sovereign: v4.sovereign,
+    grace: v4.grace,
+    oracle: v4.oracle,
+  };
+}
+
+function hydrateV5(parsed: Record<string, unknown>): AppState {
+  const s = parsed as AppState;
+  if (!s.gateState) s.gateState = emptyGateState();
+  // Backfill any missing gate slots.
+  ([1, 2, 3, 4, 5, 6, 7] as GateId[]).forEach((id) => {
+    if (!s.gateState[id]) s.gateState[id] = defaultGateRuntime();
+  });
+  if (!s.cabinet) s.cabinet = { encounters: [], recentTriads: [] };
+  if (!s.cabinet.encounters) s.cabinet.encounters = [];
+  if (!s.cabinet.recentTriads) s.cabinet.recentTriads = [];
+  s.cabinet.encounters = s.cabinet.encounters.map((e) => ({
+    ...e,
+    markedLyrics: Array.isArray(e.markedLyrics) ? e.markedLyrics : [],
+  }));
+  if (!s.sovereign) s.sovereign = { actions: [], graceMarks: 0, graceMessages: [] };
+  if (!s.sovereign.graceMessages) s.sovereign.graceMessages = [];
+  if (typeof s.sovereign.graceMarks !== "number") s.sovereign.graceMarks = 0;
+  return s;
 }
 
 export function loadState(): AppState {
@@ -246,28 +334,21 @@ export function loadState(): AppState {
       return defaultState();
     }
     const parsed = JSON.parse(raw);
+    if (parsed.version === 5) {
+      return hydrateV5(parsed);
+    }
     if (parsed.version === 4) {
-      if (!parsed.gate1) parsed.gate1 = defaultGate1();
-      if (!parsed.cabinet) parsed.cabinet = { encounters: [], recentTriads: [] };
-      if (!parsed.cabinet.encounters) parsed.cabinet.encounters = [];
-      if (!parsed.cabinet.recentTriads) parsed.cabinet.recentTriads = [];
-      // Defensive markedLyrics backfill (in case an encounter slipped in pre-migration).
-      parsed.cabinet.encounters = parsed.cabinet.encounters.map((e: CabinetEncounter) => ({
-        ...e,
-        markedLyrics: Array.isArray(e.markedLyrics) ? e.markedLyrics : [],
-      }));
-      if (!parsed.sovereign) parsed.sovereign = { actions: [], graceMarks: 0, graceMessages: [] };
-      if (!parsed.sovereign.graceMessages) parsed.sovereign.graceMessages = [];
-      if (typeof parsed.sovereign.graceMarks !== "number") parsed.sovereign.graceMarks = 0;
-      return parsed as AppState;
+      const migrated = migrateV4toV5(parsed as V4State);
+      saveState(migrated);
+      return migrated;
     }
     if (parsed.version === 3) {
-      const migrated = migrateV3toV4(parsed as V3State);
+      const migrated = migrateV4toV5(migrateV3toV4(parsed as V3State));
       saveState(migrated);
       return migrated;
     }
     if (parsed.version === 2) {
-      const migrated = migrateV3toV4(migrateV2toV3(parsed as V2State));
+      const migrated = migrateV4toV5(migrateV3toV4(migrateV2toV3(parsed as V2State)));
       saveState(migrated);
       return migrated;
     }

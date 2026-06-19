@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { motion } from "framer-motion";
+import type { GlyphId } from "../../data/correctives";
 
 export function RitualButton({
   children,
@@ -99,3 +100,26 @@ export const CrackedSun = () => (
 export const BrokenCompass = () => (
   <Artifact src="/assets/correctives/splintered-trust.png" alt="A shattered antique compass, the bearing that broke" />
 );
+
+export const BurnedTongue = () => (
+  <Artifact src="/assets/glyphs/gate-2/burned-tongue.svg" alt="A tongue rising into flame, an ember at its tip" />
+);
+
+export const SilencedFire = () => (
+  <Artifact src="/assets/glyphs/gate-2/silenced-fire.svg" alt="A flame sealed inside a stoppered vial, embers glowing through the seal" />
+);
+
+type GlyphComponent = () => ReactNode;
+
+const GLYPHS: Record<GlyphId, GlyphComponent> = {
+  "cracked-sun": CrackedSun,
+  "broken-compass": BrokenCompass,
+  "burned-tongue": BurnedTongue,
+  "silenced-fire": SilencedFire,
+};
+
+export function Glyph({ id }: { id: GlyphId }) {
+  const C = GLYPHS[id] ?? CrackedSun;
+  return <C />;
+}
+
