@@ -10,7 +10,9 @@ export type RouteId =
   | "hidden_grief"
   | "withheld_tears"
   | "doubled_name"
-  | "binding_veil";
+  | "binding_veil"
+  | "unspoken_truth"
+  | "forgotten_light";
 
 export type GlyphId =
   | "cracked-sun"
@@ -20,7 +22,9 @@ export type GlyphId =
   | "hidden-grief"
   | "withheld-tears"
   | "doubled-name"
-  | "binding-veil";
+  | "binding-veil"
+  | "unspoken-truth"
+  | "forgotten-light";
 
 export type AnswerField = {
   key: string;
@@ -176,6 +180,40 @@ const GATE_4_SAFETY_TIERS: SafetyTier[] = [
       "Unsafe: self-harm, danger to self/others, panic, dissociation, severe identity destabilization, mania-like certainty, crisis, life-rupture impulse.",
     oracleTone:
       "Pause the page. This threshold does not require you to decide who you are while unstable. Step away and seek immediate human support if there is danger or you cannot ground.",
+    blocksUnlock: true,
+  },
+];
+
+// Shared Gate 5 safety tiers (Unspoken Truth and Forgotten Light use the same set).
+// Parallel to Gate 2/3/4; reuses green/amber/red ids so detectFlameTier
+// applies unchanged. Wild Tongue blocks unlock. Visual edge treatment is a
+// darkened word-field with a subdued red-gold warning — never dramatic.
+const GATE_5_SAFETY_TIERS: SafetyTier[] = [
+  {
+    id: "green",
+    label: "Aligned Flame",
+    meaning:
+      "Avatar grounded; speech precise; right vessel and matching action chosen; no public-proof impulse, attack, coercion, domination, or grandiose command language.",
+    oracleTone:
+      "The word can be held. Speak it through the vessel and give it one body.",
+    blocksUnlock: false,
+  },
+  {
+    id: "amber",
+    label: "Flared Word",
+    meaning:
+      "Avatar wants to say too much, declare publicly, command reality without action, prove, persuade, dominate, or be witnessed.",
+    oracleTone:
+      "The word is becoming larger than its body. Make the sentence smaller and the action clearer.",
+    blocksUnlock: false,
+  },
+  {
+    id: "red",
+    label: "Wild Tongue",
+    meaning:
+      "Unsafe: threats, harm language, coercive intent, crisis-level intensity, mania-like certainty, delusional command language, spiritual domination, public destruction impulse, inability to ground, danger to self/others.",
+    oracleTone:
+      "Pause the page. This threshold does not require speech that can harm. Step away and seek immediate human support if there is danger or you cannot ground.",
     blocksUnlock: true,
   },
 ];
@@ -1095,5 +1133,264 @@ The sacred remains protected.`,
     // FLAGGED FOR OWNER REVIEW — drafted sealLine in Words Between Worlds voice
     sealLine:
       "I do not tear the veil. I open one seam where fear wore the sacred's name.",
+  },
+
+  // ── Gate 5 — The Speaking Flame ─────────────────────────────────────────
+
+  unspoken_truth: {
+    id: "unspoken_truth",
+    title: "Unspoken Truth",
+    glyph: "unspoken-truth",
+    symbolic: "The sentence withheld still shapes the room.",
+    oracle:
+      "Do not speak to perform. Speak what your next action can carry.",
+    oracleReturn:
+      "You have stood here before. The sentence still shapes the room from the dark. What action can give it a body?",
+    coreQuestion:
+      "What truth has remained unspoken because speaking it would change the field?",
+    scroll: `Some truths do not disappear when they remain unspoken.
+They continue shaping the room.
+They bend the silence.
+They choose the distance between bodies.
+They live inside the sentence no one has allowed to enter the field.
+But not every withheld truth is ready for public fire.
+Not every sentence belongs in the largest room.
+This page does not ask you to say everything.
+It does not ask you to win, expose, punish, or prove.
+It asks for one precise truth to enter the right vessel and receive one matching action.`,
+    answers: [
+      {
+        key: "truth",
+        label: "The Unspoken Truth",
+        prompt:
+          "What truth has remained unspoken because speaking it would change the field?",
+        placeholder: "Name one truth. Not the whole story.",
+      },
+      {
+        key: "cost",
+        label: "The Cost of Speaking",
+        prompt:
+          "What consequence, change, loss, responsibility, boundary, or action might become unavoidable if this truth is spoken?",
+        placeholder:
+          "Name what the word may require after it is spoken.",
+      },
+      {
+        key: "field",
+        label: "The Field It Would Change",
+        prompt:
+          "What field would this truth alter: relationship, work, family, audience, private practice, creative direction, boundary, or inner contract?",
+        placeholder: "Name the actual field, not the imagined audience.",
+      },
+      {
+        key: "vessel",
+        label: "The Right Speech Vessel",
+        prompt:
+          "Where can this truth be spoken or written without becoming performance, attack, spectacle, or domination?",
+        placeholder: "Choose the vessel before choosing the speech.",
+      },
+      {
+        key: "matching_action",
+        label: "The Matching Action",
+        prompt: "What one action will give the truth a body?",
+        placeholder:
+          "Choose one action small enough to complete and true enough to matter.",
+      },
+    ],
+    vesselSelector: {
+      title: "Choose the Speech Vessel",
+      options: [
+        "Private spoken sentence",
+        "App journal entry only",
+        "Safe witness",
+        "Direct boundary sentence",
+        "Written clarification",
+        "Private voice note",
+        "One honest answer without overexplaining",
+        "Unsent message plus matching action",
+        "Ritual candle sentence witnessed only by self",
+        "Calm written boundary drafted before delivery",
+        "One sentence spoken in a low-risk real conversation",
+        "A scheduled conversation with a clear limit",
+      ],
+    },
+    safetyTiers: GATE_5_SAFETY_TIERS,
+    journalPrompt:
+      "What sentence still governs the field because it has not yet been given a body?",
+    journalHeader: "Unspoken Truth — Private Reflection",
+    trackerTitle: "Word-and-Action Alignment",
+    trackerCopy:
+      "Speak one precise truth into the right vessel and complete one matching action that proves the word has a body.",
+    examples: [
+      "Speak one private sentence aloud, then make one matching boundary.",
+      "Write the truth in the app and schedule the conversation it requires.",
+      "Tell one safe witness the sentence without turning it into a speech.",
+      "Clarify one expectation in writing and stop one behavior that contradicts it.",
+      "Say one direct no and remove one performative agreement.",
+      "Draft a boundary message but wait until grounded before sending it.",
+      "Name the truth privately, then take one matching action inside reality.",
+    ],
+    invalidExamples: [
+      "I will finally say everything.",
+      "I will post the truth publicly.",
+      "I will call them out.",
+      "I will make them understand.",
+      "I will declare it and reality will obey.",
+      "I will speak my truth from now on.",
+      "I will use this truth to show them who I am.",
+      "I will say it without changing anything.",
+    ],
+    reflectionPrompts: [
+      "What did this Spiral Path allow you to see?",
+      "What field does this unspoken truth quietly shape?",
+      "What action would give the word a body without making it a performance?",
+    ],
+    readiness: [
+      "I have named the unspoken truth.",
+      "I have identified the consequence or responsibility speech may require.",
+      "I have named the field this truth would change.",
+      "I have chosen the right speech vessel.",
+      "I have chosen one matching action.",
+      "The truth has been spoken, written, or scheduled in the right vessel.",
+      "The matching action has been completed or scheduled.",
+      "I am not using this truth for public proof, attack, domination, punishment, or spectacle.",
+    ],
+    incompleteCopy:
+      "The page remains open. The word does not need volume. It needs a body.",
+    preUnlock:
+      "The sentence has found its vessel. The word has been given a body.",
+    unlockEpigraph: `The sentence has found its vessel.
+The word has been given a body.`,
+    // FLAGGED FOR OWNER REVIEW — drafted sealLine in Words Between Worlds voice
+    sealLine:
+      "I do not speak to perform. I speak what my next action can carry.",
+  },
+
+  forgotten_light: {
+    id: "forgotten_light",
+    title: "Forgotten Light",
+    glyph: "forgotten-light",
+    symbolic: "What went dim was not gone. It was unfed.",
+    oracle: "Name the light, then give it one lived signal.",
+    oracleReturn:
+      "You have stood here before. The light still flickers, still unfed. What one act can feed it?",
+    coreQuestion:
+      "What knowing, gift, direction, or inner light did you forget to keep surviving?",
+    scroll: `There is a light that did not vanish.
+It grew quiet because it was unfed.
+Perhaps the world rewarded what was useful and ignored what was luminous.
+Perhaps survival asked for function and the light asked for devotion.
+Perhaps the gift became inconvenient.
+Perhaps the direction became too costly to follow.
+This page does not ask you to crown the light.
+It does not ask you to abandon your life for it.
+It does not ask you to prove it publicly.
+It asks that you name the light and give it one lived signal.`,
+    answers: [
+      {
+        key: "light",
+        label: "The Forgotten Light",
+        prompt:
+          "What knowing, gift, direction, devotion, creative current, discipline, or inner light did you forget to keep surviving?",
+        placeholder: "Name the light without inflating it.",
+      },
+      {
+        key: "covered",
+        label: "What Covered It",
+        prompt:
+          "What covered this light: busyness, fear, shame, usefulness, grief, survival, approval, cynicism, delay, distraction, or another covering?",
+        placeholder: "Name what dimmed or covered the light.",
+      },
+      {
+        key: "still_appears",
+        label: "Where It Still Appears",
+        prompt: "Where does this light still appear, even faintly?",
+        placeholder: "Name the place where it still flickers.",
+      },
+      {
+        key: "remembering_sentence",
+        label: "The Remembering Sentence",
+        prompt:
+          "What one sentence can name this light without turning it into destiny inflation?",
+        placeholder: "Name the light simply. No crown. No spectacle.",
+      },
+      {
+        key: "confirming_act",
+        label: "The Confirming Act",
+        prompt:
+          "What one small act will feed this light in lived reality?",
+        placeholder:
+          "Choose one act of allegiance small enough to complete.",
+      },
+    ],
+    vesselSelector: {
+      title: "Choose the Light-Tending Vessel",
+      options: [
+        "Private spoken sentence",
+        "App journal entry only",
+        "Thirty-minute practice block",
+        "One creative act",
+        "Study / devotion session",
+        "Small offering of time",
+        "Safe witness",
+        "One boundary protecting the light",
+        "Private voice note",
+        "One scheduled return",
+        "A small workspace prepared",
+        "One page read or written",
+        "One act of craft repetition",
+        "One private recommitment",
+      ],
+    },
+    safetyTiers: GATE_5_SAFETY_TIERS,
+    journalPrompt:
+      "What light went dim because it stopped receiving your allegiance?",
+    journalHeader: "Forgotten Light — Private Reflection",
+    trackerTitle: "Light-Tending Act",
+    trackerCopy:
+      "Name the forgotten light and complete one confirming act that feeds it in lived reality.",
+    examples: [
+      "Spend thirty minutes practicing the neglected craft.",
+      "Prepare one small workspace for the light to return.",
+      "Read or write one page connected to the forgotten direction.",
+      "Protect one hour on the calendar for the practice.",
+      'Tell one safe witness: "This light still matters."',
+      "Complete one private creative act without posting it.",
+      "Make one boundary that protects time for the light.",
+      "Return once to a study, discipline, devotion, or practice you abandoned.",
+    ],
+    invalidExamples: [
+      "This is my destiny now.",
+      "I will abandon everything for this light.",
+      "I will show everyone what I really am.",
+      "I will become my highest self.",
+      "I will finally prove my gift.",
+      "I will turn this into my whole identity.",
+      "I will announce my calling publicly.",
+      "I will name the light without tending it.",
+    ],
+    reflectionPrompts: [
+      "What did this Spiral Path allow you to see?",
+      "What covered this light, and where does it still flicker?",
+      "What one lived signal would feed it without crowning it?",
+    ],
+    readiness: [
+      "I have named the forgotten light without inflating it.",
+      "I have identified what covered or dimmed it.",
+      "I have named where it still appears.",
+      "I have written one remembering sentence.",
+      "I have chosen a light-tending vessel.",
+      "I have chosen one confirming act.",
+      "The confirming act has been completed or scheduled.",
+      "I am not using this light for public proof, destiny inflation, superiority, escape, or spectacle.",
+    ],
+    incompleteCopy:
+      "The page remains open. The light does not need a crown. It needs one lived signal.",
+    preUnlock:
+      "The light has received one act of allegiance. What was dim has been tended.",
+    unlockEpigraph: `The light has received one act of allegiance.
+What was dim has been tended.`,
+    // FLAGGED FOR OWNER REVIEW — drafted sealLine in Words Between Worlds voice
+    sealLine:
+      "I do not crown the light. I feed it one lived signal.",
   },
 };
