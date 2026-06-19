@@ -48,14 +48,19 @@ export function drawTriad(
   const themeBag = new Map<string, number>();
   const bump = (w: string, n = 1) => themeBag.set(w, (themeBag.get(w) ?? 0) + n);
 
-  // Active gate phase keywords
-  bump(state.gate1.phase.replace(/_/g, " "), 1);
-  if (state.gate1.activeRoute === "false_arrival") { bump("vow"); bump("promise"); bump("fracture"); }
-  if (state.gate1.activeRoute === "splintered_trust") { bump("witness"); bump("discernment"); bump("trust"); }
+  // Active gate phase keywords — sum across all per-gate runtime states
+  for (const id of [1, 2, 3, 4, 5, 6, 7] as const) {
+    const g = state.gateState?.[id];
+    if (!g) continue;
+    bump(g.phase.replace(/_/g, " "), 1);
+    if (g.activeRoute === "false_arrival") { bump("vow"); bump("promise"); bump("fracture"); }
+    if (g.activeRoute === "splintered_trust") { bump("witness"); bump("discernment"); bump("trust"); }
+    if (g.activeRoute === "burned_tongue") { bump("fire"); bump("voice"); bump("tongue"); bump("borrowed"); }
+    if (g.activeRoute === "silenced_fire") { bump("fire"); bump("silence"); bump("vessel"); bump("speak"); }
 
-  // Journal + encounter answer keywords
-  for (const w of KEYWORDS_FROM_TEXT(state.gate1.journal ?? "")) bump(w);
-  for (const w of KEYWORDS_FROM_TEXT(state.gate1.encounterAnswer ?? "")) bump(w);
+    for (const w of KEYWORDS_FROM_TEXT(g.journal ?? "")) bump(w);
+    for (const w of KEYWORDS_FROM_TEXT(g.encounterAnswer ?? "")) bump(w);
+  }
 
   // Action intent keywords
   for (const a of state.sovereign.actions) {

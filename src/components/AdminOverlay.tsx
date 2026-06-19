@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Settings2, Eye, EyeOff } from "lucide-react";
 import { isAdmin, isDev, clearAdmin } from "../lib/admin";
-import { loadState, resetState, saveState, type AppState, type PrivacyMode } from "../lib/state";
+import { loadState, resetState, saveState, type AppState, type GateId, type GatePhase, type PrivacyMode } from "../lib/state";
+import type { RouteId } from "../data/correctives";
 import { readObs, clearObs } from "../lib/observation";
 
 /* Admin / Dev overlay — fixed bottom-right pill rendered from __root.tsx.
@@ -13,6 +14,7 @@ export function AdminOverlay() {
   const [open, setOpen] = useState(false);
   const [showState, setShowState] = useState(false);
   const [state, setState] = useState<AppState | null>(null);
+  const [gateId, setGateId] = useState<GateId>(1);
 
   useEffect(() => {
     setAdmin(isAdmin());
@@ -29,17 +31,17 @@ export function AdminOverlay() {
 
   const refresh = () => setState(loadState());
 
-  const setPhase = (phase: NonNullable<AppState["gate1"]>["phase"]) => {
+  const setPhase = (phase: GatePhase) => {
     const s = loadState();
-    s.gate1.phase = phase;
+    s.gateState[gateId].phase = phase;
     saveState(s);
     refresh();
     location.reload();
   };
 
-  const setRoute = (r: "false_arrival" | "splintered_trust") => {
+  const setRoute = (r: RouteId) => {
     const s = loadState();
-    s.gate1.activeRoute = r;
+    s.gateState[gateId].activeRoute = r;
     saveState(s);
     refresh();
     location.reload();
@@ -47,8 +49,17 @@ export function AdminOverlay() {
 
   const zeroAnchors = () => {
     const s = loadState();
-    const keys = Object.keys(s.gate1.anchors) as Array<keyof typeof s.gate1.anchors>;
-    keys.forEach((k) => { s.gate1.anchors[k] = 1; });
+    const anchors = s.gateState[gateId].anchors;
+    const keys = Object.keys(anchors) as Array<keyof typeof anchors>;
+    keys.forEach((k) => { anchors[k] = 1; });
+    saveState(s);
+    refresh();
+    location.reload();
+  };
+
+  const completeGate = (id: GateId) => {
+    const s = loadState();
+    s.gates[id] = { ...s.gates[id], completedAt: s.gates[id]?.completedAt ?? Date.now() };
     saveState(s);
     refresh();
     location.reload();
@@ -60,6 +71,12 @@ export function AdminOverlay() {
     saveState(s);
     refresh();
   };
+
+  const routesForGate: RouteId[] =
+    gateId === 1 ? ["false_arrival", "splintered_trust"]
+    : gateId === 2 ? ["burned_tongue", "silenced_fire"]
+    : [];
+
 
   return (
     <div className="fixed bottom-4 right-4 z-[100] max-w-sm font-mono text-xs">
