@@ -117,7 +117,7 @@ export function TransmissionObject({
             />
             {/* Stopper that lifts and floats on opening */}
             <img
-              src={glassVialStopper}
+              src={VIAL_STOPPER_SRC}
               alt=""
               aria-hidden
               draggable={false}
