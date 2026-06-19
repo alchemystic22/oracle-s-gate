@@ -6,13 +6,17 @@ export type RouteId =
   | "false_arrival"
   | "splintered_trust"
   | "burned_tongue"
-  | "silenced_fire";
+  | "silenced_fire"
+  | "hidden_grief"
+  | "withheld_tears";
 
 export type GlyphId =
   | "cracked-sun"
   | "broken-compass"
   | "burned-tongue"
-  | "silenced-fire";
+  | "silenced-fire"
+  | "hidden-grief"
+  | "withheld-tears";
 
 export type AnswerField = {
   key: string;
@@ -521,5 +525,253 @@ It asks for one true flame to move through a vessel that can hold it.`,
     // FLAGGED FOR OWNER REVIEW — drafted sealLine in Words Between Worlds voice
     sealLine:
       "I do not break the vessel. I let one true flame move through it.",
+  },
+
+  // ── Gate 3 — The Stone Garden of Grief ───────────────────────────────────
+
+  hidden_grief: {
+    id: "hidden_grief",
+    title: "Hidden Grief",
+    glyph: "hidden-grief",
+    symbolic: "What was buried did not vanish. It waited beneath strength.",
+    oracle: "Let the hidden grief be found. Not fixed. Found.",
+    oracleReturn:
+      "You have stood here before. The grief has not yet been allowed to be seen. What waits beneath the strength?",
+    coreQuestion:
+      "What sorrow have you kept hidden beneath strength, function, or meaning?",
+    scroll: `There is a sorrow that learned to live underground.
+It did not disappear.
+It became useful.
+It became composed.
+It became wise too quickly.
+It learned to stand while something inside remained kneeling.
+Perhaps others needed you strong.
+Perhaps the room had no place for grief.
+Perhaps meaning arrived before mourning.
+This page does not ask you to explain the sorrow.
+It does not ask you to heal it.
+It asks that the hidden grief be found without being hurried into purpose.`,
+    answers: [
+      {
+        key: "sorrow",
+        label: "The Hidden Sorrow",
+        prompt:
+          "What sorrow have you kept hidden beneath strength, composure, usefulness, numbness, or meaning?",
+        placeholder:
+          "Name the sorrow without explaining why it should already be gone.",
+      },
+      {
+        key: "covering",
+        label: "The Covering Form",
+        prompt:
+          "What has covered this grief: strength, duty, wisdom, busyness, humor, numbness, caretaking, spiritual meaning, achievement, or silence?",
+        placeholder: "Name the form that kept grief buried.",
+      },
+      {
+        key: "why_hidden",
+        label: "Why It Stayed Hidden",
+        prompt: "Why did this grief have to remain unseen?",
+        placeholder:
+          "Name the reason: safety, responsibility, shame, timing, fear, lack of witness, survival, or another true reason.",
+      },
+      {
+        key: "vessel",
+        label: "The Mourning Vessel",
+        prompt:
+          "What private or safely witnessed vessel can receive this grief without forcing it to perform?",
+        placeholder: "Choose a vessel before choosing the mourning act.",
+      },
+      {
+        key: "act",
+        label: "The Mourning Act",
+        prompt: "What one small act can honor this grief without fixing it?",
+        placeholder:
+          "Choose one act small enough to complete and gentle enough to hold.",
+      },
+    ],
+    vesselSelector: {
+      title: "Choose the Mourning Vessel",
+      options: [
+        "Private candle",
+        "Stone placed in a bowl",
+        "Letter never sent",
+        "Name spoken aloud alone",
+        "Safe witness",
+        "Grave / place / memory visit",
+        "Quiet music and stillness",
+        "Flower, water, or earth offering",
+        "App journal entry only",
+      ],
+    },
+    safetyTiers: GATE_3_SAFETY_TIERS,
+    journalPrompt:
+      "What grief has remained unseen because you became strong too soon?",
+    journalHeader: "Hidden Grief — Private Reflection",
+    trackerTitle: "Mourning Act",
+    trackerCopy:
+      "Complete one private or safely witnessed act that lets the hidden grief be found without forcing it to become useful.",
+    examples: [
+      "Light a candle and say the name of what was lost.",
+      "Place a stone in a bowl and let it represent the hidden grief.",
+      "Write a letter that will not be sent.",
+      "Sit for five minutes with music that allows the sorrow to be near.",
+      'Tell one safe witness: "There is grief here I have not let be seen."',
+      "Visit a place connected to the grief without requiring a breakthrough.",
+      "Place flowers, water, or earth as a private acknowledgment.",
+    ],
+    invalidExamples: [
+      "I will finally heal this.",
+      "I will turn this grief into purpose.",
+      "I will tell everyone everything.",
+      "I will cry until it is gone.",
+      "I will prove I am over it.",
+      "I will understand why this happened.",
+      "I will forgive now.",
+    ],
+    reflectionPrompts: [
+      "What did this Spiral Path allow you to see?",
+      "What did carrying this grief in silence cost you?",
+      "What would it mean to let this sorrow be witnessed without being fixed?",
+    ],
+    readiness: [
+      "I have named the hidden sorrow.",
+      "I have identified what covered it.",
+      "I have named why it stayed hidden.",
+      "I have chosen a mourning vessel.",
+      "I have chosen one mourning act.",
+      "The mourning act has been completed or scheduled.",
+      "I am not forcing this grief to become useful, public, resolved, or explained.",
+    ],
+    incompleteCopy:
+      "The page remains open. The grief does not need meaning yet. It needs witness.",
+    preUnlock:
+      "The hidden grief has been found. It does not need to become anything else yet.",
+    unlockEpigraph: `The hidden grief has been found.
+It does not need to become anything else yet.`,
+    // FLAGGED FOR OWNER REVIEW — drafted sealLine in Words Between Worlds voice
+    sealLine: "I do not bury my grief beneath strength. I let it be seen.",
+  },
+
+  withheld_tears: {
+    id: "withheld_tears",
+    title: "Withheld Tears",
+    glyph: "withheld-tears",
+    symbolic:
+      "The body may hold the sorrow long after the mind has named it.",
+    oracle: "Do not force the tears. Give the sorrow one safe movement.",
+    oracleReturn:
+      "You have stood here before. The body still holds the gate closed. What one small movement can it allow?",
+    coreQuestion: "What sorrow do you know, but still cannot let move?",
+    scroll: `You may already know the grief.
+You may have named it many times.
+You may understand its history.
+You may have spoken of it clearly.
+Still, the body may hold the gate closed.
+Not because it refuses healing.
+Because movement once felt unsafe.
+Because tears once changed nothing.
+Because release once brought no witness.
+This page does not command you to cry.
+It does not ask for catharsis.
+It asks for one safe movement, small enough that the body does not need to defend against it.`,
+    answers: [
+      {
+        key: "known_sorrow",
+        label: "The Known Sorrow",
+        prompt:
+          "What sorrow do you already know or feel, but still cannot let move?",
+        placeholder: "Name the sorrow without requiring tears.",
+      },
+      {
+        key: "holding",
+        label: "The Body's Holding Pattern",
+        prompt:
+          "How does the body hold this sorrow: tight throat, chest pressure, frozen belly, numbness, jaw tension, shallow breath, tiredness, collapse, or another pattern?",
+        placeholder: "Name the holding pattern gently.",
+      },
+      {
+        key: "why_unsafe",
+        label: "Why Movement Felt Unsafe",
+        prompt:
+          "Why might emotional movement have felt unsafe, useless, dangerous, shameful, or unwitnessed?",
+        placeholder: "Name the reason without forcing memory.",
+      },
+      {
+        key: "vessel",
+        label: "The Safe Movement Vessel",
+        prompt:
+          "What vessel can hold one small movement of sorrow without forcing catharsis?",
+        placeholder: "Choose the vessel before choosing the movement.",
+      },
+      {
+        key: "movement",
+        label: "The Small Movement",
+        prompt:
+          "What one small movement can let sorrow move one degree without demanding tears?",
+        placeholder: "Choose one movement the body can survive.",
+      },
+    ],
+    vesselSelector: {
+      title: "Choose the Movement Vessel",
+      options: [
+        "Hand on heart",
+        "Slow breath",
+        "Music and stillness",
+        "Gentle walk",
+        "Water ritual",
+        "Private voice note",
+        "Soft body movement",
+        "Sitting beside a candle",
+        "Safe witness presence",
+        "App journal entry only",
+      ],
+    },
+    safetyTiers: GATE_3_SAFETY_TIERS,
+    journalPrompt:
+      "Where does sorrow remain held in the body even after it has been named?",
+    journalHeader: "Withheld Tears — Private Reflection",
+    trackerTitle: "Safe Movement Act",
+    trackerCopy:
+      "Allow one safe movement of sorrow without requiring tears, catharsis, or explanation.",
+    examples: [
+      "Place a hand on the chest and breathe slowly for one minute.",
+      "Listen to one song and let the body respond however it responds.",
+      "Take a slow walk while naming the grief once.",
+      "Hold a bowl of water and let it represent what could not move.",
+      'Record a private voice note beginning: "This sorrow is allowed one breath."',
+      "Sit with a safe witness without explaining everything.",
+      "Let the face soften for thirty seconds without forcing tears.",
+    ],
+    invalidExamples: [
+      "I will make myself cry.",
+      "I will release it all tonight.",
+      "I will finally break down.",
+      "I will force my body to feel it.",
+      "I will relive the whole event.",
+      "I will prove I am healed.",
+      "I will tell everyone how much I suffered.",
+    ],
+    reflectionPrompts: [
+      "What did this Spiral Path allow you to see?",
+      "Where does the body still hold the gate closed?",
+      "What one small movement could the body allow without being forced?",
+    ],
+    readiness: [
+      "I have named the known sorrow.",
+      "I have identified how the body holds it.",
+      "I have named why movement may have felt unsafe.",
+      "I have chosen a movement vessel.",
+      "I have chosen one small movement.",
+      "The movement has been completed or scheduled.",
+      "I am not forcing tears, catharsis, memory, public exposure, or emotional breakthrough.",
+    ],
+    incompleteCopy:
+      "The page remains open. Tears are not required. One safe movement is enough.",
+    preUnlock: "The sorrow has moved one degree. Nothing was forced.",
+    unlockEpigraph: `The sorrow has moved one degree.
+Nothing was forced.`,
+    // FLAGGED FOR OWNER REVIEW — drafted sealLine in Words Between Worlds voice
+    sealLine:
+      "I do not force the tears. I give the sorrow one safe movement.",
   },
 };
