@@ -187,7 +187,7 @@
      is painted on. */
   .matrix-char {
     display: inline;
-    color: oklch(0.78 0.005 240);
+    color: oklch(0.94 0.005 240);
     animation: matrix-char-light 1600ms cubic-bezier(.22, 1, .36, 1) 1 both;
     will-change: color, text-shadow;
   }
@@ -209,7 +209,7 @@
         0 0 1.4em oklch(0.78 0.14 232 / 0.4);
     }
     100% {
-      color: oklch(0.78 0.005 240);
+      color: oklch(0.94 0.005 240);
       text-shadow: none;
     }
   }
