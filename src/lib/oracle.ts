@@ -20,6 +20,7 @@ export const ORACLE_CATEGORIES: { id: OracleCategory; label: string }[] = [
 const isGate2 = (r: RouteId) => r === "burned_tongue" || r === "silenced_fire";
 const isGate3 = (r: RouteId) => r === "hidden_grief" || r === "withheld_tears";
 const isGate4 = (r: RouteId) => r === "doubled_name" || r === "binding_veil";
+const isGate5 = (r: RouteId) => r === "unspoken_truth" || r === "forgotten_light";
 
 export function oracleResponse(
   route: RouteId,
@@ -33,6 +34,9 @@ export function oracleResponse(
     return "Only this page is before you now. The rest of the map is not needed for this threshold.";
   }
   if (q.includes("skip") && q.includes("action")) {
+    if (isGate5(route)) {
+      return "No. The page completes when word and action align.";
+    }
     if (isGate4(route)) {
       return "No. The page completes when one small act separates echo from truth.";
     }
@@ -45,6 +49,9 @@ export function oracleResponse(
     return "No. The page does not close through reflection alone. One action must touch lived reality.";
   }
   if (q.includes("choose") && (q.includes("for me") || q.includes("my action"))) {
+    if (isGate5(route)) {
+      return "I can help make the sentence smaller and the action clearer. I cannot speak the word in your place.";
+    }
     if (isGate4(route)) {
       return "I can help make the act smaller and safer. I cannot name you in your place.";
     }
@@ -55,6 +62,16 @@ export function oracleResponse(
       return "I can help make the vessel gentler and the act smaller. I cannot grieve in your place.";
     }
     return "I can help you make the action smaller and clearer. I cannot choose your obedience for you.";
+  }
+
+  // ── Gate 5 universal overrides ──────────────────────────────────────────
+  if (isGate5(route)) {
+    if (q.includes("can i just say") || (q.includes("just say") && q.includes("it"))) {
+      return "Not yet. The word needs a body. Name the action that can carry it.";
+    }
+    if (q.includes("make this public") || q.includes("should i make this public") || q.includes("post publicly") || q.includes("post it publicly")) {
+      return "Audience is not the field yet. Let the word become real in one precise vessel first.";
+    }
   }
 
   // ── Gate 2 keyword overrides ────────────────────────────────────────────
