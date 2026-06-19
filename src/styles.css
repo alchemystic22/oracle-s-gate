@@ -187,25 +187,29 @@
      is painted on. */
   .matrix-char {
     display: inline;
-    color: oklch(0.98 0.005 240);
-    animation: matrix-char-light 850ms cubic-bezier(.22, 1, .36, 1) 1 both;
+    color: oklch(0.78 0.005 240);
+    animation: matrix-char-light 1600ms cubic-bezier(.22, 1, .36, 1) 1 both;
+    will-change: color, text-shadow;
   }
   @keyframes matrix-char-light {
     0% {
       color: oklch(1 0 0);
       text-shadow:
-        0 0 0.18em oklch(1 0 0 / 0.95),
-        0 0 0.42em oklch(0.92 0.07 232 / 0.7),
-        0 0 0.9em oklch(0.82 0.09 232 / 0.45);
+        0 0 0.06em oklch(1 0 0 / 1),
+        0 0 0.22em oklch(1 0 0 / 0.95),
+        0 0 0.55em oklch(0.95 0.08 230 / 0.95),
+        0 0 1.1em oklch(0.82 0.14 232 / 0.85),
+        0 0 2.2em oklch(0.72 0.16 232 / 0.55);
     }
-    55% {
-      color: oklch(0.995 0.005 240);
+    35% {
+      color: oklch(1 0 0);
       text-shadow:
-        0 0 0.1em oklch(1 0 0 / 0.45),
-        0 0 0.3em oklch(0.9 0.06 232 / 0.25);
+        0 0 0.18em oklch(1 0 0 / 0.85),
+        0 0 0.55em oklch(0.9 0.1 230 / 0.6),
+        0 0 1.4em oklch(0.78 0.14 232 / 0.4);
     }
     100% {
-      color: oklch(0.98 0.005 240);
+      color: oklch(0.78 0.005 240);
       text-shadow: none;
     }
   }
