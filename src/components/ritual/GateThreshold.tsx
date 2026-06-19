@@ -167,36 +167,41 @@ export function GateThreshold({
             WebkitMaskImage: "radial-gradient(ellipse at 50% 50%, black 45%, rgba(0,0,0,0.55) 80%, transparent 100%)",
           }}
         />
-        <motion.div
-          aria-hidden
-          className="pointer-events-none absolute left-1/2 top-[44%] z-20 -translate-x-1/2 -translate-y-1/2 rounded-full"
-          style={{
-            width: "3.5rem",
-            height: "3.5rem",
-            background:
-              "radial-gradient(circle, hsl(43 95% 70% / 0.55) 0%, hsl(28 90% 50% / 0.25) 40%, transparent 75%)",
-            filter: "blur(2px)",
-            mixBlendMode: "screen",
-          }}
-          animate={{ opacity: [0.35, 0.75, 0.35], scale: [1, 1.08, 1] }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          aria-hidden
-          className="pointer-events-none absolute left-1/2 top-[58%] z-20 -translate-x-1/2 -translate-y-1/2 rounded-full"
-          style={{
-            width: "10rem",
-            height: "10rem",
-            border: "1px solid hsl(43 80% 60% / 0.18)",
-            boxShadow: "inset 0 0 24px hsl(43 80% 60% / 0.18)",
-            mixBlendMode: "screen",
-          }}
-          animate={{ opacity: [0.25, 0.5, 0.25], rotate: 360 }}
-          transition={{
-            opacity: { duration: 8, repeat: Infinity, ease: "easeInOut" },
-            rotate: { duration: 240, repeat: Infinity, ease: "linear" },
-          }}
-        />
+        {showRitualOverlays && (
+          <>
+            <motion.div
+              aria-hidden
+              className="pointer-events-none absolute left-1/2 top-[44%] z-20 -translate-x-1/2 -translate-y-1/2 rounded-full"
+              style={{
+                width: "3.5rem",
+                height: "3.5rem",
+                background:
+                  "radial-gradient(circle, hsl(43 95% 70% / 0.55) 0%, hsl(28 90% 50% / 0.25) 40%, transparent 75%)",
+                filter: "blur(2px)",
+                mixBlendMode: "screen",
+              }}
+              animate={{ opacity: [0.35, 0.75, 0.35], scale: [1, 1.08, 1] }}
+              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+            />
+            <motion.div
+              aria-hidden
+              className="pointer-events-none absolute left-1/2 top-[58%] z-20 -translate-x-1/2 -translate-y-1/2 rounded-full"
+              style={{
+                width: "10rem",
+                height: "10rem",
+                border: "1px solid hsl(43 80% 60% / 0.18)",
+                boxShadow: "inset 0 0 24px hsl(43 80% 60% / 0.18)",
+                mixBlendMode: "screen",
+              }}
+              animate={{ opacity: [0.25, 0.5, 0.25], rotate: 360 }}
+              transition={{
+                opacity: { duration: 8, repeat: Infinity, ease: "easeInOut" },
+                rotate: { duration: 240, repeat: Infinity, ease: "linear" },
+              }}
+            />
+          </>
+        )}
+
         <motion.div
           aria-hidden
           className="pointer-events-none absolute inset-x-8 z-20 h-px"
