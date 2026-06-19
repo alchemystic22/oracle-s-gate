@@ -220,6 +220,8 @@ function ThresholdPhase({ content, gs, setPhase }: { content: GateContent; gs: G
       imageSrc={content.thresholdImage}
       imageAspect={content.thresholdAspect}
       thresholdCopy={content.thresholdCopy}
+      showRitualOverlays={content.thresholdRitualOverlays !== false}
+
       canApproach={ready}
       onApproach={() => setPhase("encounter")}
     />

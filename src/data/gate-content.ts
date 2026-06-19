@@ -25,6 +25,9 @@ export type GateContent = {
   thresholdImage: string;
   /** CSS aspect-ratio string for the threshold image, e.g. "1024 / 1536". */
   thresholdAspect: string;
+  /** Optional: hide the chin-sphere + rotating ring overlays when the threshold image already supplies its own focal composition. Defaults to true. */
+  thresholdRitualOverlays?: boolean;
+
   /** Epithet shown in the small header above the encounter / obstruction copy. */
   headerEpithet: string;
   /** Threshold time-lock copy (after 30s). Three measured lines. */
