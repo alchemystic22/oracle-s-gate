@@ -109,7 +109,9 @@ export const SilencedFire = () => (
   <Artifact src="/assets/glyphs/gate-2/silenced-fire.svg" alt="A flame sealed inside a stoppered vial, embers glowing through the seal" />
 );
 
-const GLYPHS: Record<GlyphId, () => JSX.Element> = {
+type GlyphComponent = () => ReactNode;
+
+const GLYPHS: Record<GlyphId, GlyphComponent> = {
   "cracked-sun": CrackedSun,
   "broken-compass": BrokenCompass,
   "burned-tongue": BurnedTongue,
@@ -120,3 +122,4 @@ export function Glyph({ id }: { id: GlyphId }) {
   const C = GLYPHS[id] ?? CrackedSun;
   return <C />;
 }
+
