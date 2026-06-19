@@ -94,6 +94,13 @@ const AMBER_KEYWORDS = [
   "relive the whole",
   "force myself to feel",
   "cry until it is gone",
+  // Gate 4 identity-intensity markers (Split Mirror tier).
+  "change everything",
+  "everyone will know the real me",
+  "destroy who i was",
+  "start over completely",
+  "prove i am not",
+  "become my true self overnight",
 ];
 
 export function detectFlameTier(...texts: (string | undefined | null)[]): FlameTier {

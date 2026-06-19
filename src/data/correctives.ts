@@ -8,7 +8,9 @@ export type RouteId =
   | "burned_tongue"
   | "silenced_fire"
   | "hidden_grief"
-  | "withheld_tears";
+  | "withheld_tears"
+  | "doubled_name"
+  | "binding_veil";
 
 export type GlyphId =
   | "cracked-sun"
@@ -16,7 +18,9 @@ export type GlyphId =
   | "burned-tongue"
   | "silenced-fire"
   | "hidden-grief"
-  | "withheld-tears";
+  | "withheld-tears"
+  | "doubled-name"
+  | "binding-veil";
 
 export type AnswerField = {
   key: string;
@@ -137,6 +141,41 @@ const GATE_3_SAFETY_TIERS: SafetyTier[] = [
       "Unsafe: acute crisis, self-harm, dissociation, retraumatization risk, inability to ground.",
     oracleTone:
       "Pause the page. This threshold does not require you to break. Step away and seek human support if the grief is more than this moment can hold.",
+    blocksUnlock: true,
+  },
+];
+
+// Shared Gate 4 safety tiers (Doubled Name and Binding Veil use the same set).
+// Parallel to Gate 2/3; reuses the green/amber/red ids so detectFlameTier
+// applies unchanged. Shattered Mirror blocks unlock. Visual edge treatment
+// is a darkened reflective field with a subdued red-violet warning — never
+// literal shattered glass.
+const GATE_4_SAFETY_TIERS: SafetyTier[] = [
+  {
+    id: "green",
+    label: "Clear Mirror",
+    meaning:
+      "Avatar grounded; the act is small, private or safely witnessed, non-destructive.",
+    oracleTone:
+      "The mirror can hold this. Keep the act small and let distinction be enough.",
+    blocksUnlock: false,
+  },
+  {
+    id: "amber",
+    label: "Split Mirror",
+    meaning:
+      "Avatar exposed, ashamed, urgent, inflated, seeking public recognition or final identity, or proposing an act too large.",
+    oracleTone:
+      "The echo is loud. Do not break the mirror. Make the act smaller.",
+    blocksUnlock: false,
+  },
+  {
+    id: "red",
+    label: "Shattered Mirror",
+    meaning:
+      "Unsafe: self-harm, danger to self/others, panic, dissociation, severe identity destabilization, mania-like certainty, crisis, life-rupture impulse.",
+    oracleTone:
+      "Pause the page. This threshold does not require you to decide who you are while unstable. Step away and seek immediate human support if there is danger or you cannot ground.",
     blocksUnlock: true,
   },
 ];
@@ -806,5 +845,255 @@ Nothing was forced.`,
     // FLAGGED FOR OWNER REVIEW — drafted sealLine in Words Between Worlds voice
     sealLine:
       "I do not force the tears. I give the sorrow one safe movement.",
+  },
+
+  // ── Gate 4 — The Echoed Self ────────────────────────────────────────────
+
+  doubled_name: {
+    id: "doubled_name",
+    title: "The Doubled Name",
+    glyph: "doubled-name",
+    symbolic: "The name that was praised may not be the name that is true.",
+    oracle:
+      "Do not destroy the performed name. Separate it from the one beneath.",
+    oracleReturn:
+      "You have stood here before. The performed name still answers first. What waits beneath it?",
+    coreQuestion:
+      "What name, role, or identity still performs for approval against the truth of being?",
+    scroll: `There is a name the world learned to call you.
+Perhaps it was responsible.
+Gifted.
+Difficult.
+Strong.
+Pleasant.
+Useful.
+Special.
+Safe.
+Perhaps the name was never spoken aloud, but every room rewarded it.
+So the name became a face.
+Then the face became a rule.
+This page does not ask you to hate the name that helped you survive.
+It asks you to see where that name still answers before truth can speak.`,
+    answers: [
+      {
+        key: "approved_name",
+        label: "The Approved Name",
+        prompt:
+          "What name, role, identity, persona, reputation, or mask has been rewarded by others?",
+        placeholder: "Name the identity that learned to perform.",
+      },
+      {
+        key: "rewarding_room",
+        label: "The Rewarding Room",
+        prompt:
+          "Who or what rewarded this name: family, authority, relationship, institution, audience, marketplace, community, spiritual group, or survival pattern?",
+        placeholder: "Name the room that trained the echo.",
+      },
+      {
+        key: "cost",
+        label: "The Cost of the Name",
+        prompt:
+          "What did this approved name cost in truth, expression, rest, desire, boundary, grief, fire, or freedom?",
+        placeholder:
+          "Name what the performance required you to withhold.",
+      },
+      {
+        key: "name_beneath",
+        label: "The Name Beneath",
+        prompt:
+          "What quieter name, quality, truth, or signal waits beneath the performed identity?",
+        placeholder: "Name only what is safe enough to name now.",
+      },
+      {
+        key: "reclaiming_act",
+        label: "The Reclaiming Act",
+        prompt:
+          "What one small act can let the name beneath move without destroying the old name?",
+        placeholder:
+          "Choose one act of distinction, not a dramatic identity rupture.",
+      },
+    ],
+    vesselSelector: {
+      title: "Choose the Naming Vessel",
+      options: [
+        "Private mirror sentence",
+        "App journal entry only",
+        "Unsent letter to the approved name",
+        "Safe witness",
+        "Small boundary sentence",
+        "One choice made without performing the role",
+        "Symbolic object or nameplate",
+        "Private voice note",
+        "Quiet refusal of one performance",
+      ],
+    },
+    safetyTiers: GATE_4_SAFETY_TIERS,
+    journalPrompt:
+      "Where does the name the world rewarded still answer before the truer one can speak?",
+    journalHeader: "The Doubled Name — Private Reflection",
+    trackerTitle: "Reclaiming Act",
+    trackerCopy:
+      "Complete one small act that lets the name beneath move without destroying the name that protected you.",
+    examples: [
+      'Privately write: "This is the name they rewarded; this is the name beneath."',
+      "Make one choice without performing the approved role.",
+      "Tell one safe witness one true thing the performed name would hide.",
+      "Refuse one performance the rewarding room expects.",
+      "Say a quiet mirror sentence naming what is true beneath.",
+      "Write an unsent letter to the approved name, thanking it and setting it down.",
+    ],
+    invalidExamples: [
+      "I will destroy who I used to be.",
+      "I will tell everyone the real me.",
+      "I will quit everything and start over as a new person.",
+      "I will prove I was never that role.",
+      "I will become my true self overnight.",
+      "I will reject everyone who knew the old name.",
+    ],
+    reflectionPrompts: [
+      "What did this Spiral Path allow you to see?",
+      "What has the approved name required you to withhold?",
+      "What would it mean to let the name beneath move without destroying the old one?",
+    ],
+    readiness: [
+      "I have named the approved identity.",
+      "I have named the room that rewarded it.",
+      "I have named what the performance cost me.",
+      "I have named the quieter truth beneath it.",
+      "I have chosen a naming vessel.",
+      "I have chosen one act of distinction.",
+      "The reclaiming act has been completed or scheduled.",
+      "I am not using this action to destroy the old name, force a final identity, or perform a new one publicly.",
+    ],
+    incompleteCopy:
+      "The page remains open. The echo does not need to be destroyed. It needs to stop answering first.",
+    preUnlock: "The echo has been named. It no longer answers first.",
+    unlockEpigraph: `The echo has been named.
+It no longer answers first.`,
+    // FLAGGED FOR OWNER REVIEW — drafted sealLine in Words Between Worlds voice
+    sealLine:
+      "I do not destroy the name that protected me. I let the truer one speak.",
+  },
+
+  binding_veil: {
+    id: "binding_veil",
+    title: "The Binding Veil",
+    glyph: "binding-veil",
+    symbolic: "Not every mystery is sacred. Some are fear dressed in silk.",
+    oracle:
+      "Do not tear the veil. Find where it protects fear and let one seam open.",
+    oracleReturn:
+      "You have stood here before. The veil still hangs whole. Which seam protects fear, not the sacred?",
+    coreQuestion:
+      "Where have you called concealment sacred because exposure felt unsafe?",
+    scroll: `Some veils are holy.
+They protect what must ripen in darkness.
+They keep the sacred from becoming spectacle.
+But some veils are woven from fear and named mystery.
+Some concealment becomes beautiful because it keeps truth from asking anything of the body.
+Some silence becomes spiritual because exposure once carried consequence.
+This page does not ask you to unveil everything.
+It does not ask you to become transparent.
+It asks you to find the seam where fear has borrowed the language of the sacred.`,
+    answers: [
+      {
+        key: "veil",
+        label: "The Veil",
+        prompt:
+          "What have you kept hidden, unnamed, vague, mystical, private, or untouchable?",
+        placeholder: "Name the veil without forcing disclosure.",
+      },
+      {
+        key: "fear_beneath",
+        label: "The Fear Beneath",
+        prompt:
+          "What fear might this veil protect: rejection, exposure, loss, judgment, responsibility, change, intimacy, consequence, or another truth?",
+        placeholder: "Name the fear gently.",
+      },
+      {
+        key: "sacred_story",
+        label: "The Sacred Story",
+        prompt:
+          "What story has made the concealment feel sacred, wise, spiritual, refined, mysterious, or necessary?",
+        placeholder: "Name the story without shaming it.",
+      },
+      {
+        key: "truly_sacred",
+        label: "What Remains Truly Sacred",
+        prompt:
+          "What part of the veil is legitimate protection, sacred privacy, timing, or discernment?",
+        placeholder:
+          "Keep what is truly sacred from being torn open.",
+      },
+      {
+        key: "seam",
+        label: "The Seam to Open",
+        prompt:
+          "What one seam can open without exposing what should remain protected?",
+        placeholder:
+          "Choose one small act of clarification, not full revelation.",
+      },
+    ],
+    vesselSelector: {
+      title: "Choose the Veil-Thinning Vessel",
+      options: [
+        "Private naming in the app",
+        "Mirror sentence",
+        "One safe witness",
+        "Unsent letter",
+        "Boundary clarification",
+        "One honest sentence without full disclosure",
+        "Symbolic veil / cloth ritual",
+        "Removing one unnecessary concealment",
+        "Private voice note",
+      ],
+    },
+    safetyTiers: GATE_4_SAFETY_TIERS,
+    journalPrompt: "Where has fear borrowed the language of mystery?",
+    journalHeader: "The Binding Veil — Private Reflection",
+    trackerTitle: "Veil-Thinning Act",
+    trackerCopy:
+      "Complete one precise act that separates sacred mystery from fear-made concealment.",
+    examples: [
+      'Privately write: "This part is sacred; this part is fear."',
+      "Tell one safe witness one honest sentence without revealing everything.",
+      "Remove one unnecessary vagueness from a boundary, request, or answer.",
+      "Name one fear that has been disguised as mystery.",
+      "Place a cloth over a mirror, then open one corner to symbolize one seam.",
+      "Clarify one private truth to yourself without making it public.",
+      "Keep one sacred boundary while releasing one protective excuse.",
+    ],
+    invalidExamples: [
+      "I will reveal everything.",
+      "I will stop hiding anything.",
+      "I will confess all of it publicly.",
+      "I will tear down every boundary.",
+      "I will become completely transparent.",
+      "I will expose myself so I can be free.",
+      "I will prove I have nothing to hide.",
+    ],
+    reflectionPrompts: [
+      "What did this Spiral Path allow you to see?",
+      "What does this veil protect — sacred timing, or fear?",
+      "What one seam could open without violating what is genuinely sacred?",
+    ],
+    readiness: [
+      "I have named the veil without forcing exposure.",
+      "I have identified the fear the veil may protect.",
+      "I have named the sacred story around the concealment.",
+      "I have distinguished what remains truly sacred from what is fear-made concealment.",
+      "I have chosen a veil-thinning vessel.",
+      "I have chosen one seam to open.",
+      "The veil-thinning act has been completed or scheduled.",
+      "I am not using this action for public confession, forced vulnerability, boundary collapse, or self-exposure.",
+    ],
+    incompleteCopy:
+      "The page remains open. The veil does not need to be torn. One seam is enough.",
+    preUnlock: "One seam has opened. The sacred remains protected.",
+    unlockEpigraph: `One seam has opened.
+The sacred remains protected.`,
+    // FLAGGED FOR OWNER REVIEW — drafted sealLine in Words Between Worlds voice
+    sealLine:
+      "I do not tear the veil. I open one seam where fear wore the sacred's name.",
   },
 };
