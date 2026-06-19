@@ -108,6 +108,39 @@ const GATE_2_SAFETY_TIERS: SafetyTier[] = [
   },
 ];
 
+// Shared Gate 3 safety tiers (Hidden Grief and Withheld Tears use the same set).
+// Parallel to Gate 2's flame tiers; reuses the green/amber/red ids so the
+// existing detectFlameTier classifier applies unchanged.
+const GATE_3_SAFETY_TIERS: SafetyTier[] = [
+  {
+    id: "green",
+    label: "Soft Stone",
+    meaning:
+      "Avatar grounded; the mourning or movement act is small, private, safe.",
+    oracleTone:
+      "The stone can hold this. Choose a gentle act, then let it be witnessed cleanly.",
+    blocksUnlock: false,
+  },
+  {
+    id: "amber",
+    label: "Cracked Stone",
+    meaning:
+      "Avatar flooded, rushing toward catharsis, forcing breakthrough, or proposing an act too large.",
+    oracleTone:
+      "The grief is real. The vessel is not yet ready for that much. Make the movement smaller before you act.",
+    blocksUnlock: false,
+  },
+  {
+    id: "red",
+    label: "Broken Stone",
+    meaning:
+      "Unsafe: acute crisis, self-harm, dissociation, retraumatization risk, inability to ground.",
+    oracleTone:
+      "Pause the page. This threshold does not require you to break. Step away and seek human support if the grief is more than this moment can hold.",
+    blocksUnlock: true,
+  },
+];
+
 export const ROUTES: Record<RouteId, RouteContent> = {
   false_arrival: {
     id: "false_arrival",

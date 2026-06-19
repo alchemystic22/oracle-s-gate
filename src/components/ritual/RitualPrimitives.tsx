@@ -109,6 +109,14 @@ export const SilencedFire = () => (
   <Artifact src="/assets/glyphs/gate-2/silenced-fire.svg" alt="A flame sealed inside a stoppered vial, embers glowing through the seal" />
 );
 
+export const HiddenGrief = () => (
+  <Artifact src="/assets/glyphs/gate-3/hidden-grief.png" alt="A stone seed beneath a weeping willow, cracked by a single root of gold" />
+);
+
+export const WithheldTears = () => (
+  <Artifact src="/assets/glyphs/gate-3/withheld-tears.png" alt="A silver tear suspended inside a closed stone basin, a crack beneath it where water begins to move" />
+);
+
 type GlyphComponent = () => ReactNode;
 
 const GLYPHS: Record<GlyphId, GlyphComponent> = {
@@ -116,6 +124,8 @@ const GLYPHS: Record<GlyphId, GlyphComponent> = {
   "broken-compass": BrokenCompass,
   "burned-tongue": BurnedTongue,
   "silenced-fire": SilencedFire,
+  "hidden-grief": HiddenGrief,
+  "withheld-tears": WithheldTears,
 };
 
 export function Glyph({ id }: { id: GlyphId }) {
