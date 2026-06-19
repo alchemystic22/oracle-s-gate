@@ -184,8 +184,52 @@ export function oracleResponse(
     }
   }
 
+  // ── Gate 5 keyword overrides ────────────────────────────────────────────
+  if (route === "unspoken_truth") {
+    if (q.includes("confront") || q.includes("confront them")) {
+      return "The field may be too charged for the first vessel. Speak the sentence where it can stay clean before it enters conflict.";
+    }
+    if (q.includes("attack") || q.includes("sounds like attack") || q.includes("accusation")) {
+      return "The heat is real, but the blade is not needed. Remove accusation. Keep consequence.";
+    }
+    if (
+      q.includes("do not know the matching action") ||
+      q.includes("don't know the matching action") ||
+      q.includes("dont know the matching action") ||
+      (q.includes("no matching action") && q.includes("know"))
+    ) {
+      return "Then the sentence is not ready to become world. Find the action first, or make the sentence smaller.";
+    }
+    if (q.includes("public validation") || (q.includes("public") && q.includes("validation"))) {
+      return "Public witness may turn the word into performance. Let the truth alter one real field before it seeks an audience.";
+    }
+    if (q.includes("say everything") || (q.includes("want to say") && q.includes("everything"))) {
+      return "Everything is too much. One precise sentence is enough for this threshold.";
+    }
+  }
+  if (route === "forgotten_light") {
+    if (q.includes("destiny")) {
+      return "Destiny is too large for this page. Tend the light once before naming its future.";
+    }
+    if (q.includes("abandon everything") || (q.includes("abandon") && q.includes("for this light"))) {
+      return "Abandonment is not allegiance. Give the light one protected act inside reality first.";
+    }
+    if (q.includes("prove") && (q.includes("public") || q.includes("publicly") || q.includes("light"))) {
+      return "Proof still makes the audience the keeper of the flame. Feed the light before displaying it.";
+    }
+    if (q.includes("special") || q.includes("makes me special")) {
+      return "The light is not a crown above others. It is a responsibility asking for practice.";
+    }
+    if (q.includes("ashamed") || q.includes("shame for forgetting")) {
+      return "Shame does not feed the light. Return once. Let that be the first offering.";
+    }
+  }
+
   // ── Category dispatch, per route ─────────────────────────────────────────
   if (cat === "fail") {
+    if (isGate5(route)) {
+      return "The Gate has not judged you. A hidden page has opened because the word must find its body before passage continues.";
+    }
     if (isGate4(route)) {
       return "The Gate has not judged you. A hidden page has opened because an echo must be distinguished before passage continues.";
     }
@@ -267,6 +311,22 @@ export function oracleResponse(
       return "Open one seam, not the whole cloth. One honest sentence without full disclosure is enough.";
     if (cat === "trust")
       return "This page does not ask you to trust the world with the hidden thing. It asks you to distinguish sacred privacy from fear.";
+  }
+  if (route === "unspoken_truth") {
+    if (cat === "clarify")
+      return "Bring it to one sentence. What truth would change the field if spoken?";
+    if (cat === "smaller")
+      return "Make the sentence smaller and the action clearer. One precise truth into one right vessel, with one matching act.";
+    if (cat === "trust")
+      return "This page does not ask you to trust an audience with the word. It asks whether your next action can carry it.";
+  }
+  if (route === "forgotten_light") {
+    if (cat === "clarify")
+      return "Name the light simply. Gift, direction, devotion, discipline, creative current, knowing, or practice.";
+    if (cat === "smaller")
+      return "Choose one act of allegiance small enough to complete. Thirty minutes. One page. One protected hour.";
+    if (cat === "trust")
+      return "This page does not ask you to crown the light. It asks for one lived signal that you still tend it.";
   }
 
   return "Return to the page. The answer you need is closer than the question you asked.";
