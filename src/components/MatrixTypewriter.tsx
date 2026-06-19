@@ -86,7 +86,7 @@ export function MatrixTypewriter({
         }}
       >
         {done ? paragraphs[paragraphs.length - 1] : text}
-        <span className="matrix-cursor" aria-hidden />
+        {!done && <span className="matrix-lamp" aria-hidden />}
       </pre>
       <span className="sr-only">{paragraphs[phraseIdx]}</span>
     </div>
