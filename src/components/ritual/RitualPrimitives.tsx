@@ -125,6 +125,14 @@ export const BindingVeil = () => (
   <Artifact src="/assets/glyphs/gate-4/binding-veil.svg" alt="A translucent silver-violet veil before a dark mirror, fastened by a black pearl and split by a thin gold seam" />
 );
 
+export const UnspokenTruth = () => (
+  <Artifact src="/assets/glyphs/gate-5/unspoken-truth.svg" alt="A single gold sentence suspended between a closed mouth and a darkened field, with one flame touching the first word" />
+);
+
+export const ForgottenLight = () => (
+  <Artifact src="/assets/glyphs/gate-5/forgotten-light.svg" alt="A covered lantern beneath a dark cloth, with one gold ray escaping through a narrow opening" />
+);
+
 type GlyphComponent = () => ReactNode;
 
 const GLYPHS: Record<GlyphId, GlyphComponent> = {
@@ -136,6 +144,8 @@ const GLYPHS: Record<GlyphId, GlyphComponent> = {
   "withheld-tears": WithheldTears,
   "doubled-name": DoubledName,
   "binding-veil": BindingVeil,
+  "unspoken-truth": UnspokenTruth,
+  "forgotten-light": ForgottenLight,
 };
 
 export function Glyph({ id }: { id: GlyphId }) {

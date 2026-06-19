@@ -184,6 +184,40 @@ const GATE_4_SAFETY_TIERS: SafetyTier[] = [
   },
 ];
 
+// Shared Gate 5 safety tiers (Unspoken Truth and Forgotten Light use the same set).
+// Parallel to Gate 2/3/4; reuses green/amber/red ids so detectFlameTier
+// applies unchanged. Wild Tongue blocks unlock. Visual edge treatment is a
+// darkened word-field with a subdued red-gold warning — never dramatic.
+const GATE_5_SAFETY_TIERS: SafetyTier[] = [
+  {
+    id: "green",
+    label: "Aligned Flame",
+    meaning:
+      "Avatar grounded; speech precise; right vessel and matching action chosen; no public-proof impulse, attack, coercion, domination, or grandiose command language.",
+    oracleTone:
+      "The word can be held. Speak it through the vessel and give it one body.",
+    blocksUnlock: false,
+  },
+  {
+    id: "amber",
+    label: "Flared Word",
+    meaning:
+      "Avatar wants to say too much, declare publicly, command reality without action, prove, persuade, dominate, or be witnessed.",
+    oracleTone:
+      "The word is becoming larger than its body. Make the sentence smaller and the action clearer.",
+    blocksUnlock: false,
+  },
+  {
+    id: "red",
+    label: "Wild Tongue",
+    meaning:
+      "Unsafe: threats, harm language, coercive intent, crisis-level intensity, mania-like certainty, delusional command language, spiritual domination, public destruction impulse, inability to ground, danger to self/others.",
+    oracleTone:
+      "Pause the page. This threshold does not require speech that can harm. Step away and seek immediate human support if there is danger or you cannot ground.",
+    blocksUnlock: true,
+  },
+];
+
 export const ROUTES: Record<RouteId, RouteContent> = {
   false_arrival: {
     id: "false_arrival",
