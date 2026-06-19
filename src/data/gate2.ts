@@ -14,13 +14,12 @@ export const GATE_2_CONTENT: GateContent = {
 It does not require haste.
 It requires arrival.`,
   encounterParas: [
-    "The fire at this Gate is not punishment. It does not consume what is real.",
-    "It consumes the rehearsed self. The performed voice. The borrowed conviction. The script you have been speaking that was never yours to begin with.",
-    "What enters this fire is not who you have presented to the world. What walks through is what survived the burning.",
-    "Stand close enough to feel the heat.",
+    "The flame rises.",
+    "It does not consume you.",
+    "It asks what is real.",
+    "Only what endures the fire is yours to carry through.",
   ],
-  encounterQuestion:
-    "What part of yourself have you been speaking that was never truly yours?",
+  encounterQuestion: "What in you has been waiting for fire it could survive?",
   encounterSubmitHint:
     "There is no answer here that is too small. Name only what burns when you write it.",
   obstructionParas: [
@@ -30,11 +29,11 @@ It requires arrival.`,
   ],
   stanceCards: [
     {
-      text: "I have spoken what was given to me, but the words burned my own tongue.",
+      text: "There is a truth I stopped letting myself speak, because speaking it once cost me.",
       route: "burned_tongue",
     },
     {
-      text: "I have kept silent where my own fire wanted to speak.",
+      text: "There is a fire in me — anger, desire, creativity — I made quiet to stay acceptable.",
       route: "silenced_fire",
     },
   ],

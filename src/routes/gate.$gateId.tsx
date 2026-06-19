@@ -21,7 +21,7 @@ import { RitualButton, Section, SectionTitle, Glyph } from "../components/ritual
 import { GateThreshold } from "../components/ritual/GateThreshold";
 import { BookEmergence, BookShell } from "../components/ritual/Book";
 import { useTimeLock } from "../lib/timelock";
-import { detectSafetyConcern, SAFETY_COPY } from "../lib/safety";
+import { detectSafetyConcern, SAFETY_COPY, detectFlameTier, type FlameTier } from "../lib/safety";
 import { ORACLE_CATEGORIES, oracleResponse, type OracleCategory } from "../lib/oracle";
 import { obs } from "../lib/observation";
 import { isDev } from "../lib/admin";
@@ -464,6 +464,23 @@ function PagePhase({
 
   const safetyLocked = gs.safetyLocked || safety;
 
+  // Flame tier — Gate 2+ corrective routes only
+  const flameTier: FlameTier | null = route.safetyTiers
+    ? detectFlameTier(
+        gs.encounterAnswer,
+        gs.journal,
+        gs.actionBlock.principle,
+        gs.actionBlock.action,
+        gs.actionBlock.benefit,
+        gs.actionBlock.visibleEvidence,
+        ...Object.values(gs.answers),
+      )
+    : null;
+  const activeTier = flameTier && route.safetyTiers
+    ? route.safetyTiers.find((t) => t.id === flameTier) ?? null
+    : null;
+  const flameBlocksUnlock = activeTier?.blocksUnlock ?? false;
+
   const askOracle = () => {
     const a = oracleResponse(routeId, oracleCat, oracleQ);
     setOracleA(a);
@@ -567,6 +584,9 @@ function PagePhase({
           </div>
 
           <div className="md:col-span-7 mt-10 md:mt-0">
+            {activeTier && activeTier.id !== "green" && (
+              <FlameBanner tier={activeTier} />
+            )}
             {safetyLocked && (
               <div className="mb-10 border p-5 italic" style={{ borderColor: "hsl(43 60% 60% / 0.4)", background: "hsl(240 30% 8% / 0.6)", color: "hsl(43 30% 85%)", fontFamily: "'Cormorant Garamond', serif" }}>
                 {SAFETY_COPY}
@@ -650,6 +670,16 @@ function PagePhase({
                 )}
               </div>
             </Section>
+
+            {route.vesselSelector && (
+              <VesselSelectorBlock
+                title={route.vesselSelector.title}
+                options={route.vesselSelector.options}
+                value={gs.answers["vesselChoice"] || ""}
+                disabled={safetyLocked}
+                onChange={(v) => setAnswer("vesselChoice", v)}
+              />
+            )}
 
             {/* Sovereign Action Block */}
             <Section className="mt-10">
@@ -770,10 +800,15 @@ function PagePhase({
                 </div>
                 <RitualButton
                   onClick={() => setPhase("corrective_gate_open")}
-                  disabled={!allReady || safetyLocked}
+                  disabled={!allReady || safetyLocked || flameBlocksUnlock}
                 >
                   Open the Corrective Gate
                 </RitualButton>
+                {flameBlocksUnlock && activeTier && (
+                  <p className="mt-4 text-sm italic" style={{ fontFamily: "'Cormorant Garamond', serif", color: "hsl(12 65% 70%)" }}>
+                    {activeTier.oracleTone}
+                  </p>
+                )}
               </div>
             </Section>
 
@@ -824,6 +859,77 @@ function PagePhase({
         </div>
       </BookShell>
     </motion.article>
+  );
+}
+
+function FlameBanner({ tier }: { tier: { id: "green" | "amber" | "red"; label: string; meaning: string; oracleTone: string } }) {
+  const isRed = tier.id === "red";
+  const borderColor = isRed ? "hsl(12 75% 60% / 0.7)" : "hsl(35 90% 60% / 0.55)";
+  const glow = isRed ? "0 0 24px hsl(12 75% 55% / 0.35)" : "0 0 20px hsl(35 90% 55% / 0.25)";
+  const labelColor = isRed ? "hsl(12 80% 78%)" : "hsl(35 90% 78%)";
+  return (
+    <div
+      className="mb-10 border p-5"
+      style={{ borderColor, background: "hsl(240 30% 8% / 0.6)", boxShadow: glow }}
+    >
+      <p className="mb-2 text-xs uppercase tracking-[0.35em]" style={{ fontFamily: "'Cinzel', serif", color: labelColor }}>
+        {tier.label}
+      </p>
+      <p className="text-sm italic leading-relaxed" style={{ fontFamily: "'Cormorant Garamond', serif", color: "hsl(43 30% 85%)" }}>
+        {tier.oracleTone}
+      </p>
+    </div>
+  );
+}
+
+function VesselSelectorBlock({
+  title,
+  options,
+  value,
+  disabled,
+  onChange,
+}: {
+  title: string;
+  options: string[];
+  value: string;
+  disabled: boolean;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <Section className="mt-10">
+      <SectionTitle>{title}</SectionTitle>
+      <p className="mb-5 text-sm italic" style={{ fontFamily: "'Cormorant Garamond', serif", color: "hsl(43 30% 70%)" }}>
+        Choose the vessel before choosing the action.
+      </p>
+      <div className="flex flex-wrap gap-3">
+        {options.map((opt) => {
+          const selected = value === opt;
+          return (
+            <button
+              key={opt}
+              type="button"
+              disabled={disabled}
+              onClick={() => onChange(selected ? "" : opt)}
+              className="border px-4 py-2 text-sm transition disabled:opacity-40"
+              style={{
+                fontFamily: "'Cormorant Garamond', serif",
+                borderColor: selected ? "hsl(43 80% 70% / 0.8)" : "hsl(43 30% 55% / 0.3)",
+                color: selected ? "hsl(43 80% 88%)" : "hsl(43 30% 78%)",
+                background: selected ? "hsl(43 80% 55% / 0.12)" : "transparent",
+                boxShadow: selected ? "0 0 18px hsl(43 80% 60% / 0.35), inset 0 0 14px hsl(43 80% 55% / 0.15)" : "none",
+              }}
+            >
+              {opt}
+            </button>
+          );
+        })}
+      </div>
+      {value && (
+        <p className="mt-4 text-xs italic" style={{ color: "hsl(43 50% 65%)" }}>
+          Vessel chosen: <span style={{ color: "hsl(43 80% 82%)" }}>{value}</span>
+        </p>
+      )}
+    </Section>
   );
 }
 
