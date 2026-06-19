@@ -80,24 +80,21 @@ export function MatrixTypewriter({
   }, [paragraphs.length]);
 
   const visibleText = done ? paragraphs[paragraphs.length - 1] : text;
-  const phraseLen = Math.max(1, paragraphs[phraseIdx]?.length ?? 1);
-  // Sweep tracks the typing head and trails just behind it.
-  const sweepDurationMs = Math.round(
-    phraseLen * ((minKey + maxKey) / 2) + 600,
-  );
 
   return (
     <div className={className}>
       <pre
-        key={phraseIdx}
-        className={`matrix-text whitespace-pre-wrap break-words m-0${typing ? " matrix-text--sweeping" : ""}`}
+        className="matrix-text whitespace-pre-wrap break-words m-0"
         style={{
           fontFamily: "'Oswald', 'Inter', system-ui, sans-serif",
-          // @ts-expect-error CSS var
-          "--sweep-duration": `${sweepDurationMs}ms`,
         }}
+        aria-hidden
       >
-        {visibleText}
+        {Array.from(visibleText).map((ch, i) => (
+          <span key={`${phraseIdx}-${i}`} className="matrix-char">
+            {ch}
+          </span>
+        ))}
         {!done && <span className="matrix-caret" aria-hidden />}
       </pre>
       <span className="sr-only">{paragraphs[phraseIdx]}</span>

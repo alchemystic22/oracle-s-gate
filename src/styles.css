@@ -181,33 +181,33 @@
     font-size: clamp(1.755rem, 2.86vw, 2.6rem);
   }
 
-  /* One long luminous stroke painting across the phrase as it is typed.
-     The bright band travels from right (just past the typing head) to far
-     left, leaving the text settled white in its wake. */
-  .matrix-text--sweeping {
-    background-image: linear-gradient(
-      100deg,
-      oklch(0.98 0.005 240) 0%,
-      oklch(0.98 0.005 240) 40%,
-      oklch(1 0 0) 47%,
-      #d6ecff 50%,
-      oklch(1 0 0) 53%,
-      oklch(0.98 0.005 240) 60%,
-      oklch(0.98 0.005 240) 100%
-    );
-    background-size: 260% 100%;
-    background-repeat: no-repeat;
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
-    animation: matrix-sweep var(--sweep-duration, 6s) cubic-bezier(.45, 0, .25, 1) 1 forwards;
-    filter: drop-shadow(0 0 0.16em oklch(0.95 0.04 235 / 0.35));
+  /* Each character lights up bright white the moment it's typed, then
+     fades back to the settled white over ~800ms. The cumulative effect:
+     a luminous brush stroke trailing behind the caret as the sentence
+     is painted on. */
+  .matrix-char {
+    display: inline;
+    color: oklch(0.98 0.005 240);
+    animation: matrix-char-light 850ms cubic-bezier(.22, 1, .36, 1) 1 both;
   }
-
-  @keyframes matrix-sweep {
-    0%   { background-position: 130% 0; }
-    100% { background-position: -30% 0; }
+  @keyframes matrix-char-light {
+    0% {
+      color: oklch(1 0 0);
+      text-shadow:
+        0 0 0.18em oklch(1 0 0 / 0.95),
+        0 0 0.42em oklch(0.92 0.07 232 / 0.7),
+        0 0 0.9em oklch(0.82 0.09 232 / 0.45);
+    }
+    55% {
+      color: oklch(0.995 0.005 240);
+      text-shadow:
+        0 0 0.1em oklch(1 0 0 / 0.45),
+        0 0 0.3em oklch(0.9 0.06 232 / 0.25);
+    }
+    100% {
+      color: oklch(0.98 0.005 240);
+      text-shadow: none;
+    }
   }
 
   .matrix-caret {
