@@ -19,6 +19,7 @@ export const ORACLE_CATEGORIES: { id: OracleCategory; label: string }[] = [
 
 const isGate2 = (r: RouteId) => r === "burned_tongue" || r === "silenced_fire";
 const isGate3 = (r: RouteId) => r === "hidden_grief" || r === "withheld_tears";
+const isGate4 = (r: RouteId) => r === "doubled_name" || r === "binding_veil";
 
 export function oracleResponse(
   route: RouteId,
@@ -32,6 +33,9 @@ export function oracleResponse(
     return "Only this page is before you now. The rest of the map is not needed for this threshold.";
   }
   if (q.includes("skip") && q.includes("action")) {
+    if (isGate4(route)) {
+      return "No. The page completes when one small act separates echo from truth.";
+    }
     if (isGate3(route)) {
       return "No. Grief is honored through one act, not through understanding alone. The page completes when one small act touches reality.";
     }
@@ -41,6 +45,9 @@ export function oracleResponse(
     return "No. The page does not close through reflection alone. One action must touch lived reality.";
   }
   if (q.includes("choose") && (q.includes("for me") || q.includes("my action"))) {
+    if (isGate4(route)) {
+      return "I can help make the act smaller and safer. I cannot name you in your place.";
+    }
     if (route === "burned_tongue" || route === "silenced_fire") {
       return "I can help make the vessel smaller and safer. I cannot choose the fire in your place.";
     }
