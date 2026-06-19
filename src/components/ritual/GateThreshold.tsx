@@ -17,6 +17,7 @@ export function GateThreshold({
   thresholdCopy,
   onApproach,
   canApproach,
+  showRitualOverlays = true,
 }: {
   numberLabel: string;
   name: string;
@@ -28,7 +29,9 @@ export function GateThreshold({
   thresholdCopy: string;
   onApproach: () => void;
   canApproach: boolean;
+  showRitualOverlays?: boolean;
 }) {
+
   const [imgUrl, setImgUrl] = useState<string | null>(null);
   useEffect(() => {
     let alive = true;
