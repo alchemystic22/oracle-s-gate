@@ -244,17 +244,19 @@ function Cabinet() {
             {phase === "reverence" ? (
               <div className="h-[280px] md:h-[340px]" aria-hidden />
             ) : (
-              <div className="grid grid-cols-3 gap-4 md:gap-10 mt-2 mb-12">
+              <div className="grid grid-cols-3 gap-6 md:gap-14 mt-2 mb-12 items-end">
                 {triad.triad.map((o, i) => {
-                  let cardState: "facedown" | "illuminated" | "receded" | "flipped" = "facedown";
-                  if (phase === "ascertainment" && chosenIdx !== null && triad.mode === "oracle_revealed") {
-                    cardState = i === chosenIdx ? "illuminated" : "receded";
+                  let objState: TransmissionState = "present";
+                  if (openingIdx !== null) {
+                    objState = i === openingIdx ? "opening" : "receded";
+                  } else if (phase === "ascertainment" && chosenIdx !== null && triad.mode === "oracle_revealed") {
+                    objState = i === chosenIdx ? "illuminated" : "receded";
                   }
                   return (
-                    <OfferingCard
+                    <TransmissionObject
                       key={o.id}
                       offering={o}
-                      state={cardState}
+                      state={objState}
                       index={i}
                       onSelect={() => chooseCard(i)}
                     />
