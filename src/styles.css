@@ -178,93 +178,51 @@
     font-weight: 500;
     letter-spacing: 0.03em;
     line-height: 1.4;
-    /* +30% over previous clamp */
     font-size: clamp(1.755rem, 2.86vw, 2.6rem);
-    /* no text-shadow — smooth, no striations */
   }
 
-  .matrix-illuminated-break {
-    animation: matrix-text-lustre 520ms cubic-bezier(.16, 1, .3, 1) 1;
+  /* One long luminous stroke painting across the phrase as it is typed.
+     The bright band travels from right (just past the typing head) to far
+     left, leaving the text settled white in its wake. */
+  .matrix-text--sweeping {
+    background-image: linear-gradient(
+      100deg,
+      oklch(0.98 0.005 240) 0%,
+      oklch(0.98 0.005 240) 40%,
+      oklch(1 0 0) 47%,
+      #d6ecff 50%,
+      oklch(1 0 0) 53%,
+      oklch(0.98 0.005 240) 60%,
+      oklch(0.98 0.005 240) 100%
+    );
+    background-size: 260% 100%;
+    background-repeat: no-repeat;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    animation: matrix-sweep var(--sweep-duration, 6s) cubic-bezier(.45, 0, .25, 1) 1 forwards;
+    filter: drop-shadow(0 0 0.16em oklch(0.95 0.04 235 / 0.35));
   }
-  .matrix-glint {
+
+  @keyframes matrix-sweep {
+    0%   { background-position: 130% 0; }
+    100% { background-position: -30% 0; }
+  }
+
+  .matrix-caret {
     display: inline-block;
-    position: relative;
-    width: 0.18em;
-    height: 1.08em;
-    vertical-align: -0.16em;
-    margin-left: 0.035em;
-    pointer-events: none;
-    isolation: isolate;
+    width: 0.55em;
+    height: 1.02em;
+    vertical-align: -0.15em;
+    margin-left: 0.06em;
+    background: oklch(0.98 0.005 240);
+    box-shadow: 0 0 0.35em oklch(0.98 0.02 240 / 0.55);
+    animation: matrix-blink 1s steps(1, end) infinite;
   }
-  .matrix-glint::before,
-  .matrix-glint::after {
-    content: "";
-    position: absolute;
-    pointer-events: none;
-  }
-  .matrix-glint::before {
-    left: 50%;
-    top: 50%;
-    width: 0.12em;
-    height: 1.12em;
-    transform: translate(-50%, -50%);
-    border-radius: 50%;
-    background: linear-gradient(180deg,
-      transparent 0%,
-      oklch(0.93 0.06 225 / 0.35) 16%,
-      oklch(0.99 0.015 250 / 0.98) 46%,
-      oklch(0.93 0.06 225 / 0.46) 72%,
-      transparent 100%);
-    box-shadow:
-      0 0 0.14em oklch(0.98 0.02 240 / 0.9),
-      0 0 0.42em oklch(0.78 0.08 235 / 0.52),
-      0 0 0.88em oklch(0.76 0.08 235 / 0.2);
-    animation: matrix-glint-breathe 1.2s ease-in-out infinite;
-  }
-  .matrix-glint::after {
-    left: 50%;
-    top: 50%;
-    width: 1.45em;
-    height: 1.45em;
-    transform: translate(-50%, -50%) scale(0.72);
-    border-radius: 50%;
-    background:
-      radial-gradient(circle, oklch(0.99 0.02 245 / 0.72) 0 5%, transparent 8%),
-      radial-gradient(circle, oklch(0.9 0.08 235 / 0.3) 0 12%, transparent 36%);
-    filter: blur(0.9px);
-    opacity: 0;
-  }
-  .matrix-glint--break::after {
-    animation: matrix-glint-break 460ms cubic-bezier(.16, 1, .3, 1) 1;
-  }
-  @keyframes matrix-glint-breathe {
-    0%, 100% { opacity: 0.78; transform: translate(-50%, -50%) scaleY(0.92); }
-    50%      { opacity: 1; transform: translate(-50%, -50%) scaleY(1.02); }
-  }
-  @keyframes matrix-glint-break {
-    0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.45); }
-    18%  { opacity: 0.98; transform: translate(-50%, -50%) scale(0.92); }
-    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.28); }
-  }
-  @keyframes matrix-text-lustre {
-    0% {
-      color: oklch(0.98 0.005 240);
-      text-shadow: none;
-    }
-    18% {
-      color: oklch(1 0 0);
-      text-shadow:
-        0 0 0.18em oklch(0.98 0.025 230 / 0.82),
-        0 0 0.44em oklch(0.82 0.085 232 / 0.44);
-    }
-    100% {
-      color: oklch(0.98 0.005 240);
 
-      text-shadow: none;
-    }
-  }
   @keyframes matrix-blink {
-    0%, 50% { opacity: 1; }
+    0%, 50%      { opacity: 1; }
     50.01%, 100% { opacity: 0; }
   }
   .crt-scanlines {
