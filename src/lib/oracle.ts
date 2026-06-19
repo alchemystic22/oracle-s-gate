@@ -18,6 +18,7 @@ export const ORACLE_CATEGORIES: { id: OracleCategory; label: string }[] = [
 ];
 
 const isGate2 = (r: RouteId) => r === "burned_tongue" || r === "silenced_fire";
+const isGate3 = (r: RouteId) => r === "hidden_grief" || r === "withheld_tears";
 
 export function oracleResponse(
   route: RouteId,
@@ -28,23 +29,23 @@ export function oracleResponse(
 
   // ── Universal keyword overrides ─────────────────────────────────────────
   if (q.includes("how many pages")) {
-    if (isGate2(route)) {
-      return "Only this page is before you now. The rest of the map is not needed for this threshold.";
-    }
     return "Only this page is before you now. The rest of the map is not needed for this threshold.";
   }
   if (q.includes("skip") && q.includes("action")) {
+    if (isGate3(route)) {
+      return "No. Grief is honored through one act, not through understanding alone. The page completes when one small act touches reality.";
+    }
     if (isGate2(route)) {
       return "No. Fire must enter form. The page completes when one movement touches reality.";
     }
     return "No. The page does not close through reflection alone. One action must touch lived reality.";
   }
   if (q.includes("choose") && (q.includes("for me") || q.includes("my action"))) {
-    if (route === "burned_tongue") {
+    if (route === "burned_tongue" || route === "silenced_fire") {
       return "I can help make the vessel smaller and safer. I cannot choose the fire in your place.";
     }
-    if (route === "silenced_fire") {
-      return "I can help make the vessel smaller and safer. I cannot choose the fire in your place.";
+    if (isGate3(route)) {
+      return "I can help make the vessel gentler and the act smaller. I cannot grieve in your place.";
     }
     return "I can help you make the action smaller and clearer. I cannot choose your obedience for you.";
   }
@@ -85,8 +86,41 @@ export function oracleResponse(
     }
   }
 
+  // ── Gate 3 keyword overrides ────────────────────────────────────────────
+  if (route === "hidden_grief") {
+    if (q.includes("heal it now") || q.includes("want to heal") || q.includes("heal this now")) {
+      return "Healing is not the task here. Being seen is. Let it be found before you ask it to leave.";
+    }
+    if (q.includes("should be over") || q.includes("over this")) {
+      return "Grief does not keep a calendar. What waited beneath your strength does not need to apologize for still being here.";
+    }
+    if (q.includes("don't know what i'm grieving") || q.includes("dont know what i'm grieving") || q.includes("don't know what i am grieving")) {
+      return "Then name only the weight. The grief does not need a name yet to be witnessed.";
+    }
+    if (q.includes("too big")) {
+      return "Then make the vessel smaller. A single candle, a single name, is enough for one mourning act.";
+    }
+  }
+  if (route === "withheld_tears") {
+    if (q.includes("can't cry") || q.includes("cant cry") || q.includes("can not cry")) {
+      return "Tears are not the task. One safe movement is. The body does not have to break to be honored.";
+    }
+    if (q.includes("fall apart") || q.includes("falling apart")) {
+      return "Then make the movement smaller. One breath, one hand on the heart. The body sets the pace, not the grief.";
+    }
+    if (q.includes("nothing moves") || q.includes("numb")) {
+      return "Numbness is also a holding. Do not force it open. Choose one movement gentle enough that the body does not need to defend.";
+    }
+    if (q.includes("already processed")) {
+      return "The mind may have. The body keeps its own time. This page is for what the body still holds.";
+    }
+  }
+
   // ── Category dispatch, per route ─────────────────────────────────────────
   if (cat === "fail") {
+    if (isGate3(route)) {
+      return "The Gate has not judged you. A hidden page has opened because the grief asks to be witnessed before passage continues.";
+    }
     if (isGate2(route)) {
       return "The Gate has not judged you. A hidden page has opened because the fire needs a vessel before passage continues.";
     }
@@ -130,6 +164,22 @@ export function oracleResponse(
       return "Choose one flame-movement small enough the body and life can hold it. Not a rupture.";
     if (cat === "trust")
       return "This page does not ask you to trust the world with your fire. It asks you to find one vessel that can hold it.";
+  }
+  if (route === "hidden_grief") {
+    if (cat === "clarify")
+      return "Name the sorrow first. Not its story. Just the sorrow itself.";
+    if (cat === "smaller")
+      return "Make the vessel smaller. A single candle. A single name. One act gentle enough to complete.";
+    if (cat === "trust")
+      return "This page does not ask you to trust anyone with the grief. It asks that the grief be allowed to be seen.";
+  }
+  if (route === "withheld_tears") {
+    if (cat === "clarify")
+      return "Name the sorrow you already know. Then name where the body holds it.";
+    if (cat === "smaller")
+      return "Choose one movement small enough the body does not need to defend. A breath. A hand on the heart.";
+    if (cat === "trust")
+      return "This page does not ask the body to release. It asks for one safe movement the body can survive.";
   }
 
   return "Return to the page. The answer you need is closer than the question you asked.";
