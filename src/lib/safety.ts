@@ -83,6 +83,17 @@ const AMBER_KEYWORDS = [
   "never control myself again",
   "i am now fearless",
   "prove them wrong",
+  // Gate 3 grief-intensity / forced-catharsis markers (Cracked Stone tier).
+  "make myself cry",
+  "force myself to cry",
+  "release it all",
+  "release everything",
+  "break down completely",
+  "finally break down",
+  "relive",
+  "relive the whole",
+  "force myself to feel",
+  "cry until it is gone",
 ];
 
 export function detectFlameTier(...texts: (string | undefined | null)[]): FlameTier {
