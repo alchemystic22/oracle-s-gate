@@ -116,7 +116,25 @@ export function AdminOverlay() {
           {dev && (
             <>
               <div>
-                <div className="mb-1 uppercase tracking-widest" style={{ color: "hsl(43 50% 55%)" }}>Gate 1 phase</div>
+                <div className="mb-1 uppercase tracking-widest" style={{ color: "hsl(43 50% 55%)" }}>Active gate</div>
+                <div className="flex flex-wrap gap-1">
+                  {([1, 2, 3, 4, 5, 6, 7] as GateId[]).map((id) => (
+                    <button
+                      key={id}
+                      onClick={() => setGateId(id)}
+                      className="border px-2 py-1 hover:text-white"
+                      style={{
+                        borderColor: gateId === id ? "hsl(43 80% 70%)" : "hsl(43 30% 55% / 0.3)",
+                        color: gateId === id ? "hsl(43 80% 82%)" : undefined,
+                      }}
+                    >
+                      G{id}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="mb-1 uppercase tracking-widest" style={{ color: "hsl(43 50% 55%)" }}>Gate {gateId} phase</div>
                 <div className="grid grid-cols-2 gap-1">
                   {(["threshold","encounter","obstruction","book_emergence","page_open","corrective_gate_open","relocked","completion"] as const).map((p) => (
                     <button key={p} onClick={() => setPhase(p)} className="border px-2 py-1 text-left hover:text-white" style={{ borderColor: "hsl(43 30% 55% / 0.3)" }}>
@@ -125,21 +143,34 @@ export function AdminOverlay() {
                   ))}
                 </div>
               </div>
+              {routesForGate.length > 0 && (
+                <div>
+                  <div className="mb-1 uppercase tracking-widest" style={{ color: "hsl(43 50% 55%)" }}>Active route</div>
+                  <div className="flex gap-1">
+                    {routesForGate.map((r) => (
+                      <button key={r} onClick={() => setRoute(r)} className="flex-1 border px-2 py-1 hover:text-white" style={{ borderColor: "hsl(43 30% 55% / 0.3)" }}>
+                        {r}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <button onClick={zeroAnchors} className="block w-full border px-2 py-1 hover:text-white" style={{ borderColor: "hsl(43 30% 55% / 0.3)" }}>
+                bypass all time-locks (G{gateId})
+              </button>
               <div>
-                <div className="mb-1 uppercase tracking-widest" style={{ color: "hsl(43 50% 55%)" }}>Active route</div>
-                <div className="flex gap-1">
-                  {(["false_arrival","splintered_trust"] as const).map((r) => (
-                    <button key={r} onClick={() => setRoute(r)} className="flex-1 border px-2 py-1 hover:text-white" style={{ borderColor: "hsl(43 30% 55% / 0.3)" }}>
-                      {r}
+                <div className="mb-1 uppercase tracking-widest" style={{ color: "hsl(43 50% 55%)" }}>Mark gate complete</div>
+                <div className="flex flex-wrap gap-1">
+                  {([1, 2, 3, 4, 5, 6, 7] as GateId[]).map((id) => (
+                    <button key={id} onClick={() => completeGate(id)} className="border px-2 py-1 hover:text-white" style={{ borderColor: "hsl(43 30% 55% / 0.3)" }}>
+                      G{id}
                     </button>
                   ))}
                 </div>
               </div>
-              <button onClick={zeroAnchors} className="block w-full border px-2 py-1 hover:text-white" style={{ borderColor: "hsl(43 30% 55% / 0.3)" }}>
-                bypass all time-locks
-              </button>
             </>
           )}
+
 
           {state && (
             <div>
