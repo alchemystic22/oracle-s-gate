@@ -1,6 +1,6 @@
 // Corrective route content for the Spiral Path system.
-// Adapted verbatim from the framework reference (Gate 1) and from the
-// canonical Gate 2 instruction. Used by the Book of Spiral Fractures.
+// Gate 1 routes (false_arrival, splintered_trust) — verbatim from framework reference.
+// Gate 2 routes (burned_tongue, silenced_fire) — canonical instruction.
 
 export type RouteId =
   | "false_arrival"
@@ -19,6 +19,23 @@ export type AnswerField = {
   label: string;
   prompt: string;
   placeholder: string;
+};
+
+// Vessel selector — required component on Gate 2+ corrective pages.
+// Renders between the answer fields and the Sovereign Action Block.
+export type VesselSelector = {
+  title: string;
+  options: string[];
+};
+
+// Three-tier safety state (Green / Amber / Red Flame).
+// Routes that define `safetyTiers` get edge treatment; Red Flame blocks unlock.
+export type SafetyTier = {
+  id: "green" | "amber" | "red";
+  label: string;
+  meaning: string;
+  oracleTone: string;
+  blocksUnlock: boolean;
 };
 
 export type RouteContent = {
@@ -51,7 +68,41 @@ export type RouteContent = {
   preUnlock?: string;
   unlockEpigraph: string;
   sealLine: string;
+  /** Gate 2+ only. */
+  vesselSelector?: VesselSelector;
+  /** Gate 2+ only. Shared across both Gate 2 routes. */
+  safetyTiers?: SafetyTier[];
 };
+
+// Shared Gate 2 safety tiers (Burned Tongue and Silenced Fire use the same set).
+const GATE_2_SAFETY_TIERS: SafetyTier[] = [
+  {
+    id: "green",
+    label: "Green Flame",
+    meaning: "Avatar grounded; action small, specific, safe enough.",
+    oracleTone:
+      "The vessel can hold this. Make the action precise, then complete it cleanly.",
+    blocksUnlock: false,
+  },
+  {
+    id: "amber",
+    label: "Amber Flame",
+    meaning:
+      "Avatar intense, urgent, flooded, dramatic, or action too large.",
+    oracleTone:
+      "The fire is present. The vessel is not yet strong enough. Make the movement smaller before you act.",
+    blocksUnlock: false,
+  },
+  {
+    id: "red",
+    label: "Red Flame",
+    meaning:
+      "Unsafe activation: harm language, self-harm, threats, danger, destructive confrontation, crisis, dissociation.",
+    oracleTone:
+      "Pause the page. This threshold does not require danger. Step away from the exercise and seek immediate human support if anyone may be harmed.",
+    blocksUnlock: true,
+  },
+];
 
 export const ROUTES: Record<RouteId, RouteContent> = {
   false_arrival: {
@@ -238,135 +289,237 @@ It must return true.`,
     id: "burned_tongue",
     title: "Burned Tongue",
     glyph: "burned-tongue",
-    symbolic: `The tongue that speaks borrowed fire burns with another's heat.
-Until it learns silence, it will mistake the burn for warmth.`,
-    oracle: "The fire is not consuming you. It is consuming what was never yours to carry.",
+    symbolic: "The tongue remembers what the soul no longer serves.",
+    oracle: "Do not force the voice open. Give the truth one safe breath.",
     oracleReturn:
-      "You have stood here before. The tongue still speaks the borrowed fire. What word has remained un-burned?",
-    coreQuestion:
-      "What conviction do you defend most fluently — and where did that fluency actually come from?",
-    scroll: `You have spoken what was handed to you. You named it conviction.
-
-But conviction borrowed is conviction unsourced. The fire that came with the words did not come from you. It came from those who spoke before you and trained the tongue to carry their flame.
-
-This page has opened because the words still issue from a mouth that has not yet found its own voice. The corrective is not to renounce what you have spoken. It is to fall silent long enough for what is yours to surface.`,
+      "You have stood here before. The truth has not yet found its safe breath. What one sentence is ready?",
+    coreQuestion: "What truth became dangerous to speak?",
+    scroll: `There is a truth that did not disappear.
+It learned to stay behind the tongue.
+Not because it was false.
+Because speaking once carried consequence.
+Punishment. Ridicule. Loss. Abandonment. Heat.
+So the tongue remembered danger even after the soul outgrew the old room.
+This page does not ask you to shout.
+It does not ask you to confront.
+It does not ask you to say everything.
+It asks for one true sentence to touch air in a vessel safe enough to hold it.`,
     answers: [
       {
-        key: "origin",
-        label: "The Origin of the Fluency",
+        key: "truth",
+        label: "The Dangerous Truth",
+        prompt: "What truth became dangerous to speak?",
+        placeholder: "Name one truth. Not the whole story.",
+      },
+      {
+        key: "punishment",
+        label: "The Speech Punishment Memory",
         prompt:
-          "Name the conviction you defend most fluently. Then name where that fluency actually came from — whose voice, whose lineage, whose room.",
-        placeholder: "Name not the conviction but its origin.",
+          "Where did speaking, disagreeing, asking, refusing, needing, or naming truth become unsafe?",
+        placeholder:
+          "Name the room, pattern, authority, relationship, or memory without forcing details.",
+      },
+      {
+        key: "silence",
+        label: "The Old Silence Still Active",
+        prompt: "Where does the old silence still govern you now?",
+        placeholder:
+          "Name the choice, relationship, topic, boundary, or expression still held behind the tongue.",
+      },
+      {
+        key: "vessel",
+        label: "The Safe Vessel",
+        prompt:
+          "What vessel is safe enough for the first breath of this truth?",
+        placeholder: "Choose a vessel before choosing the action.",
+      },
+      {
+        key: "sentence",
+        label: "The Small True Sentence",
+        prompt:
+          "What is the one small true sentence that can safely touch air?",
+        placeholder:
+          "One sentence. No attack. No performance. No apology before the truth.",
       },
     ],
-    submitHint: "Name not the conviction but its origin.",
+    vesselSelector: {
+      title: "Choose the Safe Speech Vessel",
+      options: [
+        "Private voice note",
+        "Mirror sentence",
+        "Written sentence read aloud alone",
+        "Candle-side spoken sentence",
+        "Safe witness",
+        "Unsent boundary sentence",
+        "App spoken entry",
+      ],
+    },
+    safetyTiers: GATE_2_SAFETY_TIERS,
     journalPrompt:
-      "What sentence have you been speaking that, when you actually feel into it, was never yours?",
+      "What truth still waits behind the tongue because the body remembers consequence?",
     journalHeader: "Burned Tongue — Private Reflection",
-    trackerTitle: "Unfamiliar Honesty",
+    trackerTitle: "Safe Speech Action",
     trackerCopy:
-      "Speak one sentence today that you have never spoken because it would not be received well by those who taught you to speak.",
-    actionPreamble:
-      "The tongue cannot be re-sourced through declaration. Only through small acts of unfamiliar honesty.",
+      "Speak one small true sentence in a vessel safe enough to hold it.",
     examples: [
-      "Refuse to repeat a phrase, opinion, or framing you have used reflexively for years.",
-      "Speak aloud a disagreement to someone whose approval has been shaping your voice.",
-      "Write one paragraph in your own words, then delete every sentence that sounds like someone else.",
-      "Stay silent in a conversation where your reflexive contribution would be performative.",
+      "Speak one true sentence into a private voice note.",
+      "Read one boundary sentence aloud alone.",
+      'Tell one safe witness: "I was afraid to say this."',
+      'Say into the mirror: "I did not agree, but I stayed silent."',
+      "Write the sentence and read it aloud beside a candle.",
     ],
     invalidExamples: [
-      "I will find my own voice.",
-      "I will be more authentic in my speech.",
-      "I will stop sounding like them.",
-      "I will think more independently from now on.",
+      "I will speak my truth from now on.",
+      "I will confront everyone who silenced me.",
+      "I will never stay quiet again.",
+      "I will finally say everything.",
+      "I am now fearless.",
+      "I will post the truth publicly.",
     ],
     reflectionPrompts: [
       "What did this Spiral Path allow you to see?",
-      "Whose voice did you mistake for your own?",
-      "What single sentence have you been repeating that, if you stopped saying it, would change what you do tomorrow?",
+      "What did speaking once cost you?",
+      "Where does the old silence still issue orders today?",
     ],
     readiness: [
-      "I have named a conviction I have defended fluently.",
-      "I have traced its origin to someone other than myself.",
-      "I have chosen one specific sentence to speak — or refuse to speak — in lived reality.",
-      "The act has been scheduled or completed.",
-      "I am not using this to perform a different identity. I am using it to find my own voice.",
+      "I have named the truth that became dangerous to speak.",
+      "I have identified where speech became unsafe or punished.",
+      "I have named where the old silence still governs me.",
+      "I have chosen a safe vessel.",
+      "I have written one small true sentence.",
+      "The sentence has been spoken, recorded, or scheduled in the safe vessel.",
+      "I am not using this action for revenge, public exposure, or unsafe confrontation.",
     ],
     incompleteCopy:
-      "The page remains open. The tongue does not return to its source through resolve alone.",
+      "The page remains open. The voice does not need force. It needs one safe breath.",
     preUnlock:
-      "The fire has taken what was not yours. What remains is what was always yours to speak.",
-    unlockEpigraph: `The fire has taken what was not yours.
-What remains is what was always yours to speak.`,
-    sealLine: `I do not borrow my fire from those who taught me to speak.
-What burns in me now is mine.`,
+      "The sentence has touched air. The flame did not destroy you.",
+    unlockEpigraph: `The sentence has touched air.
+The flame did not destroy you.`,
+    // FLAGGED FOR OWNER REVIEW — drafted sealLine in Words Between Worlds voice
+    sealLine:
+      "I do not force the voice. I give one true sentence one safe breath.",
   },
 
   silenced_fire: {
     id: "silenced_fire",
     title: "Silenced Fire",
     glyph: "silenced-fire",
-    symbolic: `The fire kept inside the vessel does not extinguish.
-It burns the vessel from within.`,
-    oracle: "The fire is not the problem. The vessel sealing it is.",
+    symbolic: "Fire does not need permission. It needs right vessel.",
+    oracle: "Do not break the vessel. Let one flame move through it.",
     oracleReturn:
-      "You have stood here before. The fire still burns in silence. What sentence has remained unspoken?",
+      "You have stood here before. The fire still waits for its vessel. What one movement can hold it?",
     coreQuestion:
-      "What true thing have you not been saying — and what does not saying it cost you?",
-    scroll: `You have been silent. You called it wisdom. You called it patience. You called it not being one of those people who speaks too quickly.
-
-But the fire that you have not spoken is still in you. It has been burning quietly in places you have stopped looking. The cost is paid in the body, in the breath, in the slow erosion of capacity to feel what you actually know.
-
-This page has opened because the silence is no longer chosen. It is enforced. The corrective is not to declare yourself loudly. It is to speak the one true sentence you have been swallowing.`,
+      "What fire did you silence to remain safe, acceptable, or controlled?",
+    scroll: `There is a fire that did not die.
+It learned containment.
+It learned usefulness.
+It learned to become pleasant, productive, quiet, acceptable, controlled.
+Perhaps it was anger.
+Perhaps desire.
+Perhaps creativity.
+Perhaps a no that became obedience.
+Perhaps a yes that became shame.
+This page does not ask you to unleash everything.
+It does not ask you to burn the old life down.
+It asks for one true flame to move through a vessel that can hold it.`,
     answers: [
       {
-        key: "sentence",
-        label: "The Sentence Unspoken",
+        key: "fire",
+        label: "The Silenced Fire",
         prompt:
-          "Name the true sentence you have not been saying. Then name what not saying it has cost you.",
-        placeholder: "Name not the topic but the sentence.",
+          "What fire did you silence to remain safe, acceptable, useful, loved, or controlled?",
+        placeholder:
+          "Name the fire: anger, desire, creativity, boundary, truth, joy, ambition, body, or another living force.",
+      },
+      {
+        key: "unsafe",
+        label: "Why It Became Unsafe",
+        prompt:
+          "Why did this fire become unsafe, unacceptable, dangerous, selfish, shameful, or too much?",
+        placeholder:
+          "Name the rule, room, authority, relationship, or fear that contained it.",
+      },
+      {
+        key: "hid",
+        label: "How You Hid It",
+        prompt:
+          "How have you contained, hidden, over-controlled, performed, or disguised this fire?",
+        placeholder: "Name the strategy without condemning it.",
+      },
+      {
+        key: "vessel",
+        label: "The Right Vessel",
+        prompt: "What vessel can hold one safe movement of this fire?",
+        placeholder: "Choose the form before choosing the action.",
+      },
+      {
+        key: "movement",
+        label: "The Flame-Movement",
+        prompt:
+          "What one small movement can let this fire become real without becoming eruption?",
+        placeholder:
+          "Choose one action small enough to complete and true enough to matter.",
       },
     ],
-    submitHint: "Name not the topic but the sentence.",
+    vesselSelector: {
+      title: "Choose the Right Vessel",
+      options: [
+        "Body movement",
+        "Creative work",
+        "Clean boundary sentence",
+        "Direct request",
+        "Private uncensored paragraph",
+        "Small visible preference",
+        "Rest instead of over-functioning",
+        "Desire named without performance",
+      ],
+    },
+    safetyTiers: GATE_2_SAFETY_TIERS,
     journalPrompt:
-      "What true sentence has been waiting in your mouth, and what has it cost you to keep it there?",
+      "Where has your fire become acceptable at the cost of being alive?",
     journalHeader: "Silenced Fire — Private Reflection",
-    trackerTitle: "One True Sentence",
+    trackerTitle: "Right Vessel Action",
     trackerCopy:
-      "Speak one true sentence aloud to one specific person who has not heard it from you before.",
-    actionPreamble:
-      "Fire returns to the world through small spoken acts — not through declarations.",
+      "Complete one small flame-movement through a vessel that can hold it.",
     examples: [
-      "Tell one person something you have known to be true about them, or about your shared situation, for longer than a year.",
-      "Decline an obligation aloud that you have been quietly resenting.",
-      "State a preference that has historically been buried under accommodation.",
-      "Write the message you have drafted many times and never sent. Send it once. To one person. Without spectacle.",
+      "Move the body for five minutes without making it performance.",
+      "Write one uncensored paragraph and keep it private.",
+      "Say one clean no.",
+      "Spend 30 minutes on a creative act you stopped permitting.",
+      "Make one direct request without overexplaining.",
+      "Let anger become a boundary sentence instead of attack.",
+      "Let desire become one honest choice.",
     ],
     invalidExamples: [
-      "I will start speaking my truth more.",
-      "I will be braver in conversations.",
-      "I will share what I really think on social media.",
-      "I will write a long letter announcing my breakthrough.",
+      "I will unleash everything.",
+      "I will burn my old life down.",
+      "I will tell everyone off.",
+      "I will become unstoppable.",
+      "I will never control myself again.",
+      "My fire is my destiny.",
+      "I will prove them all wrong.",
     ],
     reflectionPrompts: [
       "What did this Spiral Path allow you to see?",
-      "Where has your silence stopped being chosen and started being enforced?",
-      "What would change if the sentence you have been swallowing were spoken once, to one person, today?",
+      "What did containing this fire cost you?",
+      "What one movement would let it live without becoming eruption?",
     ],
     readiness: [
-      "I have named a true sentence I have been keeping silent.",
-      "I have named what the silence has cost.",
-      "I have chosen one specific person to speak it to, or to.",
-      "The act has been scheduled or completed.",
-      "I am not using this to perform breakthrough. I am using it to return fire to my own voice.",
+      "I have named the fire I silenced.",
+      "I have identified why it became unsafe or unacceptable.",
+      "I have named how I contained or hid it.",
+      "I have chosen a right vessel.",
+      "I have chosen one small flame-movement.",
+      "The flame-movement has been completed or scheduled in lived reality.",
+      "I am not using this action for revenge, spectacle, rupture, or proving myself.",
     ],
     incompleteCopy:
-      "The page remains open. The vessel does not break through resolve alone.",
-    preUnlock:
-      "The vessel has cracked. The fire has returned to your mouth.",
-    unlockEpigraph: `The vessel has cracked.
-The fire has returned to your mouth.`,
-    sealLine: `I do not keep my fire sealed for the comfort of those who would prefer my silence.
-What is mine to speak, I speak.`,
+      "The page remains open. The fire does not need spectacle. It needs right vessel.",
+    preUnlock: "The flame has moved without consuming the vessel.",
+    unlockEpigraph: "The flame has moved without consuming the vessel.",
+    // FLAGGED FOR OWNER REVIEW — drafted sealLine in Words Between Worlds voice
+    sealLine:
+      "I do not break the vessel. I let one true flame move through it.",
   },
 };
