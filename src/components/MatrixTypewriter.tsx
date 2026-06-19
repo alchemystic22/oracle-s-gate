@@ -77,6 +77,10 @@ export function MatrixTypewriter({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paragraphs.length]);
 
+  const visibleText = done ? paragraphs[paragraphs.length - 1] : text;
+  const lastTyped = visibleText.at(-1) ?? "";
+  const isBreak = !done && /[\s,.;:—!?]/.test(lastTyped);
+
   return (
     <div className={className}>
       <pre
@@ -85,8 +89,8 @@ export function MatrixTypewriter({
           fontFamily: "'Oswald', 'Inter', system-ui, sans-serif",
         }}
       >
-        {done ? paragraphs[paragraphs.length - 1] : text}
-        {!done && <span className="matrix-lamp" aria-hidden />}
+        {visibleText}
+        {!done && <span className={`matrix-glint${isBreak ? " matrix-glint--break" : ""}`} aria-hidden />}
       </pre>
       <span className="sr-only">{paragraphs[phraseIdx]}</span>
     </div>
