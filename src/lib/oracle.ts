@@ -123,8 +123,55 @@ export function oracleResponse(
     }
   }
 
+  // ── Gate 4 keyword overrides ────────────────────────────────────────────
+  if (route === "doubled_name") {
+    if (q.includes("hate") && (q.includes("performed") || q.includes("name"))) {
+      return "Hatred keeps the performed name at the center. Name what it protected before you separate from it.";
+    }
+    if (q.includes("everyone") && (q.includes("real me") || q.includes("know the real"))) {
+      return "Public recognition is too large for the first vessel. Let the true name move privately before it enters a room.";
+    }
+    if (
+      q.includes("do not know what is beneath") ||
+      q.includes("don't know what is beneath") ||
+      q.includes("dont know what is beneath")
+    ) {
+      return "Then name the cost first. What has the approved name required you to withhold?";
+    }
+    if (q.includes("final identity") || (q.includes("want") && q.includes("final"))) {
+      return "Finality is not required. The page asks for one distinction, not a permanent doctrine of self.";
+    }
+    if (q.includes("was useful") || q.includes("useful")) {
+      return "Then honor its function. The work is not to despise it. The work is to stop letting it answer first.";
+    }
+  }
+  if (route === "binding_veil") {
+    if (q.includes("reveal everything") || q.includes("should reveal")) {
+      return "Tearing the veil is not the work. Find one seam that can open without violating what is sacred.";
+    }
+    if (
+      q.includes("do not know what is fear") ||
+      q.includes("don't know what is fear") ||
+      q.includes("dont know what is fear")
+    ) {
+      return "Do not decide all of it now. Name one part that protects timing, and one part that protects fear.";
+    }
+    if (q.includes("ashamed") || q.includes("shame for hiding")) {
+      return "Shame is another veil. Concealment once had a reason. Open one seam without condemning the cloth.";
+    }
+    if (q.includes("privacy") && (q.includes("avoidance") || q.includes("just avoidance"))) {
+      return "Some privacy is sacred. Some concealment is fear. This page asks you to distinguish them, not destroy them both.";
+    }
+    if (q.includes("collapse") && q.includes("boundary")) {
+      return "A collapsed boundary is not truth. Keep what protects the sacred. Open only what protects fear.";
+    }
+  }
+
   // ── Category dispatch, per route ─────────────────────────────────────────
   if (cat === "fail") {
+    if (isGate4(route)) {
+      return "The Gate has not judged you. A hidden page has opened because an echo must be distinguished before passage continues.";
+    }
     if (isGate3(route)) {
       return "The Gate has not judged you. A hidden page has opened because the grief asks to be witnessed before passage continues.";
     }
@@ -187,6 +234,22 @@ export function oracleResponse(
       return "Choose one movement small enough the body does not need to defend. A breath. A hand on the heart.";
     if (cat === "trust")
       return "This page does not ask the body to release. It asks for one safe movement the body can survive.";
+  }
+  if (route === "doubled_name") {
+    if (cat === "clarify")
+      return "Bring it to one name. What identity learned to answer for approval?";
+    if (cat === "smaller")
+      return "Make the act smaller. One private sentence. One choice made without performing the role. No public reveal.";
+    if (cat === "trust")
+      return "This page does not ask you to trust an audience with the truer name. It asks you to stop letting the performed one answer first.";
+  }
+  if (route === "binding_veil") {
+    if (cat === "clarify")
+      return "Bring it to one veil. What remains hidden and called mystery?";
+    if (cat === "smaller")
+      return "Open one seam, not the whole cloth. One honest sentence without full disclosure is enough.";
+    if (cat === "trust")
+      return "This page does not ask you to trust the world with the hidden thing. It asks you to distinguish sacred privacy from fear.";
   }
 
   return "Return to the page. The answer you need is closer than the question you asked.";
