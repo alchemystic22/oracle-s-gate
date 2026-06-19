@@ -466,3 +466,263 @@
     .candle-flame { animation: none; }
   }
 }
+
+/* ── Ritual transmission objects (cabinet altar) ────────────────────────────
+ * Distinct physical archetypes replace the prior card primitive. Hover raises
+ * a warm halo from beneath; selection plays a per-archetype gesture before
+ * the reception view mounts. */
+@layer components {
+  .transmission-object {
+    position: relative;
+    background: transparent;
+    border: 0;
+    padding: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    min-height: 180px;
+  }
+
+  .transmission-halo {
+    position: absolute;
+    left: 50%;
+    bottom: -8px;
+    transform: translateX(-50%);
+    width: 88%;
+    height: 60%;
+    pointer-events: none;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center,
+      color-mix(in oklab, var(--gold) 65%, transparent) 0%,
+      color-mix(in oklab, var(--gold-aged) 30%, transparent) 35%,
+      transparent 75%);
+    filter: blur(14px);
+    opacity: 0;
+    transition: opacity 600ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .transmission-object:hover .transmission-halo { transition-duration: 600ms; }
+  .transmission-object:not(:hover) .transmission-halo { transition-duration: 800ms; }
+
+  .transmission-figure {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    transform-origin: 50% 90%;
+    transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .transmission-img {
+    width: 100%;
+    height: auto;
+    max-width: 140px;
+    max-height: 160px;
+    object-fit: contain;
+    filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.55));
+    transition: filter 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @media (min-width: 768px) {
+    .transmission-img { max-width: 170px; max-height: 200px; }
+  }
+
+  /* Archetype-specific size tuning — some objects read better a touch larger. */
+  .transmission-open-codex .transmission-img,
+  .transmission-lectern .transmission-img { max-width: 180px; max-height: 200px; }
+  @media (min-width: 768px) {
+    .transmission-open-codex .transmission-img,
+    .transmission-lectern .transmission-img { max-width: 210px; max-height: 240px; }
+  }
+  .transmission-tuning-fork .transmission-img,
+  .transmission-glass-vial .transmission-img,
+  .transmission-bronze-bell .transmission-img { max-width: 110px; }
+  @media (min-width: 768px) {
+    .transmission-tuning-fork .transmission-img,
+    .transmission-glass-vial .transmission-img,
+    .transmission-bronze-bell .transmission-img { max-width: 130px; }
+  }
+
+  /* ── Per-archetype gestures (state="opening") ─────────────────────────── */
+
+  /* Brass bowl: expanding ring overlay */
+  .bowl-ring {
+    position: absolute;
+    left: 50%;
+    bottom: 8%;
+    width: 80%;
+    aspect-ratio: 1;
+    transform: translateX(-50%) scale(0.4);
+    border-radius: 50%;
+    border: 2px solid color-mix(in oklab, var(--gold) 70%, transparent);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .transmission-brass-bowl.is-opening .bowl-ring {
+    animation: bowl-ring-strike 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes bowl-ring-strike {
+    0%   { transform: translateX(-50%) scale(0.4); opacity: 0; }
+    15%  { opacity: 0.9; }
+    100% { transform: translateX(-50%) scale(2.2); opacity: 0; }
+  }
+  .transmission-brass-bowl.is-opening { animation: bowl-shudder 1.8s ease-out forwards; }
+  @keyframes bowl-shudder {
+    0%, 100% { transform: translateY(0); }
+    8%       { transform: translateY(-3px); }
+    16%      { transform: translateY(0); }
+  }
+
+  /* Tuning fork: visible vibration */
+  .transmission-tuning-fork.is-opening .transmission-img {
+    animation: fork-vibrate 0.06s linear infinite;
+    filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.55))
+            drop-shadow(0 0 12px color-mix(in oklab, var(--gold) 55%, transparent));
+  }
+  @keyframes fork-vibrate {
+    0%, 100% { transform: translateX(0); }
+    25%      { transform: translateX(-1.2px); }
+    75%      { transform: translateX(1.2px); }
+  }
+
+  /* Glass vial: stopper lifts, mist releases upward */
+  .vial-stopper {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translate(-50%, 0);
+    width: 26%;
+    height: auto;
+    pointer-events: none;
+    opacity: 0;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
+  }
+  .vial-mist {
+    position: absolute;
+    inset: 18% 18% 8% 18%;
+    pointer-events: none;
+    opacity: 0;
+    mix-blend-mode: screen;
+    border-radius: 12px;
+    transition: opacity 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .transmission-glass-vial:hover .vial-mist { opacity: 0.55; }
+  .transmission-glass-vial.is-opening .vial-mist {
+    opacity: 0.95;
+    animation: mist-rise 1.8s ease-out forwards;
+  }
+  .transmission-glass-vial.is-opening .vial-stopper {
+    animation: stopper-lift 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes stopper-lift {
+    0%   { opacity: 0; transform: translate(-50%, 0); }
+    20%  { opacity: 1; }
+    100% { opacity: 0; transform: translate(-50%, -110%) rotate(-8deg); }
+  }
+  @keyframes mist-rise {
+    0%   { transform: translateY(0) scale(0.9); opacity: 0.4; }
+    40%  { opacity: 1; }
+    100% { transform: translateY(-30%) scale(1.6); opacity: 0; }
+  }
+
+  /* Abalone shell: gentle tilt + sound-wave ripple */
+  .shell-ripple {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 60%;
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%) scale(0.5);
+    border-radius: 50%;
+    border: 1.5px solid color-mix(in oklab, oklch(0.85 0.12 200) 70%, transparent);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .transmission-abalone-shell.is-opening .shell-ripple {
+    animation: shell-ripple 1.8s ease-out forwards;
+  }
+  .transmission-abalone-shell.is-opening { animation: shell-tilt 1.8s ease-in-out forwards; }
+  @keyframes shell-tilt {
+    0%   { transform: rotate(0deg); }
+    50%  { transform: rotate(-7deg) translateY(-2px); }
+    100% { transform: rotate(0deg); }
+  }
+  @keyframes shell-ripple {
+    0%   { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+    20%  { opacity: 0.75; }
+    100% { transform: translate(-50%, -50%) scale(2.0); opacity: 0; }
+  }
+
+  /* Bone flute: light tracing along its length */
+  .flute-trace {
+    position: absolute;
+    inset: 35% 0 45% 0;
+    pointer-events: none;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      color-mix(in oklab, var(--gold) 80%, transparent) 50%,
+      transparent 100%);
+    mix-blend-mode: screen;
+    opacity: 0;
+    transform: translateX(-100%);
+    border-radius: 50%;
+    filter: blur(6px);
+  }
+  .transmission-bone-flute.is-opening .flute-trace {
+    animation: flute-trace 1.8s ease-out forwards;
+  }
+  @keyframes flute-trace {
+    0%   { transform: translateX(-100%); opacity: 0; }
+    20%  { opacity: 0.9; }
+    100% { transform: translateX(100%); opacity: 0; }
+  }
+
+  /* Bronze bell: single tilt + halo ring */
+  .bell-halo {
+    position: absolute;
+    left: 50%;
+    bottom: 12%;
+    width: 80%;
+    aspect-ratio: 1;
+    transform: translateX(-50%) scale(0.5);
+    border-radius: 50%;
+    border: 2px solid color-mix(in oklab, var(--gold) 70%, transparent);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .transmission-bronze-bell.is-opening .bell-halo {
+    animation: bowl-ring-strike 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .transmission-bronze-bell.is-opening { animation: bell-tilt 1.8s ease-in-out forwards; }
+  @keyframes bell-tilt {
+    0%   { transform: rotate(0deg); }
+    20%  { transform: rotate(-12deg); }
+    50%  { transform: rotate(8deg); }
+    80%  { transform: rotate(-3deg); }
+    100% { transform: rotate(0deg); }
+  }
+
+  /* Passage gestures — short illumination */
+  .transmission-leather-book.is-opening .transmission-img,
+  .transmission-stone-tablet.is-opening .transmission-img,
+  .transmission-open-codex.is-opening .transmission-img,
+  .transmission-book-on-side.is-opening .transmission-img,
+  .transmission-scroll.is-opening .transmission-img,
+  .transmission-lectern.is-opening .transmission-img {
+    animation: passage-illuminate 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes passage-illuminate {
+    0%   { filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.55)); }
+    100% { filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.55))
+                   drop-shadow(0 0 22px color-mix(in oklab, var(--gold) 75%, transparent)); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .bowl-ring, .shell-ripple, .flute-trace, .bell-halo, .vial-mist, .vial-stopper { animation: none !important; }
+    .transmission-tuning-fork.is-opening .transmission-img,
+    .transmission-brass-bowl.is-opening,
+    .transmission-abalone-shell.is-opening,
+    .transmission-bronze-bell.is-opening { animation: none !important; }
+  }
+}
