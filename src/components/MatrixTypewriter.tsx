@@ -80,15 +80,13 @@ export function MatrixTypewriter({
   return (
     <div className={className}>
       <pre
-        className="matrix-text whitespace-pre-wrap break-words font-mono m-0"
+        className="matrix-text whitespace-pre-wrap break-words m-0"
         style={{
-          fontFamily: "'VT323', 'Share Tech Mono', 'Courier New', Consolas, monospace",
+          fontFamily: "'Bebas Neue', 'Inter', system-ui, sans-serif",
         }}
       >
         {done ? paragraphs[paragraphs.length - 1] : text}
-        <span className="matrix-cursor" aria-hidden>
-          █
-        </span>
+        <span className="matrix-cursor" aria-hidden />
       </pre>
       <span className="sr-only">{paragraphs[phraseIdx]}</span>
     </div>

@@ -174,20 +174,23 @@
 
   /* ── Matrix terminal ─────────────────────────────────────────────── */
   .matrix-text {
-    color: oklch(0.92 0.16 95);
+    color: oklch(0.88 0.18 92);
     text-shadow:
-      0 0 4px color-mix(in oklab, var(--gold) 70%, transparent),
-      0 0 12px color-mix(in oklab, var(--gold) 35%, transparent),
-      0 0 28px color-mix(in oklab, var(--gold-aged) 20%, transparent);
-    letter-spacing: 0.02em;
-    line-height: 1.55;
-    font-size: clamp(1.35rem, 2.2vw, 2rem);
+      0 0 1px color-mix(in oklab, var(--gold) 60%, transparent),
+      0 0 6px color-mix(in oklab, var(--gold) 25%, transparent);
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+    /* +30% over previous clamp */
+    font-size: clamp(1.755rem, 2.86vw, 2.6rem);
   }
   .matrix-cursor {
     display: inline-block;
-    margin-left: 2px;
-    color: oklch(0.92 0.16 95);
-    text-shadow: 0 0 8px color-mix(in oklab, var(--gold) 80%, transparent);
+    width: 0.18em;
+    height: 1em;
+    margin-left: 0.18em;
+    vertical-align: -0.12em;
+    background: oklch(0.9 0.19 92);
+    box-shadow: 0 0 8px color-mix(in oklab, var(--gold) 80%, transparent);
     animation: matrix-blink 1s steps(1, end) infinite;
   }
   @keyframes matrix-blink {
