@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
-import type { ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
 import { RitualButton } from "./RitualPrimitives";
+
 
 /* Per-gate threshold. Image path comes from gate content; falls back to a CSS
    placeholder if the asset is missing or fails to load. */
@@ -232,9 +232,3 @@ export function GateThreshold({
     </motion.div>
   );
 }
-
-// Silence unused-import noise from older callers.
-type _Unused = ReactNode;
-const _unused: _Unused = null;
-void _unused;
-void useCallback;
