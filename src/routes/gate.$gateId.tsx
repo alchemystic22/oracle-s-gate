@@ -862,6 +862,77 @@ function PagePhase({
   );
 }
 
+function FlameBanner({ tier }: { tier: { id: "green" | "amber" | "red"; label: string; meaning: string; oracleTone: string } }) {
+  const isRed = tier.id === "red";
+  const borderColor = isRed ? "hsl(12 75% 60% / 0.7)" : "hsl(35 90% 60% / 0.55)";
+  const glow = isRed ? "0 0 24px hsl(12 75% 55% / 0.35)" : "0 0 20px hsl(35 90% 55% / 0.25)";
+  const labelColor = isRed ? "hsl(12 80% 78%)" : "hsl(35 90% 78%)";
+  return (
+    <div
+      className="mb-10 border p-5"
+      style={{ borderColor, background: "hsl(240 30% 8% / 0.6)", boxShadow: glow }}
+    >
+      <p className="mb-2 text-xs uppercase tracking-[0.35em]" style={{ fontFamily: "'Cinzel', serif", color: labelColor }}>
+        {tier.label}
+      </p>
+      <p className="text-sm italic leading-relaxed" style={{ fontFamily: "'Cormorant Garamond', serif", color: "hsl(43 30% 85%)" }}>
+        {tier.oracleTone}
+      </p>
+    </div>
+  );
+}
+
+function VesselSelectorBlock({
+  title,
+  options,
+  value,
+  disabled,
+  onChange,
+}: {
+  title: string;
+  options: string[];
+  value: string;
+  disabled: boolean;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <Section className="mt-10">
+      <SectionTitle>{title}</SectionTitle>
+      <p className="mb-5 text-sm italic" style={{ fontFamily: "'Cormorant Garamond', serif", color: "hsl(43 30% 70%)" }}>
+        Choose the vessel before choosing the action.
+      </p>
+      <div className="flex flex-wrap gap-3">
+        {options.map((opt) => {
+          const selected = value === opt;
+          return (
+            <button
+              key={opt}
+              type="button"
+              disabled={disabled}
+              onClick={() => onChange(selected ? "" : opt)}
+              className="border px-4 py-2 text-sm transition disabled:opacity-40"
+              style={{
+                fontFamily: "'Cormorant Garamond', serif",
+                borderColor: selected ? "hsl(43 80% 70% / 0.8)" : "hsl(43 30% 55% / 0.3)",
+                color: selected ? "hsl(43 80% 88%)" : "hsl(43 30% 78%)",
+                background: selected ? "hsl(43 80% 55% / 0.12)" : "transparent",
+                boxShadow: selected ? "0 0 18px hsl(43 80% 60% / 0.35), inset 0 0 14px hsl(43 80% 55% / 0.15)" : "none",
+              }}
+            >
+              {opt}
+            </button>
+          );
+        })}
+      </div>
+      {value && (
+        <p className="mt-4 text-xs italic" style={{ color: "hsl(43 50% 65%)" }}>
+          Vessel chosen: <span style={{ color: "hsl(43 80% 82%)" }}>{value}</span>
+        </p>
+      )}
+    </Section>
+  );
+}
+
 function Disclosure({ open, onToggle, label, children }: { open: boolean; onToggle: () => void; label: string; children: React.ReactNode }) {
   return (
     <div className="border" style={{ borderColor: "hsl(43 30% 55% / 0.2)" }}>
