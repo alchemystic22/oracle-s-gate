@@ -6,7 +6,7 @@ import { obs } from "../lib/observation";
 import { isDev } from "../lib/admin";
 import { drawTriad, pushRecentTriad, type SelectionMode, type Triad } from "../lib/resonance";
 import { CabinetChamber } from "../components/cabinet/CabinetChamber";
-import { OfferingCard } from "../components/cabinet/OfferingCard";
+import { TransmissionObject, type TransmissionState } from "../components/cabinet/TransmissionObject";
 import { OfferingPanel } from "../components/cabinet/OfferingPanel";
 import { LyricsScroll } from "../components/cabinet/LyricsScroll";
 import { ReflectionField } from "../components/cabinet/ReflectionField";
@@ -95,6 +95,7 @@ function Cabinet() {
   const [invocationDone, setInvocationDone] = useState(false);
   const [showBegin, setShowBegin] = useState(false);
   const [markedLyrics, setMarkedLyrics] = useState<string[]>([]);
+  const [openingIdx, setOpeningIdx] = useState<number | null>(null);
 
   // Reveal the Begin button 5s after the invocation completes.
   useEffect(() => {
@@ -136,13 +137,20 @@ function Cabinet() {
   }, [triad, phase]);
 
   function chooseCard(idx: number) {
-    if (!triad || phase !== "ascertainment") return;
-    if (triad.mode === "avatar_chose") {
-      setChosenIdx(idx);
+    if (!triad || phase !== "ascertainment" || openingIdx !== null) return;
+    const isAvatarPick = triad.mode === "avatar_chose";
+    const isOracleConfirm = triad.mode === "oracle_revealed" && chosenIdx !== null && idx === chosenIdx;
+    if (!isAvatarPick && !isOracleConfirm) return;
+    // Set chosen now so it's stable for the panel mount; play the object's gesture
+    // before the reception view replaces the triad. Vessels get a longer gesture
+    // (~1.8s) than passages (~0.9s) — the object's gesture IS the transition.
+    setChosenIdx(idx);
+    setOpeningIdx(idx);
+    const gestureMs = triad.triad[idx].kind === "vessel" ? 1800 : 900;
+    window.setTimeout(() => {
       setPhase("reception");
-    } else if (chosenIdx !== null && idx === chosenIdx) {
-      setPhase("reception");
-    }
+      setOpeningIdx(null);
+    }, gestureMs);
   }
 
   function saveReflection(text: string, stored: boolean) {
@@ -236,17 +244,19 @@ function Cabinet() {
             {phase === "reverence" ? (
               <div className="h-[280px] md:h-[340px]" aria-hidden />
             ) : (
-              <div className="grid grid-cols-3 gap-4 md:gap-10 mt-2 mb-12">
+              <div className="grid grid-cols-3 gap-6 md:gap-14 mt-2 mb-12 items-end">
                 {triad.triad.map((o, i) => {
-                  let cardState: "facedown" | "illuminated" | "receded" | "flipped" = "facedown";
-                  if (phase === "ascertainment" && chosenIdx !== null && triad.mode === "oracle_revealed") {
-                    cardState = i === chosenIdx ? "illuminated" : "receded";
+                  let objState: TransmissionState = "present";
+                  if (openingIdx !== null) {
+                    objState = i === openingIdx ? "opening" : "receded";
+                  } else if (phase === "ascertainment" && chosenIdx !== null && triad.mode === "oracle_revealed") {
+                    objState = i === chosenIdx ? "illuminated" : "receded";
                   }
                   return (
-                    <OfferingCard
+                    <TransmissionObject
                       key={o.id}
                       offering={o}
-                      state={cardState}
+                      state={objState}
                       index={i}
                       onSelect={() => chooseCard(i)}
                     />

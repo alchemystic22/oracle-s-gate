@@ -1,9 +1,11 @@
 import { motion } from "framer-motion";
 import { type ReactNode } from "react";
 import { MeasuredReveal } from "../MeasuredReveal";
+import { TransmissionObject } from "./TransmissionObject";
 import type { Offering } from "../../data/cabinet";
 
-/** Reception view of a selected transmission. Glyph → source (if canonical) → title → body (passage) or vessel slot. */
+/** Reception view of a selected transmission. Object rests at the head of the
+ *  panel → source (if canonical) → title → body (passage) or vessel slot. */
 export function OfferingPanel({
   offering,
   repeated,
@@ -25,14 +27,13 @@ export function OfferingPanel({
       transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
       className="relative max-w-2xl mx-auto"
     >
-      <div className="text-center">
+      <div className="text-center flex flex-col items-center">
         <motion.div
-          initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-          className="text-5xl text-gold mb-6"
-          style={{ textShadow: "0 0 20px color-mix(in oklab, var(--gold) 50%, transparent)" }}
+          initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+          className="mb-6"
         >
-          {offering.glyph}
+          <TransmissionObject offering={offering} state="illuminated" index={0} />
         </motion.div>
         {repeated && (
           <motion.p
