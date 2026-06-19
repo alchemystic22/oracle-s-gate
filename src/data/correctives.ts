@@ -10,7 +10,9 @@ export type RouteId =
   | "hidden_grief"
   | "withheld_tears"
   | "doubled_name"
-  | "binding_veil";
+  | "binding_veil"
+  | "unspoken_truth"
+  | "forgotten_light";
 
 export type GlyphId =
   | "cracked-sun"
@@ -20,7 +22,9 @@ export type GlyphId =
   | "hidden-grief"
   | "withheld-tears"
   | "doubled-name"
-  | "binding-veil";
+  | "binding-veil"
+  | "unspoken-truth"
+  | "forgotten-light";
 
 export type AnswerField = {
   key: string;
