@@ -7,7 +7,7 @@ export type GateMeta = {
 
 export const GATES: GateMeta[] = [
   { id: 1, name: "The Broken Vow",       epithet: "Where the world's promise fractures, and the soul begins to see.", pos: { x: 50, y: 52 } },
-  { id: 2, name: "The Inheritance",      epithet: "Of what was given without consent.",                                pos: { x: 22, y: 38 } },
+  { id: 2, name: "Soul Fire",            epithet: "Only what endures the flame is real.",                              pos: { x: 22, y: 38 } },
   { id: 3, name: "The Mirror",           epithet: "Where the face is met.",                                            pos: { x: 78, y: 38 } },
   { id: 4, name: "The Marrow",           epithet: "Where the lineage rearranges.",                                     pos: { x: 14, y: 70 } },
   { id: 5, name: "The Quiet Yes",        epithet: "Built from a thousand refusals.",                                   pos: { x: 86, y: 70 } },
