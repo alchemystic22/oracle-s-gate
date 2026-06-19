@@ -101,6 +101,16 @@ const AMBER_KEYWORDS = [
   "start over completely",
   "prove i am not",
   "become my true self overnight",
+  // Gate 5 proclamation / domination markers (Flared Word tier).
+  "make them understand",
+  "declare it",
+  "reality will obey",
+  "call them out",
+  "post publicly",
+  "make this public",
+  "show them who i am",
+  "prove my gift",
+  "this is my destiny",
 ];
 
 export function detectFlameTier(...texts: (string | undefined | null)[]): FlameTier {
