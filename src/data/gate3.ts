@@ -13,6 +13,8 @@ export const GATE_3_CONTENT: GateContent = {
   // adopts the image's native shape so MEMORIA inscription and the ground
   // offerings (quill, keys, scattered tokens) remain visible without cropping.
   thresholdAspect: "571 / 847",
+  thresholdRitualOverlays: false,
+
   headerEpithet: "Gate 3 — The Stone Garden of Grief",
   thresholdCopy: `The Gate stands before you.
 It does not require haste.
