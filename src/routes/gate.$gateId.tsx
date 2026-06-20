@@ -20,6 +20,7 @@ import { MeasuredReveal } from "../components/MeasuredReveal";
 import { RitualButton, Section, SectionTitle, Glyph } from "../components/ritual/RitualPrimitives";
 import { GateThreshold } from "../components/ritual/GateThreshold";
 import { BookEmergence, BookShell } from "../components/ritual/Book";
+import { Gate7Orchestrator } from "../components/ritual/gate7/Gate7Orchestrator";
 import { useTimeLock } from "../lib/timelock";
 import { detectSafetyConcern, SAFETY_COPY, detectFlameTier, type FlameTier } from "../lib/safety";
 import { ORACLE_CATEGORIES, oracleResponse, type OracleCategory } from "../lib/oracle";
@@ -63,6 +64,11 @@ function GatePage() {
   })();
 
   if (!accessible) return <Locked text="This gate is not yet yours." />;
+
+  // Gate 7 is a release threshold, not a corrective gate. It does not use
+  // the Gates 1–6 content pack / Book / route pipeline; render its own
+  // surfaces directly.
+  if (id === 7) return <Gate7Orchestrator state={state} update={update} />;
 
   // Gates without authored content are sealed.
   if (!content) return <SealedGate id={id} name={gate.name} />;
