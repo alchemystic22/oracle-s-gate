@@ -12,7 +12,9 @@ export type RouteId =
   | "doubled_name"
   | "binding_veil"
   | "unspoken_truth"
-  | "forgotten_light";
+  | "forgotten_light"
+  | "fractured_pattern"
+  | "erased_face";
 
 export type GlyphId =
   | "cracked-sun"
@@ -24,7 +26,9 @@ export type GlyphId =
   | "doubled-name"
   | "binding-veil"
   | "unspoken-truth"
-  | "forgotten-light";
+  | "forgotten-light"
+  | "fractured-pattern"
+  | "erased-face";
 
 export type AnswerField = {
   key: string;
@@ -214,6 +218,41 @@ const GATE_5_SAFETY_TIERS: SafetyTier[] = [
       "Unsafe: threats, harm language, coercive intent, crisis-level intensity, mania-like certainty, delusional command language, spiritual domination, public destruction impulse, inability to ground, danger to self/others.",
     oracleTone:
       "Pause the page. This threshold does not require speech that can harm. Step away and seek immediate human support if there is danger or you cannot ground.",
+    blocksUnlock: true,
+  },
+];
+
+// Shared Gate 6 safety tiers (Fractured Pattern and Erased Face use the same set).
+// Parallel to Gates 2–5; reuses green/amber/red ids so detectFlameTier
+// applies unchanged. Fallen Crown blocks unlock. Visual edge treatment is a
+// darkened mirror-crown field with a subdued red-violet / ash-gold warning
+// — never a literal shattered crown.
+const GATE_6_SAFETY_TIERS: SafetyTier[] = [
+  {
+    id: "green",
+    label: "Steady Crown",
+    meaning:
+      "Avatar grounded; pattern named without destiny inflation; fragments specific and limited; act small; no public legacy declaration, forced wholeness, superiority, or self-erasure.",
+    oracleTone:
+      "The mirror can hold this pattern. Keep the crown small enough to carry.",
+    blocksUnlock: false,
+  },
+  {
+    id: "amber",
+    label: "Tilted Crown",
+    meaning:
+      "Avatar urgent, inflated, collapsed, ashamed, or over-certain; wants the pattern to explain everything, declare destiny, claim public meaning, force wholeness, or erase a fragment that does not fit.",
+    oracleTone:
+      "The pattern is becoming heavier than the vessel. Hold fewer fragments and make the act smaller.",
+    blocksUnlock: false,
+  },
+  {
+    id: "red",
+    label: "Fallen Crown",
+    meaning:
+      "Unsafe: self-harm, danger to self/others, panic, dissociation, mania-like or delusional or conspiracy-style pattern certainty, crisis-level despair, extreme self-erasure, immediate major life rupture from pattern revelation.",
+    oracleTone:
+      "Pause the page. This threshold does not require you to build from the pattern while unstable. Step away and seek immediate human support if there is danger or you cannot ground.",
     blocksUnlock: true,
   },
 ];

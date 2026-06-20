@@ -111,6 +111,15 @@ const AMBER_KEYWORDS = [
   "show them who i am",
   "prove my gift",
   "this is my destiny",
+  // Gate 6 pattern-inflation markers (Tilted Crown tier).
+  "this proves my destiny",
+  "everything was leading to this",
+  "explains my whole life",
+  "i was chosen",
+  "build my legacy",
+  "make every wound meaningful",
+  "everything is connected",
+  "this is my life work",
 ];
 
 export function detectFlameTier(...texts: (string | undefined | null)[]): FlameTier {
