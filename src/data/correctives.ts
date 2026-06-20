@@ -1432,4 +1432,275 @@ What was dim has been tended.`,
     sealLine:
       "I do not crown the light. I feed it one lived signal.",
   },
+
+  // ── Gate 6 — The Mirror Crown ─────────────────────────────────────────────
+
+  fractured_pattern: {
+    id: "fractured_pattern",
+    title: "Fractured Pattern",
+    glyph: "fractured-pattern",
+    symbolic: "The pieces were not random. But they are not yet blueprint.",
+    oracle:
+      "Do not crown the pattern too soon. Hold three fragments until one line becomes honest.",
+    oracleReturn:
+      "You have stood here before. The fragments still resist the line. Which three will you hold this time?",
+    coreQuestion:
+      "What recurring pattern keeps appearing, but remains too fractured to build from?",
+    scroll: `There is a pattern that has been speaking through fragments.
+A wound.
+A success.
+A loss.
+A repeated room.
+A symbol that keeps returning.
+A choice that appears in different clothing.
+But fragments are not yet blueprint.
+Pattern is not crown simply because it can be seen.
+This page does not ask you to explain your whole life.
+It does not ask you to declare destiny.
+It asks you to hold three fragments long enough for one honest line to appear.`,
+    answers: [
+      {
+        key: "pattern",
+        label: "The Recurring Pattern",
+        prompt:
+          "What recurring pattern keeps appearing, but remains too fractured to build from?",
+        placeholder: "Name one pattern only. Do not explain the whole life.",
+      },
+      {
+        key: "fragment_one",
+        label: "Fragment One",
+        prompt:
+          "Where did this pattern appear first, or where do you remember it most clearly?",
+        placeholder:
+          "Name one life-fragment, event, role, relationship, season, wound, success, or symbol.",
+      },
+      {
+        key: "fragment_two",
+        label: "Fragment Two",
+        prompt:
+          "Where did the same pattern appear again in a different form?",
+        placeholder: "Name the second fragment without forcing the connection.",
+      },
+      {
+        key: "fragment_three",
+        label: "Fragment Three",
+        prompt:
+          "Where does this pattern appear now, or where is it asking to be held differently?",
+        placeholder:
+          "Name the third fragment as it appears in present reality.",
+      },
+      {
+        key: "honest_line",
+        label: "The Honest Line",
+        prompt:
+          "What one honest line connects these three fragments without turning them into destiny, superiority, or proof?",
+        placeholder:
+          "One sentence. Honest enough to hold. Small enough to live.",
+      },
+      {
+        key: "coherence_act",
+        label: "The Coherence Act",
+        prompt:
+          "What one small act can make this pattern more coherent without crowning it too soon?",
+        placeholder:
+          "Choose one action that changes how the pattern is held in lived reality.",
+      },
+    ],
+    vesselSelector: {
+      title: "Choose the Coherence Vessel",
+      options: [
+        "Three-fragment map in the app",
+        "Three symbolic objects before a mirror",
+        "One private pattern sentence",
+        "App journal entry only",
+        "One practical system adjustment",
+        "One boundary based on the pattern",
+        "One calendar change that reflects the pattern",
+        "One page of pattern notes kept private",
+        "One diagram with three points and one connecting line",
+        "One action that stops repeating the same fragment unconsciously",
+      ],
+    },
+    safetyTiers: GATE_6_SAFETY_TIERS,
+    journalPrompt:
+      "What pattern keeps returning because it has not yet been held coherently?",
+    journalHeader: "Fractured Pattern — Private Reflection",
+    trackerTitle: "Coherence-Building Act",
+    trackerCopy:
+      "Map one recurring pattern across three fragments and complete one small act that makes the pattern more coherent without crowning it too soon.",
+    examples: [
+      "Write three fragments and one honest connecting sentence.",
+      "Place three symbolic objects before a mirror and name one line between them.",
+      "Make one small practical system adjustment based on the pattern.",
+      "Create one boundary that prevents the pattern from repeating unconsciously.",
+      "Change one calendar block to reflect what the pattern has revealed.",
+      "Draw a three-point map and leave the circle incomplete.",
+      "Name the pattern privately, then complete one grounded act that honors the connection.",
+    ],
+    invalidExamples: [
+      "This proves my destiny.",
+      "Everything was leading to this.",
+      "I will build my entire legacy from this now.",
+      "This explains my whole life.",
+      "I will make every wound meaningful.",
+      "I will post the pattern publicly.",
+      "I will erase the fragment that does not fit.",
+      "I will force the pattern to become whole.",
+    ],
+    reflectionPrompts: [
+      "What did this Spiral Path allow you to see?",
+      "Which fragment have you been tempted to erase because it does not fit?",
+      "What one honest line can hold the pattern without crowning it?",
+    ],
+    readiness: [
+      "I have named one recurring pattern.",
+      "I have named three specific fragments.",
+      "I have written one honest line connecting the fragments.",
+      "I have chosen a coherence vessel.",
+      "I have chosen one coherence-building act.",
+      "The coherence-building act has been completed or scheduled.",
+      "I am not using this pattern for destiny inflation, public legacy claims, superiority, forced wholeness, or fragment erasure.",
+    ],
+    incompleteCopy:
+      "The page remains open. The pattern does not need a crown yet. It needs one honest line.",
+    preUnlock:
+      "Three fragments have been held. One honest line has appeared.",
+    unlockEpigraph: `Three fragments have been held.
+One honest line has appeared.`,
+    // FLAGGED FOR OWNER REVIEW — drafted sealLine in Words Between Worlds voice
+    sealLine:
+      "I do not crown the pattern too soon. I hold the fragments until one honest line can carry them.",
+  },
+
+  erased_face: {
+    id: "erased_face",
+    title: "The Erased Face",
+    glyph: "erased-face",
+    symbolic: "What was erased from the pattern still belongs to the crown.",
+    oracle:
+      "Restore one feature. Do not force the whole face to return at once.",
+    oracleReturn:
+      "You have stood here before. The face is still incomplete. Which one feature is ready to return?",
+    coreQuestion:
+      "What face, feature, expression, or presence was erased so the pattern could remain acceptable?",
+    scroll: `Some patterns survive by removing a face.
+A softness.
+A fire.
+A grief.
+A preference.
+A voice.
+A request.
+A strange brilliance.
+A visible need.
+A living expression that made the whole arrangement less acceptable.
+So the face disappeared from the mirror.
+This page does not ask you to restore everything at once.
+It does not ask you to reveal the erased face to the world.
+It asks for one feature to return safely enough that the pattern becomes more whole without becoming violent.`,
+    answers: [
+      {
+        key: "erased_feature",
+        label: "The Erased Feature",
+        prompt:
+          "What face, feature, expression, or presence was erased so the pattern could remain acceptable?",
+        placeholder: "Name one erased feature only.",
+      },
+      {
+        key: "why_erased",
+        label: "Why It Was Erased",
+        prompt:
+          "Why did this feature have to disappear: survival, belonging, perfection, role, spirituality, family, audience, safety, or legacy pressure?",
+        placeholder:
+          "Name the reason gently without condemning the survival pattern.",
+      },
+      {
+        key: "still_appears",
+        label: "Where It Still Appears",
+        prompt: "Where does this erased feature still appear, even faintly?",
+        placeholder: "Name one place where it still lives.",
+      },
+      {
+        key: "protected_continuity",
+        label: "What Protected Continuity",
+        prompt:
+          "What surviving face, role, or structure kept you visible enough to continue?",
+        placeholder:
+          "Name what protected continuity without making it the enemy.",
+      },
+      {
+        key: "restoration_act",
+        label: "The Restoration Act",
+        prompt:
+          "What one safe act can let this erased feature re-enter the pattern without forcing the whole face to return?",
+        placeholder: "Choose one restoration act small enough to hold.",
+      },
+    ],
+    vesselSelector: {
+      title: "Choose the Restoration Vessel",
+      options: [
+        "Private mirror naming",
+        "App journal entry only",
+        "One safe witness",
+        "One ordinary request",
+        "One creative act including the erased feature",
+        "One boundary protecting the returning feature",
+        "Private voice note",
+        "One photograph, symbol, or object that represents the erased feature",
+        "One non-public act of expression",
+        'One sentence beginning: "This feature still belongs."',
+        "One small preference expressed without apology",
+        "One quiet restoration ritual with mirror, candle, or object",
+      ],
+    },
+    safetyTiers: GATE_6_SAFETY_TIERS,
+    journalPrompt:
+      "What part of the face still belongs, though the pattern learned to omit it?",
+    journalHeader: "The Erased Face — Private Reflection",
+    trackerTitle: "Restoration Act",
+    trackerCopy:
+      "Name one erased feature and complete one safe act that lets it re-enter the pattern without forcing the whole face to return.",
+    examples: [
+      'Say privately: "This feature still belongs."',
+      "Tell one safe witness one missing quality without turning it into a full confession.",
+      "Make one ordinary request that includes the erased feature.",
+      "Complete one creative act that includes the erased feature.",
+      "Set one boundary that protects the returning feature.",
+      "Place one object before a mirror to represent what is returning.",
+      "Express one small preference without apology.",
+      "Record one private voice note naming the feature.",
+    ],
+    invalidExamples: [
+      "I will reveal the erased face publicly.",
+      "I will become this erased part completely.",
+      "I will destroy the face that survived.",
+      "I will force the whole face to return tonight.",
+      "I will make this erased part my new identity.",
+      "I will prove I was erased.",
+      "I will expose everyone who erased me.",
+      "I will erase the old pattern by force.",
+    ],
+    reflectionPrompts: [
+      "What did this Spiral Path allow you to see?",
+      "What did this feature's disappearance protect?",
+      "What one feature is ready to return without forcing the whole face?",
+    ],
+    readiness: [
+      "I have named one erased feature.",
+      "I have named why it was erased.",
+      "I have identified where it still appears.",
+      "I have named what protected continuity without condemning it.",
+      "I have chosen a restoration vessel.",
+      "I have chosen one restoration act.",
+      "The restoration act has been completed or scheduled.",
+      "I am not using this restoration for public exposure, identity rupture, forced wholeness, revenge, or making the erased feature into the whole self.",
+    ],
+    incompleteCopy:
+      "The page remains open. The whole face does not need to return at once. One feature is enough.",
+    preUnlock: "One feature has returned. The mirror did not break.",
+    unlockEpigraph: `One feature has returned.
+The mirror did not break.`,
+    // FLAGGED FOR OWNER REVIEW — drafted sealLine in Words Between Worlds voice
+    sealLine:
+      "I do not force the whole face to return. I let one erased feature take its place in the pattern again.",
+  },
 };
