@@ -133,6 +133,14 @@ export const ForgottenLight = () => (
   <Artifact src="/assets/glyphs/gate-5/forgotten-light.svg" alt="A covered lantern beneath a dark cloth, with one gold ray escaping through a narrow opening" />
 );
 
+export const FracturedPattern = () => (
+  <Artifact src="/assets/glyphs/gate-6/fractured-pattern.png" alt="An obsidian mirror reflecting a broken geometric pattern, three gold fragments joined by a single thin gold line that does not yet close the circle" />
+);
+
+export const ErasedFace = () => (
+  <Artifact src="/assets/glyphs/gate-6/erased-face.png" alt="A faceless silver reflection inside a crowned obsidian mirror, with one missing feature returning as a thin gold line" />
+);
+
 type GlyphComponent = () => ReactNode;
 
 const GLYPHS: Record<GlyphId, GlyphComponent> = {
@@ -146,6 +154,8 @@ const GLYPHS: Record<GlyphId, GlyphComponent> = {
   "binding-veil": BindingVeil,
   "unspoken-truth": UnspokenTruth,
   "forgotten-light": ForgottenLight,
+  "fractured-pattern": FracturedPattern,
+  "erased-face": ErasedFace,
 };
 
 export function Glyph({ id }: { id: GlyphId }) {

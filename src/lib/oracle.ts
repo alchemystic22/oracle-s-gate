@@ -21,6 +21,7 @@ const isGate2 = (r: RouteId) => r === "burned_tongue" || r === "silenced_fire";
 const isGate3 = (r: RouteId) => r === "hidden_grief" || r === "withheld_tears";
 const isGate4 = (r: RouteId) => r === "doubled_name" || r === "binding_veil";
 const isGate5 = (r: RouteId) => r === "unspoken_truth" || r === "forgotten_light";
+const isGate6 = (r: RouteId) => r === "fractured_pattern" || r === "erased_face";
 
 export function oracleResponse(
   route: RouteId,
@@ -34,6 +35,9 @@ export function oracleResponse(
     return "Only this page is before you now. The rest of the map is not needed for this threshold.";
   }
   if (q.includes("skip") && q.includes("action")) {
+    if (isGate6(route)) {
+      return "No. The page completes when the pattern or erased feature enters one grounded act.";
+    }
     if (isGate5(route)) {
       return "No. The page completes when word and action align.";
     }
@@ -49,6 +53,9 @@ export function oracleResponse(
     return "No. The page does not close through reflection alone. One action must touch lived reality.";
   }
   if (q.includes("choose") && (q.includes("for me") || q.includes("my action"))) {
+    if (isGate6(route)) {
+      return "I can help make the pattern smaller and clearer. I cannot crown the pattern in your place.";
+    }
     if (isGate5(route)) {
       return "I can help make the sentence smaller and the action clearer. I cannot speak the word in your place.";
     }
@@ -62,6 +69,19 @@ export function oracleResponse(
       return "I can help make the vessel gentler and the act smaller. I cannot grieve in your place.";
     }
     return "I can help you make the action smaller and clearer. I cannot choose your obedience for you.";
+  }
+
+  // ── Gate 6 universal overrides ──────────────────────────────────────────
+  if (isGate6(route)) {
+    if (q.includes("destiny")) {
+      return "Destiny is too large for this page. Hold the pattern through one small act before naming its future.";
+    }
+    if (q.includes("legacy") || (q.includes("build") && q.includes("life work"))) {
+      return "Not yet. Legacy is too large for an untested pattern. Choose one coherence act first.";
+    }
+    if (q.includes("name the blueprint") || (q.includes("blueprint") && q.includes("for me"))) {
+      return "I can help make the pattern smaller and clearer. I cannot crown the pattern in your place.";
+    }
   }
 
   // ── Gate 5 universal overrides ──────────────────────────────────────────
@@ -225,8 +245,47 @@ export function oracleResponse(
     }
   }
 
+  // ── Gate 6 keyword overrides ────────────────────────────────────────────
+  if (route === "fractured_pattern") {
+    if (q.includes("too many connections") || q.includes("see too many")) {
+      return "Too many lines will distort the mirror. Choose three fragments only.";
+    }
+    if (q.includes("explains everything") || q.includes("explain everything")) {
+      return "The pattern does not need to explain everything. It only needs to reveal one honest line.";
+    }
+    if (q.includes("make this public") || q.includes("want to make this public") || q.includes("post the pattern")) {
+      return "Public meaning is too large for an untested pattern. Let the pattern become coherent privately first.";
+    }
+    if (q.includes("does not fit") || q.includes("doesn't fit") || q.includes("doesnt fit")) {
+      return "Do not remove it yet. The fragment that does not fit may be the one protecting the truth of the pattern.";
+    }
+    if (q.includes("life work") || (q.includes("turn this into") && q.includes("work"))) {
+      return "Life work is too large for this threshold. Build one small coherence before naming the architecture.";
+    }
+  }
+  if (route === "erased_face") {
+    if (q.includes("reveal") && (q.includes("publicly") || q.includes("erased face"))) {
+      return "Public recognition is too large for the first restoration. Let one feature return privately before it enters a room.";
+    }
+    if (q.includes("ashamed") || q.includes("shame that this was erased") || q.includes("shame for being erased")) {
+      return "Shame is another erasure. Name what had to disappear without condemning why it disappeared.";
+    }
+    if (q.includes("hate the surviving") || (q.includes("hate") && q.includes("surviving"))) {
+      return "The surviving face protected continuity. Do not punish what kept you visible enough to remain.";
+    }
+    if (q.includes("become this erased") || q.includes("become this") || (q.includes("entirely") && q.includes("face"))) {
+      return "The erased feature is not the whole crown. Restore one feature without making it the total identity.";
+    }
+    if (q.includes("do not know what was erased") || q.includes("don't know what was erased") || q.includes("dont know what was erased")) {
+      return "Look for the absent signal. What part of you never gets included when the story is told?";
+    }
+  }
+
   // ── Category dispatch, per route ─────────────────────────────────────────
   if (cat === "fail") {
+    if (isGate6(route)) {
+      return "The Gate has not judged you. A hidden page has opened because the pattern must be held before it can become crown.";
+    }
     if (isGate5(route)) {
       return "The Gate has not judged you. A hidden page has opened because the word must find its body before passage continues.";
     }
@@ -327,6 +386,22 @@ export function oracleResponse(
       return "Choose one act of allegiance small enough to complete. Thirty minutes. One page. One protected hour.";
     if (cat === "trust")
       return "This page does not ask you to crown the light. It asks for one lived signal that you still tend it.";
+  }
+  if (route === "fractured_pattern") {
+    if (cat === "clarify")
+      return "Choose three fragments only. The whole life is too large for this page.";
+    if (cat === "smaller")
+      return "Make the act smaller. One honest line. One coherence-building move. No life overhaul.";
+    if (cat === "trust")
+      return "This page does not ask you to trust the pattern as destiny. It asks whether one honest line can hold three fragments.";
+  }
+  if (route === "erased_face") {
+    if (cat === "clarify")
+      return "Look for what never appears in the pattern. A preference. A softness. A fire. A grief. A face. A request. A voice.";
+    if (cat === "smaller")
+      return "Restore one feature, not the whole face. Choose an act safe enough that the mirror does not break.";
+    if (cat === "trust")
+      return "This page does not ask you to trust the world with the erased face. It asks whether one feature can return without forcing the whole.";
   }
 
   return "Return to the page. The answer you need is closer than the question you asked.";
