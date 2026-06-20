@@ -245,8 +245,47 @@ export function oracleResponse(
     }
   }
 
+  // ── Gate 6 keyword overrides ────────────────────────────────────────────
+  if (route === "fractured_pattern") {
+    if (q.includes("too many connections") || q.includes("see too many")) {
+      return "Too many lines will distort the mirror. Choose three fragments only.";
+    }
+    if (q.includes("explains everything") || q.includes("explain everything")) {
+      return "The pattern does not need to explain everything. It only needs to reveal one honest line.";
+    }
+    if (q.includes("make this public") || q.includes("want to make this public") || q.includes("post the pattern")) {
+      return "Public meaning is too large for an untested pattern. Let the pattern become coherent privately first.";
+    }
+    if (q.includes("does not fit") || q.includes("doesn't fit") || q.includes("doesnt fit")) {
+      return "Do not remove it yet. The fragment that does not fit may be the one protecting the truth of the pattern.";
+    }
+    if (q.includes("life work") || (q.includes("turn this into") && q.includes("work"))) {
+      return "Life work is too large for this threshold. Build one small coherence before naming the architecture.";
+    }
+  }
+  if (route === "erased_face") {
+    if (q.includes("reveal") && (q.includes("publicly") || q.includes("erased face"))) {
+      return "Public recognition is too large for the first restoration. Let one feature return privately before it enters a room.";
+    }
+    if (q.includes("ashamed") || q.includes("shame that this was erased") || q.includes("shame for being erased")) {
+      return "Shame is another erasure. Name what had to disappear without condemning why it disappeared.";
+    }
+    if (q.includes("hate the surviving") || (q.includes("hate") && q.includes("surviving"))) {
+      return "The surviving face protected continuity. Do not punish what kept you visible enough to remain.";
+    }
+    if (q.includes("become this erased") || q.includes("become this") || (q.includes("entirely") && q.includes("face"))) {
+      return "The erased feature is not the whole crown. Restore one feature without making it the total identity.";
+    }
+    if (q.includes("do not know what was erased") || q.includes("don't know what was erased") || q.includes("dont know what was erased")) {
+      return "Look for the absent signal. What part of you never gets included when the story is told?";
+    }
+  }
+
   // ── Category dispatch, per route ─────────────────────────────────────────
   if (cat === "fail") {
+    if (isGate6(route)) {
+      return "The Gate has not judged you. A hidden page has opened because the pattern must be held before it can become crown.";
+    }
     if (isGate5(route)) {
       return "The Gate has not judged you. A hidden page has opened because the word must find its body before passage continues.";
     }
