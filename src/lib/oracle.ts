@@ -387,6 +387,22 @@ export function oracleResponse(
     if (cat === "trust")
       return "This page does not ask you to crown the light. It asks for one lived signal that you still tend it.";
   }
+  if (route === "fractured_pattern") {
+    if (cat === "clarify")
+      return "Choose three fragments only. The whole life is too large for this page.";
+    if (cat === "smaller")
+      return "Make the act smaller. One honest line. One coherence-building move. No life overhaul.";
+    if (cat === "trust")
+      return "This page does not ask you to trust the pattern as destiny. It asks whether one honest line can hold three fragments.";
+  }
+  if (route === "erased_face") {
+    if (cat === "clarify")
+      return "Look for what never appears in the pattern. A preference. A softness. A fire. A grief. A face. A request. A voice.";
+    if (cat === "smaller")
+      return "Restore one feature, not the whole face. Choose an act safe enough that the mirror does not break.";
+    if (cat === "trust")
+      return "This page does not ask you to trust the world with the erased face. It asks whether one feature can return without forcing the whole.";
+  }
 
   return "Return to the page. The answer you need is closer than the question you asked.";
 }
