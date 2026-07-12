@@ -13,6 +13,7 @@ export type ProtectedReassessmentRecord = {
   newManifestInstanceId: string;
   newRouteToken: string;
   newRouteBindingRevision: number;
+  priorProtectedRouteId: CanonicalRouteId;
   newProtectedRouteId: CanonicalRouteId;
   retainedSharedOpening: true;
   staleDomains: readonly ["responses", "gate_act", "evidence", "validations"];
@@ -24,6 +25,7 @@ export type CompileRouteReassessmentInput = Omit<
   "stage" | "routeBinding"
 > & {
   previousManifest: ParticipantManifest;
+  previousRouteBinding: ProtectedRouteBinding;
   routeBinding: ProtectedRouteBinding;
 };
 
@@ -32,12 +34,16 @@ export function compileRouteReassessment(input: CompileRouteReassessmentInput): 
   protectedRecord: ProtectedReassessmentRecord;
 } {
   const previous = input.previousManifest;
+  const previousBinding = input.previousRouteBinding;
   if (
     previous.stage !== "active_route" ||
     !previous.routeToken ||
     previous.routeBindingRevision === undefined ||
     input.routeBinding.routeToken === previous.routeToken ||
-    input.routeBinding.routeBindingRevision <= previous.routeBindingRevision
+    input.routeBinding.routeBindingRevision <= previous.routeBindingRevision ||
+    previousBinding.routeToken !== previous.routeToken ||
+    previousBinding.routeBindingRevision !== previous.routeBindingRevision ||
+    input.routeBinding.protectedRouteId === previousBinding.protectedRouteId
   ) {
     throw new Error("Route reassessment binding rotation is invalid");
   }
@@ -66,6 +72,7 @@ export function compileRouteReassessment(input: CompileRouteReassessmentInput): 
       newManifestInstanceId: participantManifest.manifestInstanceId,
       newRouteToken: input.routeBinding.routeToken,
       newRouteBindingRevision: input.routeBinding.routeBindingRevision,
+      priorProtectedRouteId: previousBinding.protectedRouteId,
       newProtectedRouteId: input.routeBinding.protectedRouteId,
       retainedSharedOpening: true,
       staleDomains: ["responses", "gate_act", "evidence", "validations"],

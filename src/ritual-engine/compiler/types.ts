@@ -8,7 +8,7 @@ import type {
 
 export type ParticipantManifestStage = "pre_route" | "active_route" | "completion";
 
-export type OpaqueIdKind = "manifest" | "scene" | "question";
+export type OpaqueIdKind = "manifest" | "scene" | "interaction" | "question" | "transition";
 export type OpaqueIdFactory = { next(kind: OpaqueIdKind): string };
 
 export type ParticipantAssetRecord = {
@@ -25,7 +25,10 @@ export type ParticipantScene = {
   heading?: string;
   narration?: readonly string[];
   prompt?: string;
-  interaction?: ParticipantInteractionDefinition & { runtimeQuestionId?: string };
+  interaction?: ParticipantInteractionDefinition & {
+    runtimeInteractionId: string;
+    runtimeQuestionId?: string;
+  };
   primaryAction?: ParticipantActionDefinition;
   secondaryAction?: ParticipantActionDefinition;
   accessibility: {
@@ -34,7 +37,7 @@ export type ParticipantScene = {
     screenReaderSequence?: readonly string[];
   };
   assetRefs?: readonly string[];
-  transitions: readonly { targetRuntimeSceneId: string }[];
+  transitions: readonly { runtimeTransitionId: string; targetRuntimeSceneId: string }[];
 };
 
 export type ParticipantManifest = {

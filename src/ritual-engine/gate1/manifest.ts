@@ -3,6 +3,7 @@ import {
   ManifestValidationError,
   resolveCanonicalPath,
   validateQuestionPreparation,
+  validatePreparationFlow,
   validateRouteConvergence,
   validateSceneGraph,
 } from "../manifest/graphValidation";
@@ -61,6 +62,7 @@ export function validateCanonicalManifest(manifest: Gate1CanonicalManifest): voi
   }
 
   validateSceneGraph(manifest);
+  validatePreparationFlow(manifest, GATE1_ROUTE_IDS);
   validateQuestionPreparation(manifest);
   validateRouteConvergence(manifest, GATE1_ROUTE_IDS);
 

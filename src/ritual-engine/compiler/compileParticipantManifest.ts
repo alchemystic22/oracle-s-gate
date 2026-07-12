@@ -1,4 +1,4 @@
-import { validateSceneGraph } from "../manifest/graphValidation";
+import { validateCanonicalManifest } from "../gate1/manifest";
 import { resolveParticipantGraph } from "./activeGraph";
 import { assertOpaqueIdentifier } from "./opaqueIds";
 import { projectParticipantScene } from "./participantAllowlist";
@@ -23,7 +23,7 @@ function structuralDigest(value: unknown): string {
 export function compileParticipantManifest(
   input: CompileParticipantManifestInput,
 ): ParticipantManifest {
-  validateSceneGraph(input.canonicalManifest);
+  validateCanonicalManifest(input.canonicalManifest);
   if (!Number.isFinite(Date.parse(input.compiledAtUtc))) {
     throw new Error("Compilation timestamp is invalid");
   }
@@ -43,19 +43,23 @@ export function compileParticipantManifest(
   assertOpaqueIdentifier(manifestInstanceId);
 
   const runtimeIds = new Map(
-    resolved.scenes.map((scene) => {
+    resolved.scenes.map(({ scene }) => {
       const runtimeSceneId = input.opaqueIdFactory.next("scene");
       assertOpaqueIdentifier(runtimeSceneId);
       return [scene.canonicalSceneId, runtimeSceneId] as const;
     }),
   );
 
-  const scenes: ParticipantScene[] = resolved.scenes.map((scene, index) => {
-    const nextScene = resolved.scenes[index + 1];
+  const scenes: ParticipantScene[] = resolved.scenes.map(({ scene, transition }) => {
     return projectParticipantScene(
       scene,
       runtimeIds.get(scene.canonicalSceneId)!,
-      nextScene ? runtimeIds.get(nextScene.canonicalSceneId) : undefined,
+      transition
+        ? {
+            runtimeTransitionId: input.opaqueIdFactory.next("transition"),
+            targetRuntimeSceneId: runtimeIds.get(transition.targetSceneId)!,
+          }
+        : undefined,
       input.opaqueIdFactory,
       resolved.activeRouteCanon,
     );

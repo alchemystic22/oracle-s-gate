@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { compileRouteReassessment } from "../compiler/protectedMapping";
+import { compileRouteReassessment } from "../compiler/protectedMapping.protected";
 import { GATE1_CANONICAL_MANIFEST } from "../gate1/manifest";
 import { GATE1_PARTICIPANT_ASSET_REGISTRY } from "../gate1/assets";
 import { FALSE_ARRIVAL_ROUTE_ID, SPLINTERED_TRUST_ROUTE_ID } from "../gate1/constants";
@@ -18,6 +18,11 @@ describe("route reassessment compilation", () => {
     const previousManifest = compileStage("active_route", FALSE_ARRIVAL_ROUTE_ID, factory);
     const result = compileRouteReassessment({
       previousManifest,
+      previousRouteBinding: {
+        protectedRouteId: FALSE_ARRIVAL_ROUTE_ID,
+        routeToken: ROUTE_TOKEN_A,
+        routeBindingRevision: 1,
+      },
       canonicalManifest: GATE1_CANONICAL_MANIFEST,
       routeBinding: {
         protectedRouteId: SPLINTERED_TRUST_ROUTE_ID,
@@ -42,6 +47,11 @@ describe("route reassessment compilation", () => {
     const previousManifest = compileStage("active_route", FALSE_ARRIVAL_ROUTE_ID, factory);
     const result = compileRouteReassessment({
       previousManifest,
+      previousRouteBinding: {
+        protectedRouteId: FALSE_ARRIVAL_ROUTE_ID,
+        routeToken: ROUTE_TOKEN_A,
+        routeBindingRevision: 1,
+      },
       canonicalManifest: GATE1_CANONICAL_MANIFEST,
       routeBinding: {
         protectedRouteId: SPLINTERED_TRUST_ROUTE_ID,
@@ -56,6 +66,8 @@ describe("route reassessment compilation", () => {
     expect(serialized).not.toContain(GATE1_QUESTIONS.falseArrivalAxis.prompt);
     expect(serialized).toContain(GATE1_QUESTIONS.splinteredTrustAxis.prompt);
     expect(result.protectedRecord.retainedSharedOpening).toBe(true);
+    expect(result.protectedRecord.priorProtectedRouteId).toBe(FALSE_ARRIVAL_ROUTE_ID);
+    expect(result.protectedRecord.newProtectedRouteId).toBe(SPLINTERED_TRUST_ROUTE_ID);
     expect(result.protectedRecord.staleDomains).toEqual([
       "responses",
       "gate_act",
@@ -70,11 +82,40 @@ describe("route reassessment compilation", () => {
     expect(() =>
       compileRouteReassessment({
         previousManifest,
+        previousRouteBinding: {
+          protectedRouteId: FALSE_ARRIVAL_ROUTE_ID,
+          routeToken: ROUTE_TOKEN_A,
+          routeBindingRevision: 1,
+        },
         canonicalManifest: GATE1_CANONICAL_MANIFEST,
         routeBinding: {
           protectedRouteId: SPLINTERED_TRUST_ROUTE_ID,
           routeToken: ROUTE_TOKEN_A,
           routeBindingRevision: 1,
+        },
+        opaqueIdFactory: factory,
+        participantAssetRegistry: GATE1_PARTICIPANT_ASSET_REGISTRY,
+        compiledAtUtc: COMPILED_AT,
+      }),
+    ).toThrow();
+  });
+
+  it("rejects reassessment to the same protected route", () => {
+    const factory = createTestOpaqueIdFactory();
+    const previousManifest = compileStage("active_route", FALSE_ARRIVAL_ROUTE_ID, factory);
+    expect(() =>
+      compileRouteReassessment({
+        previousManifest,
+        previousRouteBinding: {
+          protectedRouteId: FALSE_ARRIVAL_ROUTE_ID,
+          routeToken: ROUTE_TOKEN_A,
+          routeBindingRevision: 1,
+        },
+        canonicalManifest: GATE1_CANONICAL_MANIFEST,
+        routeBinding: {
+          protectedRouteId: FALSE_ARRIVAL_ROUTE_ID,
+          routeToken: ROUTE_TOKEN_B,
+          routeBindingRevision: 2,
         },
         opaqueIdFactory: factory,
         participantAssetRegistry: GATE1_PARTICIPANT_ASSET_REGISTRY,

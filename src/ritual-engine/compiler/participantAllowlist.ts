@@ -14,7 +14,7 @@ function routeSafeNarration(
 export function projectParticipantScene(
   scene: CanonicalSceneDefinition,
   runtimeSceneId: string,
-  nextRuntimeSceneId: string | undefined,
+  transition: { runtimeTransitionId: string; targetRuntimeSceneId: string } | undefined,
   opaqueIdFactory: OpaqueIdFactory,
   routeCanon?: ProtectedRouteCanon,
 ): ParticipantScene {
@@ -24,9 +24,11 @@ export function projectParticipantScene(
         options: scene.participant.interaction.options
           ? [...scene.participant.interaction.options]
           : undefined,
-        runtimeQuestionId: scene.protected?.canonicalQuestionId
-          ? opaqueIdFactory.next("question")
-          : undefined,
+        runtimeInteractionId: opaqueIdFactory.next("interaction"),
+        runtimeQuestionId:
+          scene.participant.prompt || scene.participant.interaction.kind !== "acknowledgment"
+            ? opaqueIdFactory.next("question")
+            : undefined,
       }
     : undefined;
 
@@ -51,6 +53,6 @@ export function projectParticipantScene(
         : undefined,
     },
     assetRefs: scene.participant.assetRefs?.map(String),
-    transitions: nextRuntimeSceneId ? [{ targetRuntimeSceneId: nextRuntimeSceneId }] : [],
+    transitions: transition ? [{ ...transition }] : [],
   };
 }

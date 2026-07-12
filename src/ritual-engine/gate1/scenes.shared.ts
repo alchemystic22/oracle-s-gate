@@ -65,6 +65,7 @@ export const GATE1_SHARED_OPENING_SCENES: readonly CanonicalSceneDefinition[] = 
       "One agreement broke, not reality itself.",
     ],
     prerequisites: [requiresShared(V.agreementRecognized)],
+    establishes: [establishes(V.inscriptionFractured)],
     transitions: [transitionTo("G1-03")],
   }),
   defineGate1Scene({
@@ -75,7 +76,7 @@ export const GATE1_SHARED_OPENING_SCENES: readonly CanonicalSceneDefinition[] = 
     purpose: "Distinguish what happened from what was believed",
     narration: ["What happened", "from", "What was expected to follow"],
     interaction: { kind: "reflection" },
-    prerequisites: [requiresShared(V.agreementRecognized)],
+    prerequisites: [requiresShared(V.inscriptionFractured)],
     establishes: [establishes(V.eventPromiseSeparated)],
     transitions: [transitionTo("G1-04")],
   }),
@@ -92,6 +93,7 @@ export const GATE1_SHARED_OPENING_SCENES: readonly CanonicalSceneDefinition[] = 
       "Planning ≠ Reality contact",
     ],
     prerequisites: [requiresShared(V.eventPromiseSeparated)],
+    establishes: [establishes(V.oracleDistinctionEstablished)],
     transitions: [transitionTo("G1-05")],
   }),
   defineGate1Scene({
@@ -105,7 +107,8 @@ export const GATE1_SHARED_OPENING_SCENES: readonly CanonicalSceneDefinition[] = 
       "I believed ___ would protect me from ___.",
     ],
     interaction: { kind: "reflection" },
-    prerequisites: [requiresShared(V.eventPromiseSeparated)],
+    prerequisites: [requiresShared(V.oracleDistinctionEstablished)],
+    establishes: [establishes(V.promiseRecognitionCompleted)],
     transitions: [transitionTo("G1-06")],
   }),
   defineGate1Scene({
@@ -116,7 +119,7 @@ export const GATE1_SHARED_OPENING_SCENES: readonly CanonicalSceneDefinition[] = 
     purpose: "Name what was expected to preserve coherence",
     prompt: GATE1_QUESTIONS.bridge.prompt,
     interaction: { kind: "reflection" },
-    prerequisites: [requiresShared(V.eventPromiseSeparated)],
+    prerequisites: [requiresShared(V.promiseRecognitionCompleted)],
     establishes: [establishes(V.bridgeAnswered)],
     transitions: [transitionTo("G1-07")],
     protected: { canonicalQuestionId: GATE1_QUESTIONS.bridge.canonicalQuestionId },
@@ -141,6 +144,7 @@ export const GATE1_SHARED_OPENING_SCENES: readonly CanonicalSceneDefinition[] = 
     title: "Obstruction",
     purpose: "Reveal that seeing fracture does not by itself create passage",
     prerequisites: [requiresShared(V.gateAxisAnswered)],
+    establishes: [establishes(V.obstructionEstablished)],
     transitions: [transitionTo("G1-09")],
   }),
   defineGate1Scene({
@@ -156,7 +160,7 @@ export const GATE1_SHARED_OPENING_SCENES: readonly CanonicalSceneDefinition[] = 
         "I see what was false. I cannot trust what comes next.",
       ],
     },
-    prerequisites: [requiresShared(V.gateAxisAnswered)],
+    prerequisites: [requiresShared(V.obstructionEstablished)],
     establishes: [establishes(V.stanceRecognized)],
     transitions: [transitionTo("G1-10")],
   }),
@@ -238,6 +242,7 @@ export const GATE1_SHARED_CLOSING_SCENES: readonly CanonicalSceneDefinition[] = 
     title: "Book Withdraws",
     purpose: "Relock and withdraw the Book",
     prerequisites: [requiresShared(V.hiddenPageSealed)],
+    establishes: [establishes(V.bookWithdrawn)],
     transitions: [transitionTo("G1-16")],
   }),
   defineGate1Scene({
@@ -247,7 +252,7 @@ export const GATE1_SHARED_CLOSING_SCENES: readonly CanonicalSceneDefinition[] = 
     title: "Gate Completion",
     purpose: "Record Gate 1 completion",
     primaryAction: { label: "Complete the gate", intent: "complete" },
-    prerequisites: [requiresShared(V.hiddenPageSealed)],
+    prerequisites: [requiresShared(V.bookWithdrawn)],
     establishes: [establishes(V.gateCompleted)],
   }),
 ];

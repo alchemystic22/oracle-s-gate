@@ -10,11 +10,24 @@ const PROTECTED_PATTERNS: readonly RegExp[] = [
   /canonicalRouteId/i,
   /canonicalSceneId/i,
   /canonicalQuestionId/i,
+  /protectedRouteId/i,
   /architectMeaning/i,
   /founderNotes/i,
   /evaluatorContractId/i,
   /safetyProfileId/i,
 ];
+
+const PROTECTED_KEYS = new Set([
+  "protected",
+  "protectedRouteId",
+  "canonicalRouteId",
+  "canonicalSceneId",
+  "canonicalQuestionId",
+  "architectMeaning",
+  "founderNotes",
+  "evaluatorContractId",
+  "safetyProfileId",
+]);
 
 export function scanParticipantObjectForProtectedTerms(value: unknown): readonly string[] {
   const findings: string[] = [];
@@ -30,7 +43,9 @@ export function scanParticipantObjectForProtectedTerms(value: unknown): readonly
     }
     if (!current || typeof current !== "object") return;
     for (const [key, nested] of Object.entries(current)) {
-      if (PROTECTED_PATTERNS.some((pattern) => pattern.test(key))) findings.push(`${path}.${key}`);
+      if (PROTECTED_KEYS.has(key) || PROTECTED_PATTERNS.some((pattern) => pattern.test(key))) {
+        findings.push(`${path}.${key}`);
+      }
       scan(nested, `${path}.${key}`);
     }
   }

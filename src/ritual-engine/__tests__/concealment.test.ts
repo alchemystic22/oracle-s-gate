@@ -16,6 +16,23 @@ describe("participant concealment", () => {
     expect(scanParticipantObjectForProtectedTerms(unsafe).length).toBeGreaterThanOrEqual(5);
   });
 
+  it.each([
+    "protected",
+    "protectedRouteId",
+    "canonicalRouteId",
+    "canonicalSceneId",
+    "canonicalQuestionId",
+    "architectMeaning",
+    "founderNotes",
+    "evaluatorContractId",
+    "safetyProfileId",
+  ])("rejects the nested protected key %s", (key) => {
+    const unsafe = { outer: { middle: { [key]: "opaque-looking-value" } } };
+    expect(scanParticipantObjectForProtectedTerms(unsafe)).toContain(
+      `$participant.outer.middle.${key}`,
+    );
+  });
+
   it("finds no protected terms in any compiled participant stage", () => {
     const manifests = [
       compileStage("pre_route"),
