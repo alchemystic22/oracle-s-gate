@@ -1,0 +1,16 @@
+export const GATE1_VALIDATION_KEYS = {
+  thresholdEntered: "g1.threshold_entered",
+  agreementRecognized: "g1.agreement_recognized",
+  eventPromiseSeparated: "g1.event_promise_separated",
+  bridgeAnswered: "g1.bridge_answered",
+  gateAxisAnswered: "g1.gate_axis_answered",
+  stanceRecognized: "g1.stance_recognized",
+  bookEmerged: "g1.book_emerged",
+  routeAxisAnswered: "g1.route_axis_answered",
+  gateActFormed: "g1.active_route_gate_act_formed",
+  qualifyingEvidence: "g1.active_route_qualifying_evidence",
+  readinessConfirmed: "g1.readiness_confirmed",
+  correctiveGateOpened: "g1.corrective_gate_opened",
+  hiddenPageSealed: "g1.hidden_page_sealed",
+  gateCompleted: "g1.completed",
+} as const;
