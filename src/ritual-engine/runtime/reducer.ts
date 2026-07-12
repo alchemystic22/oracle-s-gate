@@ -10,6 +10,12 @@ export function ritualGateReducer(
       return {
         ...state,
         currentRuntimeSceneId: action.runtimeSceneId,
+        updatedAtUtc: action.updatedAtUtc,
+      };
+    case "CONFIRM_STABLE_SCENE":
+      if (action.runtimeSceneId !== state.currentRuntimeSceneId) return state;
+      return {
+        ...state,
         lastStableRuntimeSceneId: action.runtimeSceneId,
         updatedAtUtc: action.updatedAtUtc,
       };

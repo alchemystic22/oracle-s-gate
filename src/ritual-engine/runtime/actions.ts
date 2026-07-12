@@ -3,6 +3,7 @@ import type { RitualSafetyRuntime } from "../domain/safety";
 
 export type RitualReducerAction =
   | { type: "SET_CURRENT_SCENE"; runtimeSceneId: string; updatedAtUtc: string }
+  | { type: "CONFIRM_STABLE_SCENE"; runtimeSceneId: string; updatedAtUtc: string }
   | { type: "UPSERT_RESPONSE"; response: RitualResponseRecord }
   | { type: "SET_VALIDATION"; key: string; value: boolean; source: string; updatedAtUtc: string }
   | { type: "SET_SAFETY"; safety: RitualSafetyRuntime }

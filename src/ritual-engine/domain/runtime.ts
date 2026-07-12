@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ParticipantPrivacyModeSchema } from "./privacy";
+import { ParticipantPrivacyModeSchema, ResearchPermissionSchema } from "./privacy";
 import { RitualResponseRecordSchema } from "./responses";
 import { GateActRecordSchema } from "./gateAct";
 import { EvidenceEventSchema } from "./evidence";
@@ -22,22 +22,93 @@ export const ActiveManifestReferenceSchema = z.object({
   activatedAtUtc: z.string().datetime({ offset: true }),
 });
 
-export const RitualOutboxRecordSchema = z.object({
+const RitualOutboxBaseShape = {
   outboxId: z.string().min(1),
   commandId: z.string().min(1),
-  effectType: z.enum([
-    "append_journey_event",
-    "append_protected_event",
-    "mirror_legacy_gate_visit",
-    "mirror_legacy_gate_completion",
-    "clear_session_response",
-    "delete_retired_raw_response",
-  ]),
-  payload: z.record(z.string(), z.unknown()),
   status: z.enum(["pending", "processing", "completed", "failed_retryable", "failed_terminal"]),
   attemptCount: z.number().int().nonnegative(),
   createdAtUtc: z.string().datetime({ offset: true }),
-});
+};
+
+const AppendJourneyEventIntentSchema = z
+  .object({
+    ...RitualOutboxBaseShape,
+    effectType: z.literal("append_journey_event"),
+    payload: z
+      .object({
+        eventId: z.string().min(1),
+        journeyCycleId: z.string().min(1),
+        gateRunId: z.string().min(1),
+        gateId: z.number().int().min(1).max(7),
+        runtimeSceneId: z.string().min(1).optional(),
+        eventType: z.string().min(1),
+        occurredAtUtc: z.string().datetime({ offset: true }),
+        isTestCycle: z.boolean(),
+      })
+      .strict(),
+  })
+  .strict();
+
+const MirrorLegacyGateVisitIntentSchema = z
+  .object({
+    ...RitualOutboxBaseShape,
+    effectType: z.literal("mirror_legacy_gate_visit"),
+    payload: z
+      .object({
+        gateId: z.number().int().min(1).max(7),
+        visitedAtUtc: z.string().datetime({ offset: true }),
+      })
+      .strict(),
+  })
+  .strict();
+
+const MirrorLegacyGateCompletionIntentSchema = z
+  .object({
+    ...RitualOutboxBaseShape,
+    effectType: z.literal("mirror_legacy_gate_completion"),
+    payload: z
+      .object({
+        gateId: z.number().int().min(1).max(7),
+        completedAtUtc: z.string().datetime({ offset: true }),
+      })
+      .strict(),
+  })
+  .strict();
+
+const ClearSessionResponseIntentSchema = z
+  .object({
+    ...RitualOutboxBaseShape,
+    effectType: z.literal("clear_session_response"),
+    payload: z
+      .object({
+        gateRunId: z.string().min(1),
+        responseId: z.string().min(1),
+      })
+      .strict(),
+  })
+  .strict();
+
+const DeleteRetiredRawResponseIntentSchema = z
+  .object({
+    ...RitualOutboxBaseShape,
+    effectType: z.literal("delete_retired_raw_response"),
+    payload: z
+      .object({
+        gateRunId: z.string().min(1),
+        responseId: z.string().min(1),
+        retiredAtUtc: z.string().datetime({ offset: true }),
+      })
+      .strict(),
+  })
+  .strict();
+
+export const RitualOutboxRecordSchema = z.discriminatedUnion("effectType", [
+  AppendJourneyEventIntentSchema,
+  MirrorLegacyGateVisitIntentSchema,
+  MirrorLegacyGateCompletionIntentSchema,
+  ClearSessionResponseIntentSchema,
+  DeleteRetiredRawResponseIntentSchema,
+]);
 
 export const RitualGateRuntimeSchema = z.object({
   gateRunId: z.string().min(1),
@@ -72,10 +143,7 @@ export const RitualRuntimeRootSchema = z.object({
   schemaVersion: z.literal(1),
   participantId: z.string().min(1),
   privacyMode: ParticipantPrivacyModeSchema,
-  researchPermission: z.object({
-    allowed: z.boolean(),
-    grantedAtUtc: z.string().datetime({ offset: true }).optional(),
-  }),
+  researchPermission: ResearchPermissionSchema,
   isTestCycle: z.boolean(),
   activeGateRunId: z.string().optional(),
   gateRuns: z.record(z.string(), RitualGateRuntimeSchema),
