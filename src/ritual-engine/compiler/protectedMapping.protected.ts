@@ -1,10 +1,8 @@
 import type { CanonicalRouteId } from "../domain/ids";
 import { compileParticipantManifest } from "./compileParticipantManifest";
-import type {
-  CompileParticipantManifestInput,
-  ParticipantManifest,
-  ProtectedRouteBinding,
-} from "./types";
+import type { ProtectedParticipantCompilation } from "./protectedCompilation.protected";
+import { validateProtectedParticipantManifestMapping } from "./protectedMappingValidation.protected";
+import type { CompileParticipantManifestInput, ProtectedRouteBinding } from "./types";
 
 export type ProtectedReassessmentRecord = {
   priorManifestInstanceId: string;
@@ -24,21 +22,23 @@ export type CompileRouteReassessmentInput = Omit<
   CompileParticipantManifestInput,
   "stage" | "routeBinding"
 > & {
-  previousManifest: ParticipantManifest;
-  previousRouteBinding: ProtectedRouteBinding;
+  previousCompilation: ProtectedParticipantCompilation;
   routeBinding: ProtectedRouteBinding;
 };
 
-export function compileRouteReassessment(input: CompileRouteReassessmentInput): {
-  participantManifest: ParticipantManifest;
+export function compileRouteReassessment(
+  input: CompileRouteReassessmentInput,
+): ProtectedParticipantCompilation & {
   protectedRecord: ProtectedReassessmentRecord;
 } {
-  const previous = input.previousManifest;
-  const previousBinding = input.previousRouteBinding;
+  validateProtectedParticipantManifestMapping(input.previousCompilation, input.canonicalManifest);
+  const previous = input.previousCompilation.participantManifest;
+  const previousBinding = input.previousCompilation.protectedMapping.routeBinding;
   if (
     previous.stage !== "active_route" ||
     !previous.routeToken ||
     previous.routeBindingRevision === undefined ||
+    !previousBinding ||
     input.routeBinding.routeToken === previous.routeToken ||
     input.routeBinding.routeBindingRevision <= previous.routeBindingRevision ||
     previousBinding.routeToken !== previous.routeToken ||
@@ -48,7 +48,7 @@ export function compileRouteReassessment(input: CompileRouteReassessmentInput): 
     throw new Error("Route reassessment binding rotation is invalid");
   }
 
-  const participantManifest = compileParticipantManifest({
+  const compilation = compileParticipantManifest({
     canonicalManifest: input.canonicalManifest,
     stage: "active_route",
     routeBinding: input.routeBinding,
@@ -56,6 +56,7 @@ export function compileRouteReassessment(input: CompileRouteReassessmentInput): 
     participantAssetRegistry: input.participantAssetRegistry,
     compiledAtUtc: input.compiledAtUtc,
   });
+  const { participantManifest, protectedMapping } = compilation;
   if (
     participantManifest.manifestInstanceId === previous.manifestInstanceId ||
     participantManifest.digest === previous.digest
@@ -65,6 +66,7 @@ export function compileRouteReassessment(input: CompileRouteReassessmentInput): 
 
   return {
     participantManifest,
+    protectedMapping,
     protectedRecord: {
       priorManifestInstanceId: previous.manifestInstanceId,
       priorRouteToken: previous.routeToken,

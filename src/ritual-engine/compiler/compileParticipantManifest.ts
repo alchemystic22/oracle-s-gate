@@ -5,6 +5,11 @@ import { projectParticipantScene } from "./participantAllowlist";
 import { resolveParticipantAssets } from "./participantAssets";
 import { validateParticipantManifest } from "./participantValidation";
 import type {
+  ProtectedParticipantCompilation,
+  ProtectedParticipantManifestMapping,
+} from "./protectedCompilation.protected";
+import { validateProtectedParticipantManifestMapping } from "./protectedMappingValidation.protected";
+import type {
   CompileParticipantManifestInput,
   ParticipantManifest,
   ParticipantScene,
@@ -22,7 +27,7 @@ function structuralDigest(value: unknown): string {
 
 export function compileParticipantManifest(
   input: CompileParticipantManifestInput,
-): ParticipantManifest {
+): ProtectedParticipantCompilation {
   validateCanonicalManifest(input.canonicalManifest);
   if (!Number.isFinite(Date.parse(input.compiledAtUtc))) {
     throw new Error("Compilation timestamp is invalid");
@@ -86,5 +91,70 @@ export function compileParticipantManifest(
     digest: structuralDigest(withoutDigest),
   };
   validateParticipantManifest(manifest);
-  return manifest;
+
+  const protectedMapping: ProtectedParticipantManifestMapping = {
+    schemaVersion: 1,
+    manifestInstanceId: manifest.manifestInstanceId,
+    manifestDigest: manifest.digest,
+    gateManifestVersion: manifest.gateManifestVersion,
+    stage: manifest.stage,
+    compiledAtUtc: manifest.compiledAtUtc,
+    routeBinding:
+      input.stage === "active_route" && input.routeBinding ? { ...input.routeBinding } : undefined,
+    scenes: Object.fromEntries(
+      resolved.scenes.map(({ scene }, index) => [
+        scenes[index]!.runtimeSceneId,
+        { canonicalSceneId: scene.canonicalSceneId },
+      ]),
+    ),
+    interactions: Object.fromEntries(
+      resolved.scenes.flatMap(({ scene }, index) => {
+        const interaction = scenes[index]!.interaction;
+        return interaction
+          ? [
+              [
+                interaction.runtimeInteractionId,
+                { canonicalSceneId: scene.canonicalSceneId, kind: interaction.kind },
+              ],
+            ]
+          : [];
+      }),
+    ),
+    questions: Object.fromEntries(
+      resolved.scenes.flatMap(({ scene }, index) => {
+        const runtimeQuestionId = scenes[index]!.interaction?.runtimeQuestionId;
+        return runtimeQuestionId
+          ? [
+              [
+                runtimeQuestionId,
+                {
+                  canonicalSceneId: scene.canonicalSceneId,
+                  canonicalQuestionId: scene.protected?.canonicalQuestionId,
+                },
+              ],
+            ]
+          : [];
+      }),
+    ),
+    transitions: Object.fromEntries(
+      resolved.scenes.flatMap(({ scene, transition }, index) => {
+        const runtimeTransition = scenes[index]!.transitions[0];
+        return transition && runtimeTransition
+          ? [
+              [
+                runtimeTransition.runtimeTransitionId,
+                {
+                  fromCanonicalSceneId: scene.canonicalSceneId,
+                  toCanonicalSceneId: transition.targetSceneId,
+                  canonicalRouteId: transition.routeId,
+                },
+              ],
+            ]
+          : [];
+      }),
+    ),
+  };
+  const compilation = { participantManifest: manifest, protectedMapping };
+  validateProtectedParticipantManifestMapping(compilation, input.canonicalManifest);
+  return compilation;
 }

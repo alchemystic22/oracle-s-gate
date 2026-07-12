@@ -1,6 +1,6 @@
 import type { CanonicalRouteId } from "../domain/ids";
 import type { OpaqueIdFactory, ParticipantManifestStage } from "../compiler/types";
-import { compileParticipantManifest } from "../compiler/compileParticipantManifest";
+import { compileParticipantManifest } from "../compiler/index.protected";
 import { GATE1_CANONICAL_MANIFEST } from "../gate1/manifest";
 import { GATE1_PARTICIPANT_ASSET_REGISTRY } from "../gate1/assets";
 
@@ -19,6 +19,14 @@ export function createTestOpaqueIdFactory(start = 0): OpaqueIdFactory {
 }
 
 export function compileStage(
+  stage: ParticipantManifestStage,
+  routeId?: CanonicalRouteId,
+  factory = createTestOpaqueIdFactory(),
+) {
+  return compileStageProtected(stage, routeId, factory).participantManifest;
+}
+
+export function compileStageProtected(
   stage: ParticipantManifestStage,
   routeId?: CanonicalRouteId,
   factory = createTestOpaqueIdFactory(),

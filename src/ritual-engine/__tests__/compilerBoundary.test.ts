@@ -15,11 +15,30 @@ describe("compiler export boundary", () => {
       "CompileParticipantManifestInput",
       "ProtectedRouteBinding",
       "CanonicalRoute",
+      "ProtectedParticipantCompilation",
+      "ProtectedParticipantManifestMapping",
+      "protectedMapping",
     ]) {
       expect(participantBarrel).not.toContain(protectedMember);
       expect(participantCompiler).not.toHaveProperty(protectedMember);
     }
     expect(protectedCompiler).toHaveProperty("compileParticipantManifest");
     expect(protectedCompiler).toHaveProperty("compileRouteReassessment");
+    expect(protectedCompiler).toHaveProperty("validateProtectedParticipantManifestMapping");
+  });
+
+  it("keeps protected mapping modules out of participant-safe compiler modules", () => {
+    for (const moduleName of [
+      "index.ts",
+      "types.ts",
+      "participantAllowlist.ts",
+      "participantAssets.ts",
+      "participantValidation.ts",
+      "opaqueIds.ts",
+      "concealmentScanner.ts",
+    ]) {
+      const source = readFileSync(new URL(`../compiler/${moduleName}`, import.meta.url), "utf8");
+      expect(source).not.toMatch(/protected(?:Compilation|MappingValidation)\.protected/);
+    }
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { compileRouteReassessment } from "../compiler/protectedMapping.protected";
+import { compileRouteReassessment } from "../compiler/index.protected";
 import { GATE1_CANONICAL_MANIFEST } from "../gate1/manifest";
 import { GATE1_PARTICIPANT_ASSET_REGISTRY } from "../gate1/assets";
 import { FALSE_ARRIVAL_ROUTE_ID, SPLINTERED_TRUST_ROUTE_ID } from "../gate1/constants";
@@ -8,21 +8,22 @@ import {
   COMPILED_AT,
   ROUTE_TOKEN_A,
   ROUTE_TOKEN_B,
-  compileStage,
+  compileStageProtected,
   createTestOpaqueIdFactory,
 } from "./pass2Fixture";
 
 describe("route reassessment compilation", () => {
   it("rotates token, revision, manifest instance, and digest", () => {
     const factory = createTestOpaqueIdFactory();
-    const previousManifest = compileStage("active_route", FALSE_ARRIVAL_ROUTE_ID, factory);
+    const previousCompilation = compileStageProtected(
+      "active_route",
+      FALSE_ARRIVAL_ROUTE_ID,
+      factory,
+    );
+    const previousManifest = previousCompilation.participantManifest;
+    const previousMappingSnapshot = structuredClone(previousCompilation.protectedMapping);
     const result = compileRouteReassessment({
-      previousManifest,
-      previousRouteBinding: {
-        protectedRouteId: FALSE_ARRIVAL_ROUTE_ID,
-        routeToken: ROUTE_TOKEN_A,
-        routeBindingRevision: 1,
-      },
+      previousCompilation,
       canonicalManifest: GATE1_CANONICAL_MANIFEST,
       routeBinding: {
         protectedRouteId: SPLINTERED_TRUST_ROUTE_ID,
@@ -40,18 +41,35 @@ describe("route reassessment compilation", () => {
       previousManifest.manifestInstanceId,
     );
     expect(result.participantManifest.digest).not.toBe(previousManifest.digest);
+    expect(result.protectedMapping.manifestInstanceId).toBe(
+      result.participantManifest.manifestInstanceId,
+    );
+    expect(result.protectedMapping.manifestInstanceId).not.toBe(
+      previousCompilation.protectedMapping.manifestInstanceId,
+    );
+    expect(result.protectedMapping.routeBinding).toEqual({
+      protectedRouteId: SPLINTERED_TRUST_ROUTE_ID,
+      routeToken: ROUTE_TOKEN_B,
+      routeBindingRevision: 2,
+    });
+    expect(
+      Object.values(result.protectedMapping.scenes).some((entry) =>
+        entry.canonicalSceneId.startsWith("FA-"),
+      ),
+    ).toBe(false);
+    expect(previousCompilation.protectedMapping).toEqual(previousMappingSnapshot);
   });
 
   it("removes the prior route and records stale protected domains without deleting history", () => {
     const factory = createTestOpaqueIdFactory();
-    const previousManifest = compileStage("active_route", FALSE_ARRIVAL_ROUTE_ID, factory);
+    const previousCompilation = compileStageProtected(
+      "active_route",
+      FALSE_ARRIVAL_ROUTE_ID,
+      factory,
+    );
+    const previousManifest = previousCompilation.participantManifest;
     const result = compileRouteReassessment({
-      previousManifest,
-      previousRouteBinding: {
-        protectedRouteId: FALSE_ARRIVAL_ROUTE_ID,
-        routeToken: ROUTE_TOKEN_A,
-        routeBindingRevision: 1,
-      },
+      previousCompilation,
       canonicalManifest: GATE1_CANONICAL_MANIFEST,
       routeBinding: {
         protectedRouteId: SPLINTERED_TRUST_ROUTE_ID,
@@ -78,15 +96,14 @@ describe("route reassessment compilation", () => {
 
   it("fails closed without token and revision rotation", () => {
     const factory = createTestOpaqueIdFactory();
-    const previousManifest = compileStage("active_route", FALSE_ARRIVAL_ROUTE_ID, factory);
+    const previousCompilation = compileStageProtected(
+      "active_route",
+      FALSE_ARRIVAL_ROUTE_ID,
+      factory,
+    );
     expect(() =>
       compileRouteReassessment({
-        previousManifest,
-        previousRouteBinding: {
-          protectedRouteId: FALSE_ARRIVAL_ROUTE_ID,
-          routeToken: ROUTE_TOKEN_A,
-          routeBindingRevision: 1,
-        },
+        previousCompilation,
         canonicalManifest: GATE1_CANONICAL_MANIFEST,
         routeBinding: {
           protectedRouteId: SPLINTERED_TRUST_ROUTE_ID,
@@ -102,15 +119,14 @@ describe("route reassessment compilation", () => {
 
   it("rejects reassessment to the same protected route", () => {
     const factory = createTestOpaqueIdFactory();
-    const previousManifest = compileStage("active_route", FALSE_ARRIVAL_ROUTE_ID, factory);
+    const previousCompilation = compileStageProtected(
+      "active_route",
+      FALSE_ARRIVAL_ROUTE_ID,
+      factory,
+    );
     expect(() =>
       compileRouteReassessment({
-        previousManifest,
-        previousRouteBinding: {
-          protectedRouteId: FALSE_ARRIVAL_ROUTE_ID,
-          routeToken: ROUTE_TOKEN_A,
-          routeBindingRevision: 1,
-        },
+        previousCompilation,
         canonicalManifest: GATE1_CANONICAL_MANIFEST,
         routeBinding: {
           protectedRouteId: FALSE_ARRIVAL_ROUTE_ID,

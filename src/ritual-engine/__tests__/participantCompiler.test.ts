@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { compileParticipantManifest } from "../compiler/compileParticipantManifest";
+import { compileParticipantManifest } from "../compiler/index.protected";
 import { validateParticipantManifest } from "../compiler/participantValidation";
 import { routeIdFromUnknown } from "../compiler/activeGraph";
 import { GATE1_CANONICAL_MANIFEST } from "../gate1/manifest";

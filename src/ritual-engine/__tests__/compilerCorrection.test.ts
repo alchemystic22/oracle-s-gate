@@ -27,7 +27,7 @@ function compileWith(manifest: Gate1CanonicalManifest): ParticipantManifest {
     opaqueIdFactory: createTestOpaqueIdFactory(),
     participantAssetRegistry: GATE1_PARTICIPANT_ASSET_REGISTRY,
     compiledAtUtc: COMPILED_AT,
-  });
+  }).participantManifest;
 }
 
 describe("canonical graph compilation authority", () => {
