@@ -12,6 +12,47 @@ export const SceneVisitRecordSchema = z.object({
   completedAtUtc: z.string().datetime({ offset: true }).optional(),
 });
 
+export const ParticipantCommandKindSchema = z.enum([
+  "acknowledge_scene",
+  "submit_response",
+  "select_option",
+  "submit_gate_act",
+  "record_evidence",
+  "request_route_reassessment",
+  "invoke_scene_action",
+  "pause_run",
+  "resume_run",
+]);
+
+export const ParticipantCommandReceiptSchema = z
+  .object({
+    commandId: z.string().min(1),
+    commandKind: ParticipantCommandKindSchema,
+    manifestInstanceId: z.string().min(1),
+    runtimeSceneId: z.string().min(1),
+    payloadDigest: z.string().min(1),
+    safeStatus: z.enum([
+      "advanced",
+      "accepted",
+      "awaiting_protected_resolution",
+      "awaiting_route_binding",
+      "awaiting_route_reassessment",
+      "paused",
+      "resumed",
+      "blocked",
+      "duplicate",
+      "rejected_stale",
+      "rejected_unauthorized",
+      "rejected_invalid",
+    ]),
+    resolutionState: z.enum(["unresolved", "resolved", "superseded"]),
+    resolutionDigest: z.string().min(1).optional(),
+    issuedAtUtc: z.string().datetime({ offset: true }),
+    recordedAtUtc: z.string().datetime({ offset: true }),
+    resolvedAtUtc: z.string().datetime({ offset: true }).optional(),
+  })
+  .strict();
+
 export const ActiveManifestReferenceSchema = z.object({
   manifestInstanceId: z.string().min(1),
   manifestStage: z.enum(["pre_route", "active_route", "completion"]),
@@ -130,9 +171,12 @@ export const RitualGateRuntimeSchema = z.object({
       value: z.boolean(),
       source: z.string(),
       updatedAtUtc: z.string().datetime({ offset: true }),
+      routeBindingRevision: z.number().int().nonnegative().optional(),
+      stale: z.boolean().optional(),
     }),
   ),
   activeManifest: ActiveManifestReferenceSchema.optional(),
+  commandReceipts: z.array(ParticipantCommandReceiptSchema).max(200),
   pendingOutbox: z.array(RitualOutboxRecordSchema),
   startedAtUtc: z.string().datetime({ offset: true }).optional(),
   completedAtUtc: z.string().datetime({ offset: true }).optional(),
@@ -153,3 +197,6 @@ export const RitualRuntimeRootSchema = z.object({
 
 export type RitualRuntimeRoot = z.infer<typeof RitualRuntimeRootSchema>;
 export type RitualGateRuntime = z.infer<typeof RitualGateRuntimeSchema>;
+export type ParticipantCommandReceipt = z.infer<typeof ParticipantCommandReceiptSchema>;
+export type SceneVisitRecord = z.infer<typeof SceneVisitRecordSchema>;
+export type RitualOutboxRecord = z.infer<typeof RitualOutboxRecordSchema>;
