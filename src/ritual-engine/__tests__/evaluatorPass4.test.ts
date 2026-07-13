@@ -281,6 +281,28 @@ describe("Gate 1 Pass 4 schemas, policies, and boundaries", () => {
       decision: genericSatisfied,
     });
     expect(normalized.outcome).toBe("needs_follow_up");
+
+    expect(() =>
+      normalizeProtectedEvaluationDecision({
+        request,
+        policy,
+        decision: {
+          ...genericSatisfied,
+          provider: { kind: "fixture", providerId: "other-provider" },
+        },
+      }),
+    ).toThrow();
+    expect(() =>
+      normalizeProtectedEvaluationDecision({
+        request,
+        policy,
+        decision: {
+          ...genericSatisfied,
+          outcome: "blocked",
+          safety: { state: "clear", codes: [], emergency: false },
+        },
+      }),
+    ).toThrow();
   });
 
   it("defines a protected future prompt contract without a production provider", () => {
@@ -498,12 +520,67 @@ describe("Gate 1 Pass 4 adaptive orchestration", () => {
       harness,
       command: gateAct,
       commandId: "command-gate-act-rescale",
+      provider: providerWith({
+        commandId: "command-gate-act-rescale",
+        outcome: "rescale_required",
+        reasonCodes: ["act_is_confrontational"],
+        guidanceTemplateId: "safety_rescale",
+        safety: {
+          state: "rescale_required",
+          codes: ["dangerous_confrontation"],
+          emergency: false,
+        },
+      }),
     });
     const run = await activeRun(harness.adapter);
     expect(result.guidance?.kind).toBe("rescale");
     expect(run.status).toBe("paused");
     expect(run.safety.state).toBe("rescale_required");
     expect(JSON.stringify(run)).not.toMatch(/sovereign|mark|grace|gift/i);
+  });
+
+  it("does not classify negated confrontation text in structural preflight", () => {
+    const policy = getGate1EvaluationPolicy("FA-07" as never)!;
+    const request = ProtectedEvaluationRequestSchema.parse({
+      schemaVersion: 1,
+      evaluationRequestId: "evalreq-no-confront-heuristic",
+      participantId: "participant-1",
+      journeyCycleId: "cycle-1",
+      gateRunId: "gate-run-1",
+      gateId: 1,
+      sourceParticipantCommandId: "command-no-confront-heuristic",
+      commandKind: "submit_gate_act",
+      expectedStateRevision: 3,
+      runtimeSceneId: "opaquescene000000001",
+      runtimeInteractionId: "opaqueinteraction1",
+      canonicalSceneId: "FA-07",
+      policyId: policy.policyId,
+      policyVersion: 1,
+      targetKind: "gate_act",
+      runtimeBinding: {
+        manifestInstanceId: "opaquemanifest0001",
+        manifestDigest: "digest",
+        gateManifestVersion: "1.0.0",
+        stage: "active_route",
+        routeBinding: {
+          protectedRouteId: FALSE_ARRIVAL_ROUTE_ID,
+          routeToken: "opaqueroutetoken1",
+          routeBindingRevision: 2,
+        },
+      },
+      routeToken: "opaqueroutetoken1",
+      routeBindingRevision: 2,
+      target: {
+        kind: "gate_act",
+        gateActId: "gate-act-no-confront",
+        act: "I will not confront them.",
+        immediateMicroAct: "Write down one action I control.",
+        safetySelfReport: "safe",
+      },
+      inputDigest: "evalinput-no-confront",
+      issuedAtUtc: PASS3_NOW,
+    });
+    expect(runStructuralPreflight({ request, policy, decidedAtUtc: PASS3_NOW })).toBeUndefined();
   });
 
   it("treats readiness understanding as one clarification, not completion", async () => {
@@ -527,6 +604,92 @@ describe("Gate 1 Pass 4 adaptive orchestration", () => {
     expect(result.guidance?.templateId).toBe("clarify_outside_change");
     expect(run.currentRuntimeSceneId).toBe(harness.scene.runtimeSceneId);
     expect(run.validation["g1.readiness_confirmed"]).toBeUndefined();
+  });
+
+  it("sends minimized Gate Act and current-route evidence context for readiness", async () => {
+    const base = makeActiveHarness({
+      stage: "active_route",
+      routeId: FALSE_ARRIVAL_ROUTE_ID,
+      sceneIndex: 10,
+    });
+    const root = structuredClone(base.root);
+    const run = root.gateRuns["gate-run-1"]!;
+    run.gateAct = {
+      gateActId: "gate-act-readiness-context",
+      runtimeSceneId: base.manifest.scenes[8]!.runtimeSceneId,
+      runtimeInteractionId: base.manifest.scenes[8]!.interaction!.runtimeInteractionId,
+      sourceCommandId: "prior-gate-act-readiness",
+      routeBindingRevision: base.manifest.routeBindingRevision,
+      status: "accepted",
+      activeRevision: 0,
+      revisions: [
+        {
+          revision: 0,
+          act: "Take one bounded action",
+          immediateMicroAct: "Complete one observable step",
+          continuationAction: "Notice what changed after the step",
+          participantSafetySelfReport: "safe",
+          createdAtUtc: PASS3_NOW,
+        },
+      ],
+      createdAtUtc: PASS3_NOW,
+      updatedAtUtc: PASS3_NOW,
+    };
+    run.evidenceEvents = [
+      {
+        evidenceEventId: "evidence-current-readiness",
+        gateActId: "gate-act-readiness-context",
+        eventType: "micro_act_completed",
+        mode: "self_attested_description",
+        description: "I completed the observable step.",
+        participantAttestation: "occurred_outside_reflection",
+        routeBindingRevision: base.manifest.routeBindingRevision,
+        occurredAtUtc: PASS3_NOW,
+      },
+      {
+        evidenceEventId: "evidence-inactive-readiness",
+        gateActId: "gate-act-old-route",
+        eventType: "micro_act_completed",
+        mode: "completion_marker",
+        participantAttestation: "occurred_outside_reflection",
+        routeBindingRevision: 99,
+        occurredAtUtc: PASS3_NOW,
+      },
+    ];
+    const adapter = new MemoryRitualTransactionalPersistenceAdapter(root);
+    const mappingProvider = new MemoryProtectedMappingProvider();
+    mappingProvider.put(base.compilation.protectedMapping);
+    const conductor = new Gate1SceneConductor(adapter, mappingProvider, GATE1_CANONICAL_MANIFEST);
+    const harness = { ...base, adapter, mappingProvider, conductor, root };
+    const { result } = await submitAndEvaluate({
+      harness,
+      command: reflectionCommand(harness, "I did the step and saw what changed."),
+      commandId: "command-readiness-context",
+      provider: new FixtureEvaluationProvider({
+        "command-readiness-context": (request, policy) => {
+          expect(request.target.kind).toBe("readiness");
+          if (request.target.kind !== "readiness") throw new Error("Expected readiness target");
+          expect(request.target.activeGateAct?.gateActId).toBe("gate-act-readiness-context");
+          expect(request.target.activeGateAct?.act).toBe("Take one bounded action");
+          expect(request.target.activeGateAct?.continuationAction).toBe(
+            "Notice what changed after the step",
+          );
+          expect(request.target.qualifyingEvidence).toHaveLength(1);
+          expect(request.target.qualifyingEvidence[0]?.evidenceEventId).toBe(
+            "evidence-current-readiness",
+          );
+          expect(JSON.stringify(request.target)).not.toContain("evidence-inactive-readiness");
+          return createFixtureDecision({
+            request,
+            policy,
+            outcome: "satisfied",
+            supportedFacets: policy.requiredFacets,
+            reasonCodes: ["identifies_outside_change"],
+          });
+        },
+      }),
+    });
+    expect(result.status).toBe("applied");
   });
 
   it("rejects scheduled-only evidence as non-qualifying reality contact", async () => {
@@ -628,11 +791,29 @@ describe("Gate 1 Pass 4 adaptive orchestration", () => {
       harness,
       command: evidence,
       commandId: "command-evidence-match",
-      provider: providerWith({
-        commandId: "command-evidence-match",
-        outcome: "satisfied",
-        supportedFacets: "all",
-        reasonCodes: ["completed_outside_reflection", "matches_active_gate_act"],
+      provider: new FixtureEvaluationProvider({
+        "command-evidence-match": (request, policy) => {
+          expect(request.target.kind).toBe("evidence");
+          if (request.target.kind !== "evidence") throw new Error("Expected evidence target");
+          expect(request.target.activeGateAct?.gateActId).toBe("gate-act-pass4-evidence-match");
+          expect(request.target.activeGateAct?.act).toBe("Take one bounded action");
+          expect(request.target.activeGateAct?.immediateMicroAct).toBe(
+            "Complete one observable step",
+          );
+          expect(request.target.activeGateAct?.routeBindingRevision).toBe(
+            base.manifest.routeBindingRevision,
+          );
+          expect(request.target.activeRouteBindingRevision).toBe(
+            base.manifest.routeBindingRevision,
+          );
+          return createFixtureDecision({
+            request,
+            policy,
+            outcome: "satisfied",
+            supportedFacets: policy.requiredFacets,
+            reasonCodes: ["completed_outside_reflection", "matches_active_gate_act"],
+          });
+        },
       }),
     });
     const run = await activeRun(adapter);
@@ -746,6 +927,8 @@ describe("Gate 1 Pass 4 adaptive orchestration", () => {
         activeRouteBindingRevision: 2,
         activeGateAct: {
           gateActId: "gate-act-1",
+          act: "Take one bounded action",
+          immediateMicroAct: "Complete one observable step",
           routeBindingRevision: 2,
           status: "accepted",
         },
@@ -935,6 +1118,13 @@ describe("Gate 1 Pass 4 adaptive orchestration", () => {
     expect(result.status).toBe("applied");
     const entry = ledger.all()[0]!;
     expect(entry.applicationStatus).toBe("prepared");
+    const reconciled = await orchestrator.evaluateParticipantCommand({
+      sourceParticipantCommandId: commandId,
+      nowUtc: PASS3_NOW,
+      sceneVisitId: "opaquevisitledger0002",
+    });
+    expect(reconciled.status).toBe("duplicate");
+    expect(ledger.all()[0]?.applicationStatus).toBe("applied");
     expect(() =>
       ledger.prepare({
         ...entry,
@@ -944,6 +1134,79 @@ describe("Gate 1 Pass 4 adaptive orchestration", () => {
     ).toThrow();
   });
 
+  it("permits retry after rollback failure leaves a prepared ledger entry", async () => {
+    class RejectOnceConductor extends Gate1SceneConductor {
+      private shouldReject = true;
+
+      override async executeProtected(
+        input: Parameters<Gate1SceneConductor["executeProtected"]>[0],
+      ) {
+        if (this.shouldReject) {
+          this.shouldReject = false;
+          return {
+            commandId:
+              input.envelope &&
+              typeof input.envelope === "object" &&
+              "protectedCommandId" in input.envelope
+                ? String(input.envelope.protectedCommandId)
+                : "injected-rejection",
+            status: "rejected_invalid" as const,
+            stateRevision: 0,
+            participantMessageCode: "injected_rejection",
+          };
+        }
+        return super.executeProtected(input);
+      }
+    }
+    const harness = makeActiveHarness({ sceneIndex: 3 });
+    const ledger = new MemoryProtectedEvaluationLedger();
+    const commandId = "command-ledger-rollback-failure";
+    await harness.conductor.executeParticipant({
+      envelope: envelopeFromRun(
+        harness,
+        reflectionCommand(harness, "specific grounded answer"),
+        commandId,
+      ),
+      participantManifest: harness.manifest,
+      nowUtc: PASS3_NOW,
+      ids: PASS3_IDS,
+    });
+    const rejectingConductor = new RejectOnceConductor(
+      harness.adapter,
+      harness.mappingProvider,
+      GATE1_CANONICAL_MANIFEST,
+    );
+    ledger.failNextAt("rollback");
+    const first = new Gate1AdaptiveEvaluationOrchestrator({
+      adapter: harness.adapter,
+      mappingProvider: harness.mappingProvider,
+      canonicalManifest: GATE1_CANONICAL_MANIFEST,
+      participantManifest: harness.manifest,
+      conductor: rejectingConductor,
+      provider: providerWith({
+        commandId,
+        outcome: "satisfied",
+        supportedFacets: "all",
+      }),
+      ledger,
+    });
+    const rejected = await first.evaluateParticipantCommand({
+      sourceParticipantCommandId: commandId,
+      nowUtc: PASS3_NOW,
+      sceneVisitId: "opaquevisitledgerrollback1",
+    });
+    expect(rejected.status).toBe("rejected");
+    expect(ledger.all()[0]?.applicationStatus).toBe("prepared");
+
+    const retried = await first.evaluateParticipantCommand({
+      sourceParticipantCommandId: commandId,
+      nowUtc: PASS3_NOW,
+      sceneVisitId: "opaquevisitledgerrollback2",
+    });
+    expect(retried.status).toBe("applied");
+    expect(ledger.all()[0]?.applicationStatus).toBe("applied");
+  });
+
   it("stales prior-route adaptive threads through runtime route staling", async () => {
     const run = {
       ...makeActiveHarness({
@@ -951,16 +1214,54 @@ describe("Gate 1 Pass 4 adaptive orchestration", () => {
         routeId: FALSE_ARRIVAL_ROUTE_ID,
       }).root.gateRuns["gate-run-1"]!,
       adaptiveThreads: {
-        thread1: {
+        satisfied: {
           schemaVersion: 1 as const,
-          threadId: "thread1",
-          targetRuntimeId: "target1",
+          threadId: "satisfied",
+          targetRuntimeId: "target-satisfied",
           runtimeSceneId: "scene1",
-          sourceParticipantCommandId: "command1",
+          sourceParticipantCommandId: "command-satisfied",
+          state: "satisfied" as const,
+          attemptCount: 1,
+          followupCount: 0 as const,
+          routeBindingRevision: 1,
+          createdAtUtc: PASS3_NOW,
+          updatedAtUtc: PASS3_NOW,
+        },
+        followup: {
+          schemaVersion: 1 as const,
+          threadId: "followup",
+          targetRuntimeId: "target-followup",
+          runtimeSceneId: "scene2",
+          sourceParticipantCommandId: "command-followup",
           state: "follow_up_issued" as const,
           attemptCount: 1,
           followupCount: 1 as const,
           routeBindingRevision: 1,
+          createdAtUtc: PASS3_NOW,
+          updatedAtUtc: PASS3_NOW,
+        },
+        notYet: {
+          schemaVersion: 1 as const,
+          threadId: "notYet",
+          targetRuntimeId: "target-not-yet",
+          runtimeSceneId: "scene3",
+          sourceParticipantCommandId: "command-not-yet",
+          state: "not_yet_formed" as const,
+          attemptCount: 1,
+          followupCount: 0 as const,
+          routeBindingRevision: 1,
+          createdAtUtc: PASS3_NOW,
+          updatedAtUtc: PASS3_NOW,
+        },
+        shared: {
+          schemaVersion: 1 as const,
+          threadId: "shared",
+          targetRuntimeId: "target-shared",
+          runtimeSceneId: "scene4",
+          sourceParticipantCommandId: "command-shared",
+          state: "follow_up_issued" as const,
+          attemptCount: 1,
+          followupCount: 1 as const,
           createdAtUtc: PASS3_NOW,
           updatedAtUtc: PASS3_NOW,
         },
@@ -972,8 +1273,57 @@ describe("Gate 1 Pass 4 adaptive orchestration", () => {
       routeBindingRevision: 1,
       updatedAtUtc: PASS3_NOW,
     });
-    expect(next.adaptiveThreads.thread1?.state).toBe("stale");
-    expect(next.adaptiveThreads.thread1?.stale).toBe(true);
+    expect(next.adaptiveThreads.satisfied?.state).toBe("stale");
+    expect(next.adaptiveThreads.followup?.state).toBe("stale");
+    expect(next.adaptiveThreads.notYet?.state).toBe("stale");
+    expect(next.adaptiveThreads.shared?.state).toBe("follow_up_issued");
+    expect(next.adaptiveThreads.satisfied?.stale).toBe(true);
+  });
+
+  it("stales protected ledger entries for a retired route revision only", () => {
+    const ledger = new MemoryProtectedEvaluationLedger();
+    const routeEntry = {
+      schemaVersion: 1 as const,
+      evaluationRequestId: "evalreq-route-ledger",
+      evaluationDecisionId: "decision-route-ledger",
+      sourceParticipantCommandId: "command-route-ledger",
+      manifestInstanceId: "manifest-route",
+      manifestDigest: "digest",
+      manifestStage: "active_route" as const,
+      stateRevisionEvaluated: 1,
+      runtimeSceneId: "scene-route",
+      canonicalSceneId: "FA-08" as never,
+      protectedRouteId: FALSE_ARRIVAL_ROUTE_ID,
+      routeBindingRevision: 1,
+      policyId: "gate1.FA-08.v1",
+      policyVersion: 1 as const,
+      inputDigest: "digest-route",
+      decisionDigest: "decision-digest-route",
+      providerId: "gate1-fixture-provider",
+      providerVersion: "1",
+      applicationStatus: "applied" as const,
+      appliedAtUtc: PASS3_NOW,
+      outcome: "satisfied" as const,
+      confidence: "high" as const,
+      reasonCodes: [
+        "completed_outside_reflection",
+        "matches_active_gate_act",
+      ] as ProtectedEvaluationDecision["reasonCodes"],
+      safetyCodes: [],
+      createdAtUtc: PASS3_NOW,
+    };
+    const sharedEntry = {
+      ...routeEntry,
+      evaluationRequestId: "evalreq-shared-ledger",
+      sourceParticipantCommandId: "command-shared-ledger",
+      routeBindingRevision: undefined,
+      inputDigest: "digest-shared",
+    };
+    ledger.prepare(routeEntry).commitApplied(PASS3_NOW);
+    ledger.prepare(sharedEntry).commitApplied(PASS3_NOW);
+    ledger.markRouteRevisionStale(1, PASS3_NOW);
+    expect(ledger.get("evalreq-route-ledger")?.applicationStatus).toBe("stale");
+    expect(ledger.get("evalreq-shared-ledger")?.applicationStatus).toBe("applied");
   });
 
   it("conceals inactive-route and protected evaluation material from participant output", async () => {

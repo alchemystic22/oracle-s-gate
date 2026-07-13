@@ -51,11 +51,6 @@ export function isExactNotYetFormed(value: string | undefined): boolean {
   return /^\s*i cannot name this clearly yet[.!?]?\s*$/i.test(value);
 }
 
-function containsAny(value: string, needles: readonly string[]): boolean {
-  const lowered = value.toLowerCase();
-  return needles.some((needle) => lowered.includes(needle));
-}
-
 export function runStructuralPreflight(input: {
   request: ProtectedEvaluationRequest;
   policy: Gate1EvaluationPolicy;
@@ -117,9 +112,6 @@ export function runStructuralPreflight(input: {
   }
 
   if (target.kind === "gate_act") {
-    const text = `${target.act} ${target.context ?? ""} ${target.immediateMicroAct} ${
-      target.continuationAction ?? ""
-    }`;
     if (target.safetySelfReport === "not_safe") {
       return decision({
         request,
@@ -131,37 +123,14 @@ export function runStructuralPreflight(input: {
         decidedAtUtc: input.decidedAtUtc,
       });
     }
-    if (
-      target.safetySelfReport === "unsure" ||
-      containsAny(text, [
-        "confront",
-        "threaten",
-        "drive all night",
-        "spend my savings",
-        "quit my job",
-      ])
-    ) {
+    if (target.safetySelfReport === "unsure") {
       return decision({
         request,
         outcome: "rescale_required",
         reasonCodes: ["act_is_high_cost"],
         safetyState: "rescale_required",
-        safetyCodes:
-          target.safetySelfReport === "unsure"
-            ? ["participant_declared_unsure"]
-            : ["dangerous_confrontation"],
+        safetyCodes: ["participant_declared_unsure"],
         guidanceTemplateId: "safety_rescale",
-        decidedAtUtc: input.decidedAtUtc,
-      });
-    }
-    if (containsAny(text, ["make them", "convince them", "unless they", "if they agree"])) {
-      return decision({
-        request,
-        outcome: "rescale_required",
-        reasonCodes: ["act_depends_on_other_person"],
-        safetyState: "rescale_required",
-        safetyCodes: [],
-        guidanceTemplateId: "gate_act_return_to_control",
         decidedAtUtc: input.decidedAtUtc,
       });
     }

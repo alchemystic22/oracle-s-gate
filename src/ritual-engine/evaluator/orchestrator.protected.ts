@@ -63,6 +63,45 @@ function requestThreadTargetId(request: ProtectedEvaluationRequest): string {
   );
 }
 
+function activeGateActEvaluationView(run: RitualGateRuntime) {
+  const gateAct = run.gateAct;
+  if (!gateAct) return undefined;
+  const revision = gateAct.revisions[gateAct.activeRevision];
+  if (!revision) return undefined;
+  return {
+    gateActId: gateAct.gateActId,
+    act: revision.act,
+    immediateMicroAct: revision.immediateMicroAct,
+    context: revision.context,
+    continuationAction: revision.continuationAction,
+    status: gateAct.status,
+    routeBindingRevision: gateAct.routeBindingRevision,
+    stale: gateAct.stale,
+  };
+}
+
+function qualifyingEvidenceSummaries(run: RitualGateRuntime) {
+  const activeRevision = run.activeManifest?.routeBindingRevision;
+  return run.evidenceEvents
+    .filter(
+      (evidence) =>
+        evidence.eventType === "micro_act_completed" &&
+        evidence.participantAttestation === "occurred_outside_reflection" &&
+        evidence.routeBindingRevision === activeRevision &&
+        !evidence.stale,
+    )
+    .map((evidence) => ({
+      evidenceEventId: evidence.evidenceEventId,
+      gateActId: evidence.gateActId,
+      eventType: "micro_act_completed" as const,
+      participantAttestation: "occurred_outside_reflection" as const,
+      mode: evidence.mode,
+      description: evidence.description,
+      routeBindingRevision: evidence.routeBindingRevision,
+      stale: evidence.stale,
+    }));
+}
+
 function guidanceKind(
   outcome: ProtectedEvaluationDecision["outcome"],
 ): "follow_up" | "not_yet_formed" | "rescale" | "safety_pause" | undefined {
@@ -71,6 +110,12 @@ function guidanceKind(
   if (outcome === "rescale_required") return "rescale";
   if (outcome === "blocked") return "safety_pause";
   return undefined;
+}
+
+function threadStateForOutcome(
+  outcome: ProtectedEvaluationDecision["outcome"],
+): ParticipantAdaptiveThread["state"] {
+  return outcome === "needs_follow_up" ? "follow_up_issued" : outcome;
 }
 
 function findTarget(run: RitualGateRuntime, sourceCommandId: string): ProtectedEvaluationTarget {
@@ -107,6 +152,7 @@ function findTarget(run: RitualGateRuntime, sourceCommandId: string): ProtectedE
     (candidate) => candidate.sourceCommandId === sourceCommandId,
   );
   if (evidence) {
+    const activeGateAct = activeGateActEvaluationView(run);
     return {
       kind: "evidence",
       evidenceEventId: evidence.evidenceEventId,
@@ -117,14 +163,7 @@ function findTarget(run: RitualGateRuntime, sourceCommandId: string): ProtectedE
       description: evidence.description,
       routeBindingRevision: evidence.routeBindingRevision,
       stale: evidence.stale,
-      activeGateAct: run.gateAct
-        ? {
-            gateActId: run.gateAct.gateActId,
-            routeBindingRevision: run.gateAct.routeBindingRevision,
-            stale: run.gateAct.stale,
-            status: run.gateAct.status,
-          }
-        : undefined,
+      activeGateAct,
       activeRouteBindingRevision: run.activeManifest?.routeBindingRevision,
     };
   }
@@ -224,7 +263,12 @@ export class Gate1AdaptiveEvaluationOrchestrator {
     const rawTarget = findTarget(input.run, input.sourceParticipantCommandId);
     const target: ProtectedEvaluationTarget =
       policy.targetKind === "readiness" && rawTarget.kind === "reflection"
-        ? { ...rawTarget, kind: "readiness" }
+        ? {
+            ...rawTarget,
+            kind: "readiness",
+            activeGateAct: activeGateActEvaluationView(input.run),
+            qualifyingEvidence: qualifyingEvidenceSummaries(input.run),
+          }
         : rawTarget;
     if (target.kind !== policy.targetKind) throw new Error("Evaluation target kind mismatch");
     const ids = sourceRuntimeIds(input.run, input.sourceParticipantCommandId);
@@ -340,6 +384,7 @@ export class Gate1AdaptiveEvaluationOrchestrator {
       runtimeQuestionId: input.request.runtimeQuestionId,
       canonicalSceneId: input.request.canonicalSceneId,
       protectedRouteId: input.request.runtimeBinding.routeBinding?.protectedRouteId,
+      routeBindingRevision: input.request.runtimeBinding.routeBinding?.routeBindingRevision,
       policyId: input.policy.policyId,
       policyVersion: input.policy.version,
       inputDigest: input.request.inputDigest,
@@ -363,8 +408,8 @@ export class Gate1AdaptiveEvaluationOrchestrator {
     let request: ProtectedEvaluationRequest;
     let policy: Gate1EvaluationPolicy;
     let thread: ParticipantAdaptiveThread | undefined;
-    let before: RitualRuntimeRoot;
-    let run: RitualGateRuntime;
+    let before: RitualRuntimeRoot | undefined;
+    let run: RitualGateRuntime | undefined;
     try {
       before = await this.loadRuntime();
       run = activeRun(before)!;
@@ -376,6 +421,49 @@ export class Gate1AdaptiveEvaluationOrchestrator {
         nowUtc: input.nowUtc,
       }));
     } catch {
+      if (run) {
+        const receipt = run.commandReceipts.find(
+          (candidate) => candidate.commandId === input.sourceParticipantCommandId,
+        );
+        const prepared = this.ledger
+          .all()
+          .find(
+            (entry) =>
+              entry.sourceParticipantCommandId === input.sourceParticipantCommandId &&
+              entry.applicationStatus === "prepared",
+          );
+        const expectedThread = prepared
+          ? Object.values(run.adaptiveThreads).find(
+              (candidate) =>
+                candidate.sourceParticipantCommandId === input.sourceParticipantCommandId &&
+                candidate.state === threadStateForOutcome(prepared.outcome),
+            )
+          : undefined;
+        if (receipt?.resolutionState === "resolved" && prepared && expectedThread) {
+          try {
+            this.ledger.promotePrepared(
+              prepared.evaluationRequestId,
+              prepared.inputDigest,
+              input.nowUtc,
+            );
+          } catch {
+            return AdaptiveEvaluationApplicationResultSchema.parse({
+              schemaVersion: 1,
+              evaluationRequestId: prepared.evaluationRequestId,
+              evaluationDecisionId: prepared.evaluationDecisionId,
+              sourceParticipantCommandId: input.sourceParticipantCommandId,
+              status: "rejected",
+            });
+          }
+          return AdaptiveEvaluationApplicationResultSchema.parse({
+            schemaVersion: 1,
+            evaluationRequestId: prepared.evaluationRequestId,
+            evaluationDecisionId: prepared.evaluationDecisionId,
+            sourceParticipantCommandId: input.sourceParticipantCommandId,
+            status: "duplicate",
+          });
+        }
+      }
       return AdaptiveEvaluationApplicationResultSchema.parse({
         schemaVersion: 1,
         evaluationRequestId: "unavailable",
@@ -385,14 +473,82 @@ export class Gate1AdaptiveEvaluationOrchestrator {
     }
 
     const existing = this.ledger.get(request.evaluationRequestId);
-    if (existing) {
+    if (existing?.inputDigest !== undefined && existing.inputDigest !== request.inputDigest) {
       return AdaptiveEvaluationApplicationResultSchema.parse({
         schemaVersion: 1,
         evaluationRequestId: request.evaluationRequestId,
         evaluationDecisionId: existing.evaluationDecisionId,
         sourceParticipantCommandId: input.sourceParticipantCommandId,
-        status: existing.inputDigest === request.inputDigest ? "duplicate" : "rejected",
+        status: "rejected",
       });
+    }
+    if (existing?.applicationStatus === "applied" || existing?.applicationStatus === "duplicate") {
+      return AdaptiveEvaluationApplicationResultSchema.parse({
+        schemaVersion: 1,
+        evaluationRequestId: request.evaluationRequestId,
+        evaluationDecisionId: existing.evaluationDecisionId,
+        sourceParticipantCommandId: input.sourceParticipantCommandId,
+        status: "duplicate",
+      });
+    }
+    if (existing?.applicationStatus === "stale" || existing?.applicationStatus === "rejected") {
+      return AdaptiveEvaluationApplicationResultSchema.parse({
+        schemaVersion: 1,
+        evaluationRequestId: request.evaluationRequestId,
+        evaluationDecisionId: existing.evaluationDecisionId,
+        sourceParticipantCommandId: input.sourceParticipantCommandId,
+        status: "rejected",
+      });
+    }
+    if (existing?.applicationStatus === "prepared") {
+      const receipt = run.commandReceipts.find(
+        (candidate) => candidate.commandId === input.sourceParticipantCommandId,
+      );
+      const expectedThreadState = threadStateForOutcome(existing.outcome);
+      const expectedThread = Object.values(run.adaptiveThreads).find(
+        (candidate) =>
+          candidate.sourceParticipantCommandId === input.sourceParticipantCommandId &&
+          candidate.state === expectedThreadState,
+      );
+      if (receipt?.resolutionState === "resolved" && expectedThread) {
+        try {
+          this.ledger.promotePrepared(
+            existing.evaluationRequestId,
+            existing.inputDigest,
+            input.nowUtc,
+          );
+        } catch {
+          return AdaptiveEvaluationApplicationResultSchema.parse({
+            schemaVersion: 1,
+            evaluationRequestId: request.evaluationRequestId,
+            evaluationDecisionId: existing.evaluationDecisionId,
+            sourceParticipantCommandId: input.sourceParticipantCommandId,
+            status: "rejected",
+          });
+        }
+        return AdaptiveEvaluationApplicationResultSchema.parse({
+          schemaVersion: 1,
+          evaluationRequestId: request.evaluationRequestId,
+          evaluationDecisionId: existing.evaluationDecisionId,
+          sourceParticipantCommandId: input.sourceParticipantCommandId,
+          status: "duplicate",
+        });
+      }
+      if (receipt?.resolutionState === "unresolved") {
+        try {
+          this.ledger.rollbackPrepared(existing.evaluationRequestId, existing.inputDigest);
+        } catch {
+          // A failed rollback leaves a prepared entry that prepare() can still commit on retry.
+        }
+      } else {
+        return AdaptiveEvaluationApplicationResultSchema.parse({
+          schemaVersion: 1,
+          evaluationRequestId: request.evaluationRequestId,
+          evaluationDecisionId: existing.evaluationDecisionId,
+          sourceParticipantCommandId: input.sourceParticipantCommandId,
+          status: "rejected",
+        });
+      }
     }
 
     let decision: ProtectedEvaluationDecision;
@@ -409,6 +565,17 @@ export class Gate1AdaptiveEvaluationOrchestrator {
         policy,
         decision: rawDecision,
         activeThread: thread,
+        expectedProvider: preflight
+          ? {
+              providerId: "structural-preflight",
+              providerVersion: "1",
+              deterministic: true,
+            }
+          : {
+              providerId: this.input.provider.providerId,
+              providerVersion: this.input.provider.providerVersion,
+              deterministic: true,
+            },
       });
     } catch {
       return AdaptiveEvaluationApplicationResultSchema.parse({

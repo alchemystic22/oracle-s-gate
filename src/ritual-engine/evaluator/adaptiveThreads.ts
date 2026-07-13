@@ -77,7 +77,7 @@ export class MemoryAdaptiveThreadStore implements AdaptiveThreadStore {
 
   staleByRouteRevision(routeBindingRevision: number, updatedAtUtc: string): void {
     for (const thread of this.threads.values()) {
-      if (thread.routeBindingRevision === routeBindingRevision && thread.state !== "satisfied") {
+      if (thread.routeBindingRevision === routeBindingRevision) {
         this.threads.set(thread.threadId, {
           ...thread,
           state: "stale",

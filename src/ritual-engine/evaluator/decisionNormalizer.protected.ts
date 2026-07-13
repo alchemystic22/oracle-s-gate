@@ -32,6 +32,11 @@ export function normalizeProtectedEvaluationDecision(input: {
   policy: Gate1EvaluationPolicy;
   decision: unknown;
   activeThread?: ParticipantAdaptiveThread;
+  expectedProvider?: {
+    providerId: string;
+    providerVersion: string;
+    deterministic: boolean;
+  };
 }): ProtectedEvaluationDecision {
   const parsed = ProtectedEvaluationDecisionSchema.parse(input.decision);
   if (parsed.evaluationRequestId !== input.request.evaluationRequestId) {
@@ -45,6 +50,17 @@ export function normalizeProtectedEvaluationDecision(input: {
   ) {
     throw new Error("Evaluation decision protected binding is invalid");
   }
+  if (parsed.provider.providerId !== parsed.providerId) {
+    throw new Error("Evaluation decision nested provider identity is invalid");
+  }
+  if (
+    input.expectedProvider &&
+    (parsed.providerId !== input.expectedProvider.providerId ||
+      parsed.providerVersion !== input.expectedProvider.providerVersion ||
+      parsed.deterministic !== input.expectedProvider.deterministic)
+  ) {
+    throw new Error("Evaluation decision provider identity is invalid");
+  }
   for (const facet of parsed.supportedFacets) {
     if (!input.policy.requiredFacets.includes(facet)) {
       throw new Error("Evaluation facet is not allowed by policy");
@@ -56,6 +72,18 @@ export function normalizeProtectedEvaluationDecision(input: {
     }
   }
   if (parsed.guidanceTemplateId) assertGuidanceAllowed(input.policy, parsed.guidanceTemplateId);
+  if (
+    (parsed.outcome === "blocked" || parsed.outcome === "rescale_required") &&
+    parsed.safety.state === "clear"
+  ) {
+    throw new Error("Evaluation decision outcome contradicts safety state");
+  }
+  if (
+    parsed.outcome === "satisfied" &&
+    (parsed.safety.state === "blocked" || parsed.safety.state === "rescale_required")
+  ) {
+    throw new Error("Evaluation decision satisfied outcome contradicts safety state");
+  }
 
   if (parsed.safety.state === "blocked") {
     return {

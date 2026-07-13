@@ -18,6 +18,7 @@ export const ProtectedEvaluationLedgerEntrySchema = z
     runtimeQuestionId: z.string().min(1).optional(),
     canonicalSceneId: z.custom<CanonicalSceneId>((value) => typeof value === "string"),
     protectedRouteId: z.custom<CanonicalRouteId>((value) => typeof value === "string").optional(),
+    routeBindingRevision: z.number().int().nonnegative().optional(),
     policyId: z.string().min(1),
     policyVersion: z.literal(1),
     inputDigest: z.string().min(1),
@@ -44,6 +45,9 @@ export type ProtectedEvaluationLedgerEntry = z.infer<typeof ProtectedEvaluationL
 
 export interface ProtectedEvaluationLedger {
   prepare(entry: ProtectedEvaluationLedgerEntry): ProtectedEvaluationLedgerTransaction;
+  promotePrepared(evaluationRequestId: string, inputDigest: string, appliedAtUtc: string): void;
+  rollbackPrepared(evaluationRequestId: string, inputDigest: string): void;
+  markRouteRevisionStale(routeBindingRevision: number, updatedAtUtc: string): void;
   get(evaluationRequestId: string): ProtectedEvaluationLedgerEntry | undefined;
   all(): readonly ProtectedEvaluationLedgerEntry[];
 }
@@ -83,9 +87,16 @@ export class MemoryProtectedEvaluationLedger implements ProtectedEvaluationLedge
       throw new Error("Evaluation ledger request digest conflict");
     }
     if (existing) {
+      if (existing.applicationStatus !== "prepared") {
+        throw new Error("Evaluation ledger entry is not retryable");
+      }
       return {
-        commitApplied: () => undefined,
-        rollback: () => undefined,
+        commitApplied: (appliedAtUtc: string) => {
+          this.promotePrepared(parsed.evaluationRequestId, parsed.inputDigest, appliedAtUtc);
+        },
+        rollback: () => {
+          this.rollbackPrepared(parsed.evaluationRequestId, parsed.inputDigest);
+        },
       };
     }
     this.entries.set(parsed.evaluationRequestId, parsed);
@@ -110,6 +121,43 @@ export class MemoryProtectedEvaluationLedger implements ProtectedEvaluationLedge
         }
       },
     };
+  }
+
+  promotePrepared(evaluationRequestId: string, inputDigest: string, appliedAtUtc: string): void {
+    this.failIf("commit");
+    const current = this.entries.get(evaluationRequestId);
+    if (
+      !current ||
+      current.inputDigest !== inputDigest ||
+      current.applicationStatus !== "prepared"
+    ) {
+      throw new Error("Evaluation ledger prepared entry is unavailable");
+    }
+    this.entries.set(evaluationRequestId, {
+      ...current,
+      applicationStatus: "applied",
+      appliedAtUtc,
+    });
+  }
+
+  rollbackPrepared(evaluationRequestId: string, inputDigest: string): void {
+    this.failIf("rollback");
+    const current = this.entries.get(evaluationRequestId);
+    if (current?.inputDigest === inputDigest && current.applicationStatus === "prepared") {
+      this.entries.delete(evaluationRequestId);
+    }
+  }
+
+  markRouteRevisionStale(routeBindingRevision: number, updatedAtUtc: string): void {
+    for (const [evaluationRequestId, entry] of this.entries.entries()) {
+      if (entry.routeBindingRevision === routeBindingRevision) {
+        this.entries.set(evaluationRequestId, {
+          ...entry,
+          applicationStatus: "stale",
+          appliedAtUtc: entry.appliedAtUtc ?? updatedAtUtc,
+        });
+      }
+    }
   }
 
   get(evaluationRequestId: string): ProtectedEvaluationLedgerEntry | undefined {

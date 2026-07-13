@@ -120,8 +120,7 @@ export function ritualGateReducer(
         adaptiveThreads: Object.fromEntries(
           Object.entries(state.adaptiveThreads).map(([id, thread]) => [
             id,
-            thread.routeBindingRevision === action.routeBindingRevision &&
-            thread.state !== "satisfied"
+            thread.routeBindingRevision === action.routeBindingRevision
               ? {
                   ...thread,
                   state: "stale" as const,
