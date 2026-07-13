@@ -37,6 +37,19 @@ export function normalizeProtectedEvaluationDecision(input: {
   if (parsed.evaluationRequestId !== input.request.evaluationRequestId) {
     throw new Error("Evaluation decision request binding is invalid");
   }
+  if (
+    parsed.sourceParticipantCommandId !== input.request.sourceParticipantCommandId ||
+    parsed.inputDigest !== input.request.inputDigest ||
+    parsed.policyId !== input.policy.policyId ||
+    parsed.policyVersion !== input.policy.version
+  ) {
+    throw new Error("Evaluation decision protected binding is invalid");
+  }
+  for (const facet of parsed.supportedFacets) {
+    if (!input.policy.requiredFacets.includes(facet)) {
+      throw new Error("Evaluation facet is not allowed by policy");
+    }
+  }
   for (const reason of parsed.reasonCodes) {
     if (!input.policy.allowedReasonCodes.includes(reason)) {
       throw new Error("Evaluation reason code is not allowed by policy");
@@ -62,6 +75,17 @@ export function normalizeProtectedEvaluationDecision(input: {
   }
   if (parsed.outcome === "satisfied" && parsed.confidence === "low") {
     return withOutcome(parsed, "not_yet_formed", ["low_confidence"], "not_yet_formed_permission");
+  }
+  if (
+    parsed.outcome === "satisfied" &&
+    input.policy.requiredFacets.some((facet) => !parsed.supportedFacets.includes(facet))
+  ) {
+    return withOutcome(
+      parsed,
+      "needs_follow_up",
+      parsed.reasonCodes.length > 0 ? parsed.reasonCodes : ["contradictory_to_required_facets"],
+      input.policy.allowedGuidanceTemplates[0] ?? "not_yet_formed_permission",
+    );
   }
   if (parsed.outcome === "needs_follow_up" && input.activeThread?.followupCount === 1) {
     return withOutcome(

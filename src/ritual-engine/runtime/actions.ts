@@ -8,6 +8,7 @@ import type {
 } from "../domain/runtime";
 import type { GateActRecord } from "../domain/gateAct";
 import type { EvidenceEvent } from "../domain/evidence";
+import type { ParticipantAdaptiveThread } from "../evaluator/adaptiveThreads";
 
 export type RitualReducerAction =
   | { type: "SET_CURRENT_SCENE"; runtimeSceneId: string; updatedAtUtc: string }
@@ -33,6 +34,7 @@ export type RitualReducerAction =
       stale?: boolean;
     }
   | { type: "MARK_ROUTE_DATA_STALE"; routeBindingRevision: number; updatedAtUtc: string }
+  | { type: "UPSERT_ADAPTIVE_THREAD"; thread: ParticipantAdaptiveThread; updatedAtUtc: string }
   | { type: "SET_SAFETY"; safety: RitualSafetyRuntime }
   | { type: "ACTIVATE_MANIFEST"; manifest: RitualGateRuntime["activeManifest"] }
   | { type: "APPEND_COMMAND_RECEIPT"; receipt: ParticipantCommandReceipt }

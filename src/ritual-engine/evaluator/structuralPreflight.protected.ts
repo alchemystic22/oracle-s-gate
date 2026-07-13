@@ -7,6 +7,7 @@ function decision(input: {
   request: ProtectedEvaluationRequest;
   outcome: ProtectedEvaluationDecision["outcome"];
   confidence?: ProtectedEvaluationDecision["confidence"];
+  supportedFacets?: ProtectedEvaluationDecision["supportedFacets"];
   reasonCodes: ProtectedEvaluationDecision["reasonCodes"];
   guidanceTemplateId?: ProtectedEvaluationDecision["guidanceTemplateId"];
   safetyState?: ProtectedEvaluationDecision["safety"]["state"];
@@ -17,6 +18,13 @@ function decision(input: {
     schemaVersion: 1,
     evaluationRequestId: input.request.evaluationRequestId,
     evaluationDecisionId: `${input.request.evaluationRequestId}.preflight`,
+    sourceParticipantCommandId: input.request.sourceParticipantCommandId,
+    inputDigest: input.request.inputDigest,
+    policyId: input.request.policyId,
+    policyVersion: input.request.policyVersion,
+    providerId: "structural-preflight",
+    providerVersion: "1",
+    deterministic: true,
     outcome: input.outcome,
     responseState:
       input.outcome === "satisfied"
@@ -25,6 +33,7 @@ function decision(input: {
           ? "not_yet_formed"
           : "provisional",
     confidence: input.confidence ?? "high",
+    supportedFacets: input.supportedFacets ?? [],
     reasonCodes: input.reasonCodes,
     guidanceTemplateId: input.guidanceTemplateId,
     safety: {
@@ -53,12 +62,12 @@ export function runStructuralPreflight(input: {
   activeThread?: ParticipantAdaptiveThread;
   decidedAtUtc: string;
 }): ProtectedEvaluationDecision | undefined {
-  const { request, activeThread } = input;
+  const { request } = input;
   const target = request.target;
 
   if (
     (target.kind === "reflection" || target.kind === "readiness") &&
-    isExactNotYetFormed(target.text)
+    (target.responseState === "not_yet_formed" || isExactNotYetFormed(target.text))
   ) {
     return decision({
       request,
@@ -73,6 +82,7 @@ export function runStructuralPreflight(input: {
     return decision({
       request,
       outcome: "satisfied",
+      supportedFacets: input.policy.requiredFacets,
       reasonCodes: ["directly_answers_prompt"],
       decidedAtUtc: input.decidedAtUtc,
     });
@@ -88,12 +98,22 @@ export function runStructuralPreflight(input: {
         decidedAtUtc: input.decidedAtUtc,
       });
     }
-    return decision({
-      request,
-      outcome: "satisfied",
-      reasonCodes: ["completed_outside_reflection", "matches_active_gate_act"],
-      decidedAtUtc: input.decidedAtUtc,
-    });
+    if (
+      target.stale ||
+      target.activeGateAct?.stale ||
+      !target.activeGateAct ||
+      target.gateActId !== target.activeGateAct.gateActId ||
+      target.routeBindingRevision !== target.activeRouteBindingRevision
+    ) {
+      return decision({
+        request,
+        outcome: "not_yet_formed",
+        reasonCodes: ["does_not_match_gate_act"],
+        guidanceTemplateId: "evidence_link_to_gate_act",
+        decidedAtUtc: input.decidedAtUtc,
+      });
+    }
+    return undefined;
   }
 
   if (target.kind === "gate_act") {
@@ -145,16 +165,6 @@ export function runStructuralPreflight(input: {
         decidedAtUtc: input.decidedAtUtc,
       });
     }
-  }
-
-  if (activeThread?.followupCount === 1) {
-    return decision({
-      request,
-      outcome: "not_yet_formed",
-      reasonCodes: ["follow_up_limit_reached"],
-      guidanceTemplateId: "not_yet_formed_permission",
-      decidedAtUtc: input.decidedAtUtc,
-    });
   }
 
   return undefined;

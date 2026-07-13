@@ -23,6 +23,8 @@ import { protectedRenderGuidance } from "./guidanceRegistry.protected";
 import {
   MemoryProtectedEvaluationLedger,
   type ProtectedEvaluationLedger,
+  type ProtectedEvaluationLedgerEntry,
+  type ProtectedEvaluationLedgerTransaction,
 } from "./ledger.protected";
 import type { Gate1EvaluationPolicy } from "./policyTypes.protected";
 import type { ProtectedEvaluationProvider } from "./provider.protected";
@@ -86,6 +88,7 @@ function findTarget(run: RitualGateRuntime, sourceCommandId: string): ProtectedE
       text: response.text,
       structuredSummary: response.structuredSummary,
       storageClass: response.storageClass,
+      responseState: response.state,
     };
   }
   if (run.gateAct?.sourceCommandId === sourceCommandId) {
@@ -112,6 +115,17 @@ function findTarget(run: RitualGateRuntime, sourceCommandId: string): ProtectedE
       participantAttestation: evidence.participantAttestation,
       mode: evidence.mode,
       description: evidence.description,
+      routeBindingRevision: evidence.routeBindingRevision,
+      stale: evidence.stale,
+      activeGateAct: run.gateAct
+        ? {
+            gateActId: run.gateAct.gateActId,
+            routeBindingRevision: run.gateAct.routeBindingRevision,
+            stale: run.gateAct.stale,
+            status: run.gateAct.status,
+          }
+        : undefined,
+      activeRouteBindingRevision: run.activeManifest?.routeBindingRevision,
     };
   }
   throw new Error("Evaluation source target is unavailable");
@@ -176,6 +190,7 @@ export class Gate1AdaptiveEvaluationOrchestrator {
   }
 
   private buildRequest(input: {
+    root: RitualRuntimeRoot;
     run: RitualGateRuntime;
     sourceParticipantCommandId: string;
     nowUtc: string;
@@ -225,12 +240,18 @@ export class Gate1AdaptiveEvaluationOrchestrator {
     );
     const threadTargetId =
       ids.runtimeQuestionId ?? ids.runtimeInteractionId ?? targetRuntimeId(target);
-    const thread = this.threadStore.getByTarget(threadTargetId);
+    const thread = Object.values(input.run.adaptiveThreads).find(
+      (candidate) => candidate.targetRuntimeId === threadTargetId && candidate.state !== "stale",
+    );
     const request = ProtectedEvaluationRequestSchema.parse({
       schemaVersion: 1,
       evaluationRequestId,
       sourceParticipantCommandId: input.sourceParticipantCommandId,
       commandKind: receipt.commandKind,
+      participantId: input.root.participantId,
+      journeyCycleId: input.run.journeyCycleId,
+      gateRunId: input.run.gateRunId,
+      gateId: input.run.gateId,
       expectedStateRevision: input.run.stateRevision,
       runtimeSceneId: receipt.runtimeSceneId,
       runtimeInteractionId: ids.runtimeInteractionId,
@@ -249,6 +270,8 @@ export class Gate1AdaptiveEvaluationOrchestrator {
         stage: manifestRef.manifestStage,
         routeBinding: mappingRecord.mapping.routeBinding,
       },
+      routeToken: manifestRef.routeToken,
+      routeBindingRevision: manifestRef.routeBindingRevision,
       target,
       inputDigest,
       issuedAtUtc: input.nowUtc,
@@ -256,14 +279,15 @@ export class Gate1AdaptiveEvaluationOrchestrator {
     return { request, policy, thread };
   }
 
-  private updateThread(input: {
+  private createThread(input: {
     request: ProtectedEvaluationRequest;
     decision: ProtectedEvaluationDecision;
     policy: Gate1EvaluationPolicy;
+    prior?: ParticipantAdaptiveThread;
     nowUtc: string;
-  }): void {
+  }): ParticipantAdaptiveThread {
     const targetId = requestThreadTargetId(input.request);
-    const prior = this.threadStore.getByTarget(targetId);
+    const prior = input.prior;
     const guidance =
       input.decision.guidanceTemplateId && input.decision.outcome !== "satisfied"
         ? {
@@ -272,7 +296,7 @@ export class Gate1AdaptiveEvaluationOrchestrator {
             renderedAtUtc: input.nowUtc,
           }
         : undefined;
-    this.threadStore.upsert({
+    return {
       schemaVersion: 1,
       threadId: prior?.threadId ?? deterministicDigest({ targetId }, "thread"),
       targetRuntimeId: targetId,
@@ -292,7 +316,43 @@ export class Gate1AdaptiveEvaluationOrchestrator {
       routeBindingRevision: input.request.runtimeBinding.routeBinding?.routeBindingRevision,
       createdAtUtc: prior?.createdAtUtc ?? input.nowUtc,
       updatedAtUtc: input.nowUtc,
-    });
+    };
+  }
+
+  private ledgerEntry(input: {
+    request: ProtectedEvaluationRequest;
+    decision: ProtectedEvaluationDecision;
+    policy: Gate1EvaluationPolicy;
+    status: ProtectedEvaluationLedgerEntry["applicationStatus"];
+    nowUtc: string;
+  }): ProtectedEvaluationLedgerEntry {
+    return {
+      schemaVersion: 1,
+      evaluationRequestId: input.request.evaluationRequestId,
+      evaluationDecisionId: input.decision.evaluationDecisionId,
+      sourceParticipantCommandId: input.request.sourceParticipantCommandId,
+      manifestInstanceId: input.request.runtimeBinding.manifestInstanceId,
+      manifestDigest: input.request.runtimeBinding.manifestDigest,
+      manifestStage: input.request.runtimeBinding.stage,
+      stateRevisionEvaluated: input.request.expectedStateRevision,
+      runtimeSceneId: input.request.runtimeSceneId,
+      runtimeInteractionId: input.request.runtimeInteractionId,
+      runtimeQuestionId: input.request.runtimeQuestionId,
+      canonicalSceneId: input.request.canonicalSceneId,
+      protectedRouteId: input.request.runtimeBinding.routeBinding?.protectedRouteId,
+      policyId: input.policy.policyId,
+      policyVersion: input.policy.version,
+      inputDigest: input.request.inputDigest,
+      decisionDigest: deterministicDigest(input.decision, "evaldecision"),
+      providerId: input.decision.providerId,
+      providerVersion: input.decision.providerVersion,
+      applicationStatus: input.status,
+      outcome: input.decision.outcome,
+      confidence: input.decision.confidence,
+      reasonCodes: input.decision.reasonCodes,
+      safetyCodes: input.decision.safety.codes,
+      createdAtUtc: input.nowUtc,
+    };
   }
 
   async evaluateParticipantCommand(input: {
@@ -310,6 +370,7 @@ export class Gate1AdaptiveEvaluationOrchestrator {
       run = activeRun(before)!;
       if (!run) throw new Error("Active run is unavailable");
       ({ request, policy, thread } = this.buildRequest({
+        root: before,
         run,
         sourceParticipantCommandId: input.sourceParticipantCommandId,
         nowUtc: input.nowUtc,
@@ -330,7 +391,7 @@ export class Gate1AdaptiveEvaluationOrchestrator {
         evaluationRequestId: request.evaluationRequestId,
         evaluationDecisionId: existing.evaluationDecisionId,
         sourceParticipantCommandId: input.sourceParticipantCommandId,
-        status: "duplicate",
+        status: existing.inputDigest === request.inputDigest ? "duplicate" : "rejected",
       });
     }
 
@@ -342,7 +403,7 @@ export class Gate1AdaptiveEvaluationOrchestrator {
         activeThread: thread,
         decidedAtUtc: input.nowUtc,
       });
-      const rawDecision = preflight ?? (await this.input.provider.evaluate(request));
+      const rawDecision = preflight ?? (await this.input.provider.evaluate(request, policy));
       decision = normalizeProtectedEvaluationDecision({
         request,
         policy,
@@ -361,12 +422,31 @@ export class Gate1AdaptiveEvaluationOrchestrator {
     const afterProvider = await this.loadRuntime();
     const afterRun = activeRun(afterProvider);
     const afterManifest = afterRun?.activeManifest;
+    let freshRequest: ProtectedEvaluationRequest | undefined;
+    try {
+      if (afterRun) {
+        freshRequest = this.buildRequest({
+          root: afterProvider,
+          run: afterRun,
+          sourceParticipantCommandId: input.sourceParticipantCommandId,
+          nowUtc: input.nowUtc,
+        }).request;
+      }
+    } catch {
+      freshRequest = undefined;
+    }
     if (
       !afterRun ||
+      !freshRequest ||
       afterRun.stateRevision !== request.expectedStateRevision ||
       afterRun.currentRuntimeSceneId !== request.runtimeSceneId ||
       afterManifest?.manifestInstanceId !== request.runtimeBinding.manifestInstanceId ||
-      afterManifest.manifestDigest !== request.runtimeBinding.manifestDigest
+      afterManifest.manifestDigest !== request.runtimeBinding.manifestDigest ||
+      afterManifest.manifestStage !== request.runtimeBinding.stage ||
+      afterManifest.routeToken !== request.routeToken ||
+      afterManifest.routeBindingRevision !== request.routeBindingRevision ||
+      freshRequest.inputDigest !== request.inputDigest ||
+      freshRequest.evaluationRequestId !== request.evaluationRequestId
     ) {
       return AdaptiveEvaluationApplicationResultSchema.parse({
         schemaVersion: 1,
@@ -380,6 +460,27 @@ export class Gate1AdaptiveEvaluationOrchestrator {
     const scene = this.input.participantManifest.scenes.find(
       (candidate) => candidate.runtimeSceneId === request.runtimeSceneId,
     );
+    const adaptiveThread = this.createThread({
+      request,
+      decision,
+      policy,
+      prior: thread,
+      nowUtc: input.nowUtc,
+    });
+    let ledgerTransaction: ProtectedEvaluationLedgerTransaction;
+    try {
+      ledgerTransaction = this.ledger.prepare(
+        this.ledgerEntry({ request, decision, policy, status: "prepared", nowUtc: input.nowUtc }),
+      );
+    } catch {
+      return AdaptiveEvaluationApplicationResultSchema.parse({
+        schemaVersion: 1,
+        evaluationRequestId: request.evaluationRequestId,
+        evaluationDecisionId: decision.evaluationDecisionId,
+        sourceParticipantCommandId: input.sourceParticipantCommandId,
+        status: "rejected",
+      });
+    }
     const command: ProtectedCommandEnvelope = {
       schemaVersion: 1,
       protectedCommandId: `${request.evaluationRequestId}.resolution`,
@@ -396,6 +497,7 @@ export class Gate1AdaptiveEvaluationOrchestrator {
         runtimeTransitionId:
           decision.outcome === "satisfied" ? scene?.transitions[0]?.runtimeTransitionId : undefined,
         outcome: decision.outcome,
+        adaptiveThread,
       },
     };
 
@@ -409,6 +511,11 @@ export class Gate1AdaptiveEvaluationOrchestrator {
       conductorResult.status === "rejected_invalid" ||
       conductorResult.status === "rejected_stale"
     ) {
+      try {
+        ledgerTransaction.rollback();
+      } catch {
+        // A prepared entry can remain recoverable if rollback reporting fails.
+      }
       return AdaptiveEvaluationApplicationResultSchema.parse({
         schemaVersion: 1,
         evaluationRequestId: request.evaluationRequestId,
@@ -419,22 +526,12 @@ export class Gate1AdaptiveEvaluationOrchestrator {
       });
     }
 
-    this.updateThread({ request, decision, policy, nowUtc: input.nowUtc });
-    this.ledger.append({
-      schemaVersion: 1,
-      evaluationRequestId: request.evaluationRequestId,
-      evaluationDecisionId: decision.evaluationDecisionId,
-      sourceParticipantCommandId: input.sourceParticipantCommandId,
-      policyId: policy.policyId,
-      policyVersion: 1,
-      inputDigest: request.inputDigest,
-      decisionDigest: deterministicDigest(decision, "evaldecision"),
-      outcome: decision.outcome,
-      confidence: decision.confidence,
-      reasonCodes: decision.reasonCodes,
-      safetyCodes: decision.safety.codes,
-      createdAtUtc: input.nowUtc,
-    });
+    try {
+      ledgerTransaction.commitApplied(input.nowUtc);
+    } catch {
+      // The prepared ledger entry remains recoverable and includes the decision digest.
+    }
+    this.threadStore.upsert(adaptiveThread);
     const kind = guidanceKind(decision.outcome);
     const guidance =
       kind && decision.guidanceTemplateId

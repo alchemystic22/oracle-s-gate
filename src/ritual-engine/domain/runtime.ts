@@ -4,6 +4,7 @@ import { RitualResponseRecordSchema } from "./responses";
 import { GateActRecordSchema } from "./gateAct";
 import { EvidenceEventSchema } from "./evidence";
 import { RitualSafetyRuntimeSchema } from "./safety";
+import { ParticipantAdaptiveThreadSchema } from "../evaluator/adaptiveThreads";
 
 export const SceneVisitRecordSchema = z.object({
   sceneVisitId: z.string().min(1),
@@ -175,6 +176,7 @@ export const RitualGateRuntimeSchema = z.object({
       stale: z.boolean().optional(),
     }),
   ),
+  adaptiveThreads: z.record(z.string(), ParticipantAdaptiveThreadSchema),
   activeManifest: ActiveManifestReferenceSchema.optional(),
   commandReceipts: z.array(ParticipantCommandReceiptSchema).max(200),
   pendingOutbox: z.array(RitualOutboxRecordSchema),

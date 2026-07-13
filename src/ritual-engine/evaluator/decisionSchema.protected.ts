@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ParticipantGuidanceTemplateIdSchema } from "./participantGuidance";
+import { Gate1EvaluationFacetSchema } from "./policyTypes.protected";
 import { EvaluationReasonCodeSchema } from "./reasonCodes.protected";
 import { EvaluationSafetyCodeSchema } from "./safetyCodes.protected";
 
@@ -16,9 +17,18 @@ export const ProtectedEvaluationDecisionSchema = z
     schemaVersion: z.literal(1),
     evaluationRequestId: z.string().min(1),
     evaluationDecisionId: z.string().min(1),
+    sourceParticipantCommandId: z.string().min(1),
+    inputDigest: z.string().min(1),
+    policyId: z.string().min(1),
+    policyVersion: z.literal(1),
+    providerId: z.string().min(1),
+    providerVersion: z.string().min(1),
+    modelId: z.string().min(1).optional(),
+    deterministic: z.boolean(),
     outcome: ProtectedEvaluationOutcomeSchema,
     responseState: z.enum(["grounded", "provisional", "not_yet_formed"]).optional(),
     confidence: z.enum(["low", "medium", "high"]),
+    supportedFacets: z.array(Gate1EvaluationFacetSchema),
     reasonCodes: z.array(EvaluationReasonCodeSchema),
     guidanceTemplateId: ParticipantGuidanceTemplateIdSchema.optional(),
     safety: z

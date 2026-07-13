@@ -117,11 +117,34 @@ export function ritualGateReducer(
               : validation,
           ]),
         ),
+        adaptiveThreads: Object.fromEntries(
+          Object.entries(state.adaptiveThreads).map(([id, thread]) => [
+            id,
+            thread.routeBindingRevision === action.routeBindingRevision &&
+            thread.state !== "satisfied"
+              ? {
+                  ...thread,
+                  state: "stale" as const,
+                  stale: true,
+                  updatedAtUtc: action.updatedAtUtc,
+                }
+              : thread,
+          ]),
+        ),
         commandReceipts: state.commandReceipts.map((receipt) =>
           receipt.resolutionState === "unresolved"
             ? { ...receipt, resolutionState: "superseded" as const }
             : receipt,
         ),
+        updatedAtUtc: action.updatedAtUtc,
+      };
+    case "UPSERT_ADAPTIVE_THREAD":
+      return {
+        ...state,
+        adaptiveThreads: {
+          ...state.adaptiveThreads,
+          [action.thread.threadId]: action.thread,
+        },
         updatedAtUtc: action.updatedAtUtc,
       };
     case "SET_SAFETY":

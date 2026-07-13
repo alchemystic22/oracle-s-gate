@@ -10,9 +10,12 @@ import {
   MemoryProtectedEvaluationLedger,
   ProtectedEvaluationDecisionSchema,
   ProtectedEvaluationRequestSchema,
+  GATE1_PROTECTED_EVALUATION_PROMPT_CONTRACT,
+  createFixtureDecision,
   getGate1EvaluationPolicy,
   isExactNotYetFormed,
   normalizeProtectedEvaluationDecision,
+  runStructuralPreflight,
 } from "../evaluator/index.protected";
 import * as participantEvaluator from "../evaluator";
 import { FALSE_ARRIVAL_ROUTE_ID } from "../gate1/constants";
@@ -79,6 +82,7 @@ function reflectionCommand(
   harness: ReturnType<typeof makeActiveHarness>,
   text: string,
   responseId = "response-pass4",
+  declaredState: "draft" | "not_yet_formed" = "draft",
 ): ParticipantCommand {
   return {
     kind: "submit_response",
@@ -86,8 +90,34 @@ function reflectionCommand(
     runtimeQuestionId: harness.scene.interaction!.runtimeQuestionId!,
     responseId,
     text,
-    declaredState: "draft",
+    declaredState,
   };
+}
+
+function providerWith(input: {
+  commandId: string;
+  outcome: ProtectedEvaluationDecision["outcome"];
+  reasonCodes?: ProtectedEvaluationDecision["reasonCodes"];
+  supportedFacets?: "all" | ProtectedEvaluationDecision["supportedFacets"];
+  guidanceTemplateId?: ProtectedEvaluationDecision["guidanceTemplateId"];
+  safety?: ProtectedEvaluationDecision["safety"];
+  confidence?: ProtectedEvaluationDecision["confidence"];
+}) {
+  return new FixtureEvaluationProvider({
+    [input.commandId]: (request, policy) =>
+      createFixtureDecision({
+        request,
+        policy,
+        outcome: input.outcome,
+        confidence: input.confidence,
+        supportedFacets:
+          input.supportedFacets === "all" ? policy.requiredFacets : input.supportedFacets,
+        reasonCodes: input.reasonCodes ?? ["directly_answers_prompt"],
+        guidanceTemplateId: input.guidanceTemplateId,
+        safety: input.safety,
+        fixtureId: input.commandId,
+      }),
+  });
 }
 
 describe("Gate 1 Pass 4 schemas, policies, and boundaries", () => {
@@ -95,6 +125,10 @@ describe("Gate 1 Pass 4 schemas, policies, and boundaries", () => {
     const request = {
       schemaVersion: 1,
       evaluationRequestId: "evalreq1",
+      participantId: "participant-1",
+      journeyCycleId: "cycle-1",
+      gateRunId: "gate-run-1",
+      gateId: 1,
       sourceParticipantCommandId: "cmd1",
       commandKind: "submit_response",
       expectedStateRevision: 1,
@@ -114,6 +148,7 @@ describe("Gate 1 Pass 4 schemas, policies, and boundaries", () => {
       target: {
         kind: "reflection",
         responseId: "response1",
+        responseState: "draft",
         text: "one specific event and one expected promise",
         storageClass: "persistent_private",
       },
@@ -130,9 +165,21 @@ describe("Gate 1 Pass 4 schemas, policies, and boundaries", () => {
       schemaVersion: 1,
       evaluationRequestId: "evalreq1",
       evaluationDecisionId: "decision1",
+      sourceParticipantCommandId: "cmd1",
+      inputDigest: "evalinput1",
+      policyId: "gate1.G1-03.v1",
+      policyVersion: 1,
+      providerId: "fixture",
+      providerVersion: "1",
+      deterministic: true,
       outcome: "satisfied",
       responseState: "grounded",
       confidence: "high",
+      supportedFacets: [
+        "identifies_event_or_condition",
+        "identifies_expected_promise",
+        "distinguishes_event_from_promise",
+      ],
       reasonCodes: ["directly_answers_prompt"],
       safety: { state: "clear", codes: [], emergency: false },
       provider: { kind: "fixture", providerId: "fixture" },
@@ -149,6 +196,9 @@ describe("Gate 1 Pass 4 schemas, policies, and boundaries", () => {
     expect(Object.keys(participantEvaluator)).not.toContain("GATE1_EVALUATION_POLICIES");
     expect(Object.keys(participantEvaluator)).not.toContain("FixtureEvaluationProvider");
     expect(Object.keys(participantEvaluator)).not.toContain("ProtectedEvaluationRequestSchema");
+    expect(Object.keys(participantEvaluator)).not.toContain(
+      "GATE1_PROTECTED_EVALUATION_PROMPT_CONTRACT",
+    );
   });
 
   it("covers all Gate 1 adaptive policies with exact major prompts", () => {
@@ -175,6 +225,10 @@ describe("Gate 1 Pass 4 schemas, policies, and boundaries", () => {
     const request = ProtectedEvaluationRequestSchema.parse({
       schemaVersion: 1,
       evaluationRequestId: "evalreq2",
+      participantId: "participant-1",
+      journeyCycleId: "cycle-1",
+      gateRunId: "gate-run-1",
+      gateId: 1,
       sourceParticipantCommandId: "cmd2",
       commandKind: "submit_response",
       expectedStateRevision: 1,
@@ -192,6 +246,7 @@ describe("Gate 1 Pass 4 schemas, policies, and boundaries", () => {
       target: {
         kind: "reflection",
         responseId: "response1",
+        responseState: "draft",
         text: "specific grounded answer",
         storageClass: "persistent_private",
       },
@@ -199,21 +254,40 @@ describe("Gate 1 Pass 4 schemas, policies, and boundaries", () => {
       issuedAtUtc: PASS3_NOW,
     });
     const policy = getGate1EvaluationPolicy("G1-03" as never)!;
-    const lowSatisfied: ProtectedEvaluationDecision = {
-      schemaVersion: 1,
-      evaluationRequestId: request.evaluationRequestId,
-      evaluationDecisionId: "decision-low",
+    const lowSatisfied = createFixtureDecision({
+      request,
+      policy,
+      fixtureId: "decision-low",
       outcome: "satisfied",
-      responseState: "grounded",
       confidence: "low",
+      supportedFacets: policy.requiredFacets,
       reasonCodes: ["directly_answers_prompt"],
-      safety: { state: "clear", codes: [], emergency: false },
-      provider: { kind: "fixture", providerId: "fixture" },
-      decidedAtUtc: PASS3_NOW,
-    };
+    });
     expect(
       normalizeProtectedEvaluationDecision({ request, policy, decision: lowSatisfied }).outcome,
     ).toBe("not_yet_formed");
+
+    const genericSatisfied = createFixtureDecision({
+      request,
+      policy,
+      fixtureId: "decision-generic",
+      outcome: "satisfied",
+      supportedFacets: ["identifies_event_or_condition"],
+      reasonCodes: ["directly_answers_prompt"],
+    });
+    const normalized = normalizeProtectedEvaluationDecision({
+      request,
+      policy,
+      decision: genericSatisfied,
+    });
+    expect(normalized.outcome).toBe("needs_follow_up");
+  });
+
+  it("defines a protected future prompt contract without a production provider", () => {
+    expect(GATE1_PROTECTED_EVALUATION_PROMPT_CONTRACT.executable).toBe(false);
+    expect(GATE1_PROTECTED_EVALUATION_PROMPT_CONTRACT.rules.join(" ")).toContain(
+      "Return strict JSON",
+    );
   });
 });
 
@@ -234,6 +308,19 @@ describe("Gate 1 Pass 4 adaptive orchestration", () => {
     expect(Object.values(run.responses)[0]?.state).toBe("not_yet_formed");
   });
 
+  it("honors declared not-yet-formed even without the canonical phrase", async () => {
+    const harness = makeActiveHarness({ sceneIndex: 3 });
+    const { result } = await submitAndEvaluate({
+      harness,
+      command: reflectionCommand(harness, "", "response-declared-not-yet", "not_yet_formed"),
+      commandId: "command-declared-not-yet",
+    });
+    const run = await activeRun(harness.adapter);
+    expect(result.guidance?.templateId).toBe("not_yet_formed_permission");
+    expect(run.currentRuntimeSceneId).toBe(harness.scene.runtimeSceneId);
+    expect(run.validation["g1.event_promise_separated"]).toBeUndefined();
+  });
+
   it("advances grounded reflection only through protected conductor resolution", async () => {
     const harness = makeActiveHarness({ sceneIndex: 3 });
     const { result, orchestrator } = await submitAndEvaluate({
@@ -243,6 +330,11 @@ describe("Gate 1 Pass 4 adaptive orchestration", () => {
         "A specific grounded answer names the event and the expected promise.",
       ),
       commandId: "command-grounded",
+      provider: providerWith({
+        commandId: "command-grounded",
+        outcome: "satisfied",
+        supportedFacets: "all",
+      }),
     });
     const run = await activeRun(harness.adapter);
     expect(result.conductorResult?.status).toBe("advanced");
@@ -260,6 +352,12 @@ describe("Gate 1 Pass 4 adaptive orchestration", () => {
       command: reflectionCommand(harness, "abstract philosophy", "response-followup-1"),
       commandId: "command-followup-1",
       threadStore,
+      provider: providerWith({
+        commandId: "command-followup-1",
+        outcome: "needs_follow_up",
+        reasonCodes: ["too_abstract"],
+        guidanceTemplateId: "clarify_specific_event",
+      }),
     });
     expect(first.result.guidance?.kind).toBe("follow_up");
     expect(first.orchestrator.threadStore.all()[0]?.followupCount).toBe(1);
@@ -271,11 +369,54 @@ describe("Gate 1 Pass 4 adaptive orchestration", () => {
       command: reflectionCommand(harness, "abstract philosophy again", "response-followup-2"),
       commandId: "command-followup-2",
       threadStore,
+      provider: providerWith({
+        commandId: "command-followup-2",
+        outcome: "needs_follow_up",
+        reasonCodes: ["too_abstract"],
+        guidanceTemplateId: "clarify_specific_event",
+      }),
     });
     expect(second.result.guidance?.kind).toBe("not_yet_formed");
     expect((await activeRun(harness.adapter)).currentRuntimeSceneId).toBe(
       harness.scene.runtimeSceneId,
     );
+  });
+
+  it("allows a grounded second response after the first follow-up", async () => {
+    const harness = makeActiveHarness({ sceneIndex: 3 });
+    const first = await submitAndEvaluate({
+      harness,
+      command: reflectionCommand(harness, "abstract philosophy", "response-grounded-second-1"),
+      commandId: "command-grounded-second-1",
+      provider: providerWith({
+        commandId: "command-grounded-second-1",
+        outcome: "needs_follow_up",
+        reasonCodes: ["too_abstract"],
+        guidanceTemplateId: "clarify_specific_event",
+      }),
+    });
+    expect(first.result.guidance?.kind).toBe("follow_up");
+
+    const current = await activeRun(harness.adapter);
+    harness.root.gateRuns["gate-run-1"] = current;
+    const second = await submitAndEvaluate({
+      harness,
+      command: reflectionCommand(
+        harness,
+        "A specific grounded answer names the event and expected promise.",
+        "response-grounded-second-2",
+      ),
+      commandId: "command-grounded-second-2",
+      provider: providerWith({
+        commandId: "command-grounded-second-2",
+        outcome: "satisfied",
+        supportedFacets: "all",
+      }),
+    });
+    const run = await activeRun(harness.adapter);
+    expect(second.result.conductorResult?.status).toBe("advanced");
+    expect(run.validation["g1.event_promise_separated"]?.value).toBe(true);
+    expect(Object.values(run.adaptiveThreads)[0]?.state).toBe("satisfied");
   });
 
   it("blocks immediate safety language and does not expose protected reason codes", async () => {
@@ -284,11 +425,39 @@ describe("Gate 1 Pass 4 adaptive orchestration", () => {
       harness,
       command: reflectionCommand(harness, "I might self harm tonight."),
       commandId: "command-safety",
+      provider: providerWith({
+        commandId: "command-safety",
+        outcome: "blocked",
+        reasonCodes: ["nonresponsive"],
+        guidanceTemplateId: "safety_pause",
+        safety: {
+          state: "blocked",
+          codes: ["immediate_self_harm_risk"],
+          emergency: true,
+        },
+      }),
     });
     const run = await activeRun(harness.adapter);
     expect(result.guidance?.kind).toBe("safety_pause");
     expect(run.status).toBe("blocked");
     expect(JSON.stringify(result)).not.toContain("immediate_self_harm_risk");
+
+    harness.root.gateRuns["gate-run-1"] = run;
+    const revision = run.stateRevision;
+    const revisionAttempt = await harness.conductor.executeParticipant({
+      envelope: makeParticipantEnvelope(
+        harness,
+        reflectionCommand(harness, "I feel clear now.", "response-self-clear"),
+        {
+          commandId: "command-self-clear",
+          expectedStateRevision: revision,
+        },
+      ),
+      participantManifest: harness.manifest,
+      nowUtc: PASS3_NOW,
+      ids: PASS3_IDS,
+    });
+    expect(revisionAttempt.status).toBe("rejected_unauthorized");
   });
 
   it("does not pathologize symbolic language by itself", async () => {
@@ -297,6 +466,12 @@ describe("Gate 1 Pass 4 adaptive orchestration", () => {
       harness,
       command: reflectionCommand(harness, "One day reality cracked."),
       commandId: "command-symbolic",
+      provider: providerWith({
+        commandId: "command-symbolic",
+        outcome: "needs_follow_up",
+        reasonCodes: ["too_abstract"],
+        guidanceTemplateId: "clarify_specific_event",
+      }),
     });
     const run = await activeRun(harness.adapter);
     expect(result.guidance?.kind).toBe("follow_up");
@@ -341,6 +516,12 @@ describe("Gate 1 Pass 4 adaptive orchestration", () => {
       harness,
       command: reflectionCommand(harness, "I understood the page and plan to change."),
       commandId: "command-readiness",
+      provider: providerWith({
+        commandId: "command-readiness",
+        outcome: "needs_follow_up",
+        reasonCodes: ["only_understanding"],
+        guidanceTemplateId: "clarify_outside_change",
+      }),
     });
     const run = await activeRun(harness.adapter);
     expect(result.guidance?.templateId).toBe("clarify_outside_change");
@@ -401,6 +582,192 @@ describe("Gate 1 Pass 4 adaptive orchestration", () => {
     expect(run.validation["g1.active_route_qualifying_evidence"]).toBeUndefined();
   });
 
+  it("applies completed matching evidence through governed provider facets", async () => {
+    const base = makeActiveHarness({
+      stage: "active_route",
+      routeId: FALSE_ARRIVAL_ROUTE_ID,
+      sceneIndex: 9,
+    });
+    const root = structuredClone(base.root);
+    root.gateRuns["gate-run-1"]!.gateAct = {
+      gateActId: "gate-act-pass4-evidence-match",
+      runtimeSceneId: base.manifest.scenes[8]!.runtimeSceneId,
+      runtimeInteractionId: base.manifest.scenes[8]!.interaction!.runtimeInteractionId,
+      sourceCommandId: "prior-gate-act-match",
+      routeBindingRevision: base.manifest.routeBindingRevision,
+      status: "accepted",
+      activeRevision: 0,
+      revisions: [
+        {
+          revision: 0,
+          act: "Take one bounded action",
+          immediateMicroAct: "Complete one observable step",
+          participantSafetySelfReport: "safe",
+          createdAtUtc: PASS3_NOW,
+        },
+      ],
+      createdAtUtc: PASS3_NOW,
+      updatedAtUtc: PASS3_NOW,
+    };
+    const adapter = new MemoryRitualTransactionalPersistenceAdapter(root);
+    const mappingProvider = new MemoryProtectedMappingProvider();
+    mappingProvider.put(base.compilation.protectedMapping);
+    const conductor = new Gate1SceneConductor(adapter, mappingProvider, GATE1_CANONICAL_MANIFEST);
+    const harness = { ...base, adapter, mappingProvider, conductor, root };
+    const evidence: ParticipantCommand = {
+      kind: "record_evidence",
+      runtimeInteractionId: harness.scene.interaction!.runtimeInteractionId,
+      evidenceEventId: "evidence-match-pass4",
+      gateActId: "gate-act-pass4-evidence-match",
+      eventType: "micro_act_completed",
+      mode: "completion_marker",
+      participantAttestation: "occurred_outside_reflection",
+      occurredAtUtc: PASS3_NOW,
+    };
+    const { result } = await submitAndEvaluate({
+      harness,
+      command: evidence,
+      commandId: "command-evidence-match",
+      provider: providerWith({
+        commandId: "command-evidence-match",
+        outcome: "satisfied",
+        supportedFacets: "all",
+        reasonCodes: ["completed_outside_reflection", "matches_active_gate_act"],
+      }),
+    });
+    const run = await activeRun(adapter);
+    expect(result.conductorResult?.status).toBe("advanced");
+    expect(run.validation["g1.active_route_qualifying_evidence"]?.value).toBe(true);
+  });
+
+  it("keeps unrelated completed evidence from satisfying the scene", async () => {
+    const base = makeActiveHarness({
+      stage: "active_route",
+      routeId: FALSE_ARRIVAL_ROUTE_ID,
+      sceneIndex: 9,
+    });
+    const root = structuredClone(base.root);
+    root.gateRuns["gate-run-1"]!.gateAct = {
+      gateActId: "gate-act-pass4-evidence-unrelated",
+      sourceCommandId: "prior-gate-act-unrelated",
+      routeBindingRevision: base.manifest.routeBindingRevision,
+      status: "accepted",
+      activeRevision: 0,
+      revisions: [
+        {
+          revision: 0,
+          act: "Take one bounded action",
+          immediateMicroAct: "Complete one observable step",
+          participantSafetySelfReport: "safe",
+          createdAtUtc: PASS3_NOW,
+        },
+      ],
+      createdAtUtc: PASS3_NOW,
+      updatedAtUtc: PASS3_NOW,
+    };
+    const adapter = new MemoryRitualTransactionalPersistenceAdapter(root);
+    const mappingProvider = new MemoryProtectedMappingProvider();
+    mappingProvider.put(base.compilation.protectedMapping);
+    const conductor = new Gate1SceneConductor(adapter, mappingProvider, GATE1_CANONICAL_MANIFEST);
+    const harness = { ...base, adapter, mappingProvider, conductor, root };
+    const evidence: ParticipantCommand = {
+      kind: "record_evidence",
+      runtimeInteractionId: harness.scene.interaction!.runtimeInteractionId,
+      evidenceEventId: "evidence-unrelated-pass4",
+      gateActId: "gate-act-pass4-evidence-unrelated",
+      eventType: "micro_act_completed",
+      mode: "completion_marker",
+      participantAttestation: "occurred_outside_reflection",
+      description: "I understood the page.",
+      occurredAtUtc: PASS3_NOW,
+    };
+    const { result } = await submitAndEvaluate({
+      harness,
+      command: evidence,
+      commandId: "command-evidence-unrelated",
+      provider: providerWith({
+        commandId: "command-evidence-unrelated",
+        outcome: "needs_follow_up",
+        reasonCodes: ["does_not_match_gate_act"],
+        supportedFacets: [
+          "evidence_occurred",
+          "evidence_outside_reflection",
+          "evidence_current_route_revision",
+          "evidence_not_stale",
+        ],
+        guidanceTemplateId: "evidence_link_to_gate_act",
+      }),
+    });
+    const run = await activeRun(adapter);
+    expect(result.guidance?.templateId).toBe("evidence_link_to_gate_act");
+    expect(run.currentRuntimeSceneId).toBe(harness.scene.runtimeSceneId);
+    expect(run.validation["g1.active_route_qualifying_evidence"]).toBeUndefined();
+  });
+
+  it("structurally rejects stale and wrong-revision evidence before semantic match", () => {
+    const policy = getGate1EvaluationPolicy("FA-08" as never)!;
+    const baseRequest = ProtectedEvaluationRequestSchema.parse({
+      schemaVersion: 1,
+      evaluationRequestId: "evalreq-evidence-structural",
+      participantId: "participant-1",
+      journeyCycleId: "cycle-1",
+      gateRunId: "gate-run-1",
+      gateId: 1,
+      sourceParticipantCommandId: "command-evidence-structural",
+      commandKind: "record_evidence",
+      expectedStateRevision: 3,
+      runtimeSceneId: "opaquescene000000001",
+      runtimeInteractionId: "opaqueinteraction1",
+      canonicalSceneId: "FA-08",
+      policyId: policy.policyId,
+      policyVersion: 1,
+      targetKind: "evidence",
+      runtimeBinding: {
+        manifestInstanceId: "opaquemanifest0001",
+        manifestDigest: "digest",
+        gateManifestVersion: "1.0.0",
+        stage: "active_route",
+        routeBinding: {
+          protectedRouteId: FALSE_ARRIVAL_ROUTE_ID,
+          routeToken: "opaqueroutetoken1",
+          routeBindingRevision: 2,
+        },
+      },
+      routeToken: "opaqueroutetoken1",
+      routeBindingRevision: 2,
+      target: {
+        kind: "evidence",
+        evidenceEventId: "evidence-structural",
+        gateActId: "gate-act-1",
+        eventType: "micro_act_completed",
+        participantAttestation: "occurred_outside_reflection",
+        mode: "completion_marker",
+        routeBindingRevision: 1,
+        activeRouteBindingRevision: 2,
+        activeGateAct: {
+          gateActId: "gate-act-1",
+          routeBindingRevision: 2,
+          status: "accepted",
+        },
+      },
+      inputDigest: "evalinput-evidence",
+      issuedAtUtc: PASS3_NOW,
+    });
+    const wrongRevision = runStructuralPreflight({
+      request: baseRequest,
+      policy,
+      decidedAtUtc: PASS3_NOW,
+    });
+    expect(wrongRevision?.outcome).toBe("not_yet_formed");
+    if (baseRequest.target.kind !== "evidence") throw new Error("Expected evidence target");
+    const stale = runStructuralPreflight({
+      request: { ...baseRequest, target: { ...baseRequest.target, stale: true } },
+      policy,
+      decidedAtUtc: PASS3_NOW,
+    });
+    expect(stale?.outcome).toBe("not_yet_formed");
+  });
+
   it("keeps session-only raw reflections volatile while still evaluable", async () => {
     const base = makeActiveHarness({ sceneIndex: 3 });
     const root = structuredClone(base.root);
@@ -424,10 +791,16 @@ describe("Gate 1 Pass 4 adaptive orchestration", () => {
       ),
       commandId: "command-session-only",
       sessionResponses,
+      provider: providerWith({
+        commandId: "command-session-only",
+        outcome: "satisfied",
+        supportedFacets: "all",
+      }),
     });
     const persisted = (await adapter.loadActive())!;
     expect(result.status).toBe("applied");
     expect(JSON.stringify(persisted)).not.toContain("specific grounded answer");
+    expect(Object.values(persisted.gateRuns)[0]?.adaptiveThreads).toBeDefined();
     const freshConductor = new Gate1SceneConductor(
       adapter,
       mappingProvider,
@@ -440,6 +813,7 @@ describe("Gate 1 Pass 4 adaptive orchestration", () => {
     const harness = makeActiveHarness({ sceneIndex: 3 });
     const provider = {
       providerId: "staling-fixture",
+      providerVersion: "1",
       evaluate: async (request: ProtectedEvaluationRequest) => {
         const run = await activeRun(harness.adapter);
         await harness.conductor.executeParticipant({
@@ -455,18 +829,16 @@ describe("Gate 1 Pass 4 adaptive orchestration", () => {
           nowUtc: PASS3_NOW,
           ids: PASS3_IDS,
         });
-        return {
-          schemaVersion: 1,
-          evaluationRequestId: request.evaluationRequestId,
-          evaluationDecisionId: "stale-decision",
+        const policy = getGate1EvaluationPolicy(request.canonicalSceneId)!;
+        return createFixtureDecision({
+          request,
+          policy,
+          fixtureId: "stale-decision",
           outcome: "satisfied",
-          responseState: "grounded",
-          confidence: "high",
+          supportedFacets: policy.requiredFacets,
           reasonCodes: ["directly_answers_prompt"],
-          safety: { state: "clear", codes: [], emergency: false },
-          provider: { kind: "fixture", providerId: "staling-fixture" },
-          decidedAtUtc: PASS3_NOW,
-        } as ProtectedEvaluationDecision;
+          providerId: "staling-fixture",
+        });
       },
     };
     const envelope = envelopeFromRun(
@@ -497,6 +869,113 @@ describe("Gate 1 Pass 4 adaptive orchestration", () => {
     expect(result.status).toBe("stale");
   });
 
+  it("fails malformed provider output and provider exceptions without mutation", async () => {
+    const malformedHarness = makeActiveHarness({ sceneIndex: 3 });
+    const malformed = await submitAndEvaluate({
+      harness: malformedHarness,
+      command: reflectionCommand(malformedHarness, "specific answer"),
+      commandId: "command-malformed-provider",
+      provider: new FixtureEvaluationProvider({
+        "command-malformed-provider": () => ({ bad: "shape" }) as never,
+      }),
+    });
+    expect(malformed.result.status).toBe("provider_failed");
+    expect((await activeRun(malformedHarness.adapter)).currentRuntimeSceneId).toBe(
+      malformedHarness.scene.runtimeSceneId,
+    );
+
+    const failedHarness = makeActiveHarness({ sceneIndex: 3 });
+    const failed = await submitAndEvaluate({
+      harness: failedHarness,
+      command: reflectionCommand(failedHarness, "specific answer"),
+      commandId: "command-provider-throws",
+      provider: new FixtureEvaluationProvider({
+        "command-provider-throws": () => {
+          throw new Error("fixture failure");
+        },
+      }),
+    });
+    expect(failed.result.status).toBe("provider_failed");
+  });
+
+  it("keeps ledger entries recoverable on commit failure and rejects digest conflicts", async () => {
+    const harness = makeActiveHarness({ sceneIndex: 3 });
+    const ledger = new MemoryProtectedEvaluationLedger();
+    ledger.failNextAt("commit");
+    const commandId = "command-ledger-commit-failure";
+    const envelope = envelopeFromRun(
+      harness,
+      reflectionCommand(harness, "specific grounded answer"),
+      commandId,
+    );
+    await harness.conductor.executeParticipant({
+      envelope,
+      participantManifest: harness.manifest,
+      nowUtc: PASS3_NOW,
+      ids: PASS3_IDS,
+    });
+    const orchestrator = new Gate1AdaptiveEvaluationOrchestrator({
+      adapter: harness.adapter,
+      mappingProvider: harness.mappingProvider,
+      canonicalManifest: GATE1_CANONICAL_MANIFEST,
+      participantManifest: harness.manifest,
+      conductor: harness.conductor,
+      provider: providerWith({
+        commandId,
+        outcome: "satisfied",
+        supportedFacets: "all",
+      }),
+      ledger,
+    });
+    const result = await orchestrator.evaluateParticipantCommand({
+      sourceParticipantCommandId: commandId,
+      nowUtc: PASS3_NOW,
+      sceneVisitId: "opaquevisitledger0001",
+    });
+    expect(result.status).toBe("applied");
+    const entry = ledger.all()[0]!;
+    expect(entry.applicationStatus).toBe("prepared");
+    expect(() =>
+      ledger.prepare({
+        ...entry,
+        inputDigest: "different-digest",
+        applicationStatus: "prepared",
+      }),
+    ).toThrow();
+  });
+
+  it("stales prior-route adaptive threads through runtime route staling", async () => {
+    const run = {
+      ...makeActiveHarness({
+        stage: "active_route",
+        routeId: FALSE_ARRIVAL_ROUTE_ID,
+      }).root.gateRuns["gate-run-1"]!,
+      adaptiveThreads: {
+        thread1: {
+          schemaVersion: 1 as const,
+          threadId: "thread1",
+          targetRuntimeId: "target1",
+          runtimeSceneId: "scene1",
+          sourceParticipantCommandId: "command1",
+          state: "follow_up_issued" as const,
+          attemptCount: 1,
+          followupCount: 1 as const,
+          routeBindingRevision: 1,
+          createdAtUtc: PASS3_NOW,
+          updatedAtUtc: PASS3_NOW,
+        },
+      },
+    };
+    const { ritualGateReducer } = await import("../runtime/reducer");
+    const next = ritualGateReducer(run, {
+      type: "MARK_ROUTE_DATA_STALE",
+      routeBindingRevision: 1,
+      updatedAtUtc: PASS3_NOW,
+    });
+    expect(next.adaptiveThreads.thread1?.state).toBe("stale");
+    expect(next.adaptiveThreads.thread1?.stale).toBe(true);
+  });
+
   it("conceals inactive-route and protected evaluation material from participant output", async () => {
     const harness = makeActiveHarness({
       stage: "active_route",
@@ -510,6 +989,11 @@ describe("Gate 1 Pass 4 adaptive orchestration", () => {
         "A specific grounded answer that should not reveal Splintered Trust.",
       ),
       commandId: "command-concealment",
+      provider: providerWith({
+        commandId: "command-concealment",
+        outcome: "satisfied",
+        supportedFacets: "all",
+      }),
     });
     const text = JSON.stringify(result);
     expect(text).not.toContain("Splintered Trust");

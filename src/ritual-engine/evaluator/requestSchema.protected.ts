@@ -23,6 +23,7 @@ const ReflectionTargetSchema = z
   .object({
     kind: z.literal("reflection"),
     responseId: z.string().min(1),
+    responseState: z.enum(["draft", "grounded", "provisional", "not_yet_formed"]),
     text: z.string().optional(),
     structuredSummary: z
       .record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
@@ -35,6 +36,7 @@ const ReadinessTargetSchema = z
   .object({
     kind: z.literal("readiness"),
     responseId: z.string().min(1),
+    responseState: z.enum(["draft", "grounded", "provisional", "not_yet_formed"]),
     text: z.string().optional(),
     structuredSummary: z
       .record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
@@ -71,6 +73,24 @@ const EvidenceTargetSchema = z
     participantAttestation: z.enum(["occurred_outside_reflection", "scheduled_only"]),
     mode: z.enum(["completion_marker", "self_attested_description", "safe_witness"]),
     description: z.string().optional(),
+    routeBindingRevision: z.number().int().nonnegative().optional(),
+    stale: z.boolean().optional(),
+    activeGateAct: z
+      .object({
+        gateActId: z.string().min(1),
+        routeBindingRevision: z.number().int().nonnegative().optional(),
+        stale: z.boolean().optional(),
+        status: z.enum([
+          "draft",
+          "formed",
+          "accepted",
+          "abandoned_without_judgment",
+          "completed_but_superseded",
+        ]),
+      })
+      .strict()
+      .optional(),
+    activeRouteBindingRevision: z.number().int().nonnegative().optional(),
   })
   .strict();
 
@@ -86,6 +106,10 @@ export const ProtectedEvaluationRequestSchema = z
   .object({
     schemaVersion: z.literal(1),
     evaluationRequestId: z.string().min(1),
+    participantId: z.string().min(1),
+    journeyCycleId: z.string().min(1),
+    gateRunId: z.string().min(1),
+    gateId: z.literal(1),
     sourceParticipantCommandId: z.string().min(1),
     commandKind: z.string().min(1),
     expectedStateRevision: z.number().int().nonnegative(),
@@ -100,6 +124,8 @@ export const ProtectedEvaluationRequestSchema = z
     policyVersion: z.literal(1),
     targetKind: EvaluationTargetKindSchema,
     runtimeBinding: RuntimeBindingSchema,
+    routeToken: z.string().min(1).optional(),
+    routeBindingRevision: z.number().int().nonnegative().optional(),
     target: ProtectedEvaluationTargetSchema,
     inputDigest: z.string().min(1),
     issuedAtUtc: z.string().datetime({ offset: true }),

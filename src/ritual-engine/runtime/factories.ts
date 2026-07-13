@@ -18,6 +18,7 @@ export function createGateRuntime(input: {
     evidenceEvents: [],
     safety: { state: "clear", reasonCodes: [], updatedAtUtc: input.nowUtc },
     validation: {},
+    adaptiveThreads: {},
     commandReceipts: [],
     pendingOutbox: [],
     updatedAtUtc: input.nowUtc,
