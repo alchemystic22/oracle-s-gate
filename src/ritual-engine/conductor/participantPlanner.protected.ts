@@ -12,6 +12,7 @@ import {
 } from "../events/participantEventIntents";
 import { deterministicDigest } from "../commands/digests";
 import type { EvidenceEvent } from "../domain/evidence";
+import { authoredEstablishmentOperations } from "./establishments.protected";
 
 export type ParticipantPlannerIds = {
   sceneVisitId: string;
@@ -120,25 +121,35 @@ export function planParticipantCommand(
   let sceneChanged = false;
 
   if (command.kind === "acknowledge_scene") {
-    if (bound.participantScene.interaction?.kind !== "acknowledgment") {
+    if (
+      bound.participantScene.interaction?.kind !== "acknowledgment" ||
+      bound.participantScene.primaryAction?.intent !== "continue" ||
+      bound.canonicalScene.participant.primaryAction?.intent !== "continue" ||
+      !authoredPrerequisitesSatisfied(bound.run, bound.canonicalScene)
+    ) {
       throw new ConductorAuthorizationError("rejected_unauthorized", "Acknowledgment unavailable");
     }
     const transition = bound.participantScene.transitions[0];
-    if (transition) {
-      operations.push(
-        ...planEnterScene({
-          state: bound.run,
-          runtimeSceneId: transition.targetRuntimeSceneId,
-          sceneVisitId: ids.sceneVisitId,
-          enteredAtUtc: nowUtc,
-          completeCurrent: true,
-        }),
+    if (!transition) {
+      throw new ConductorAuthorizationError(
+        "rejected_unauthorized",
+        "Acknowledgment transition unavailable",
       );
-      sceneChanged = true;
-      status = "advanced";
-      message = "scene_advanced";
-      eventType = "scene_completed";
     }
+    operations.push(
+      ...authoredEstablishmentOperations(bound.run, bound.canonicalScene, nowUtc),
+      ...planEnterScene({
+        state: bound.run,
+        runtimeSceneId: transition.targetRuntimeSceneId,
+        sceneVisitId: ids.sceneVisitId,
+        enteredAtUtc: nowUtc,
+        completeCurrent: true,
+      }),
+    );
+    sceneChanged = true;
+    status = "advanced";
+    message = "scene_advanced";
+    eventType = "scene_completed";
   } else if (command.kind === "submit_response") {
     if (bound.participantScene.interaction?.kind !== "reflection") {
       throw new ConductorAuthorizationError("rejected_unauthorized", "Reflection unavailable");
@@ -318,12 +329,20 @@ export function planParticipantCommand(
       bound.participantScene.primaryAction?.intent,
       bound.participantScene.secondaryAction?.intent,
     ];
-    if (!actionIntents.includes(command.intent)) {
+    const canonicalActionIntents = [
+      bound.canonicalScene.participant.primaryAction?.intent,
+      bound.canonicalScene.participant.secondaryAction?.intent,
+    ];
+    if (
+      !actionIntents.includes(command.intent) ||
+      !canonicalActionIntents.includes(command.intent)
+    ) {
       throw new ConductorAuthorizationError("rejected_unauthorized", "Scene action unavailable");
     }
     if (!authoredPrerequisitesSatisfied(bound.run, bound.canonicalScene)) {
       throw new ConductorAuthorizationError("rejected_unauthorized", "Prerequisites are unmet");
     }
+    operations.push(...authoredEstablishmentOperations(bound.run, bound.canonicalScene, nowUtc));
     if (command.intent === "complete") {
       const openVisitId = currentOpenVisitId(bound.run);
       if (openVisitId) {
@@ -369,6 +388,17 @@ export function planParticipantCommand(
       } else if (bound.participantManifest.stage === "pre_route") {
         status = "awaiting_route_binding";
         message = "route_binding_required";
+      } else if (bound.participantManifest.stage === "active_route") {
+        const openVisitId = currentOpenVisitId(bound.run);
+        if (openVisitId) {
+          operations.push({
+            type: "COMPLETE_SCENE_VISIT",
+            sceneVisitId: openVisitId,
+            completedAtUtc: nowUtc,
+          });
+        }
+        status = "accepted";
+        message = "completion_manifest_required";
       }
     }
   } else if (command.kind === "pause_run") {

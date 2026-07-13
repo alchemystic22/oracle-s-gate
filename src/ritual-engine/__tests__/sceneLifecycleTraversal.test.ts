@@ -8,7 +8,7 @@ import { Gate1SceneConductor } from "../conductor/index.protected";
 import { GATE1_CANONICAL_MANIFEST } from "../gate1/manifest";
 import { PASS3_IDS, PASS3_NOW, makeActiveHarness, makeParticipantEnvelope } from "./pass3Fixture";
 
-async function traverseHarness(harness: ReturnType<typeof makeActiveHarness>) {
+async function applyLifecyclePlans(harness: ReturnType<typeof makeActiveHarness>) {
   let root = harness.root;
   const adapter = new MemoryRitualTransactionalPersistenceAdapter(root);
   const coordinator = new RitualTransactionCoordinator(adapter);
@@ -51,10 +51,10 @@ async function traverseHarness(harness: ReturnType<typeof makeActiveHarness>) {
   return root.gateRuns["gate-run-1"]!;
 }
 
-describe("structural full-path conductor simulation", () => {
-  it("traverses all ten pre-route scenes coherently", async () => {
+describe("low-level scene lifecycle plan traversal", () => {
+  it("applies scene lifecycle plans across ten pre-route scenes", async () => {
     const harness = makeActiveHarness({});
-    const run = await traverseHarness(harness);
+    const run = await applyLifecyclePlans(harness);
     expect(run.currentRuntimeSceneId).toBe(harness.manifest.scenes.at(-1)!.runtimeSceneId);
     expect(run.lastStableRuntimeSceneId).toBe(run.currentRuntimeSceneId);
     expect(run.sceneVisitOrder).toHaveLength(10);
@@ -64,10 +64,10 @@ describe("structural full-path conductor simulation", () => {
     [FALSE_ARRIVAL_ROUTE_ID, 14, "ST-"],
     [SPLINTERED_TRUST_ROUTE_ID, 15, "FA-"],
   ] as const)(
-    "traverses the complete active route without inactive material",
+    "applies lifecycle plans without inactive route material",
     async (routeId, count, inactivePrefix) => {
       const harness = makeActiveHarness({ stage: "active_route", routeId });
-      const run = await traverseHarness(harness);
+      const run = await applyLifecyclePlans(harness);
       expect(run.sceneVisitOrder).toHaveLength(count);
       expect(run.currentRuntimeSceneId).toBe(harness.manifest.scenes.at(-1)!.runtimeSceneId);
       expect(

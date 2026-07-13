@@ -1,4 +1,7 @@
-import type { ProtectedParticipantCompilation } from "../compiler/index.protected";
+import type {
+  ProtectedParticipantCompilation,
+  ProtectedParticipantManifestMapping,
+} from "../compiler/index.protected";
 import type { RitualGateRuntime } from "../domain/runtime";
 import type { ConductorPlan } from "./planner";
 import { planEnterScene } from "./sceneLifecycle";
@@ -7,6 +10,7 @@ export function planRouteReassessmentApplication(input: {
   run: RitualGateRuntime;
   sourceCommandId: string;
   reassessmentCompilation: ProtectedParticipantCompilation;
+  previousMapping: ProtectedParticipantManifestMapping;
   nowUtc: string;
   sceneVisitId: string;
 }): ConductorPlan {
@@ -21,9 +25,15 @@ export function planRouteReassessmentApplication(input: {
     throw new Error("Route reassessment source receipt is invalid");
   }
   const previousRevision = input.run.activeManifest?.routeBindingRevision;
+  const previousRouteId = input.previousMapping.routeBinding?.protectedRouteId;
+  const newRouteId = input.reassessmentCompilation.protectedMapping.routeBinding?.protectedRouteId;
   const manifest = input.reassessmentCompilation.participantManifest;
   if (
     previousRevision === undefined ||
+    !previousRouteId ||
+    !newRouteId ||
+    previousRouteId === newRouteId ||
+    input.previousMapping.manifestInstanceId !== input.run.activeManifest?.manifestInstanceId ||
     manifest.stage !== "active_route" ||
     manifest.routeBindingRevision === undefined ||
     manifest.routeBindingRevision <= previousRevision ||

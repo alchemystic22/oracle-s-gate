@@ -121,6 +121,187 @@ describe("protected scene conductor", () => {
     expect(completionResult.status).toBe("rejected_invalid");
   });
 
+  it("does not authorize stage activation from validation keys alone", async () => {
+    const preHarness = makeActiveHarness({ sceneIndex: 9 });
+    preHarness.root.gateRuns["gate-run-1"]!.validation["g1.stance_recognized"] = {
+      value: true,
+      source: "shared",
+      updatedAtUtc: PASS3_NOW,
+    };
+    const preAdapter = new MemoryRitualTransactionalPersistenceAdapter(preHarness.root);
+    const preConductor = new Gate1SceneConductor(
+      preAdapter,
+      preHarness.mappingProvider,
+      GATE1_CANONICAL_MANIFEST,
+    );
+    const activeCompilation = compilePass3Stage({
+      stage: "active_route",
+      routeId: GATE1_CANONICAL_MANIFEST.protectedRouteMap.false_arrival.routeId,
+      factoryStart: 300,
+    });
+    const routeResult = await preConductor.executeProtected({
+      envelope: {
+        schemaVersion: 1,
+        protectedCommandId: "validation-only-route",
+        expectedStateRevision: 1,
+        issuedAtUtc: PASS3_NOW,
+        command: {
+          kind: "activate_compilation",
+          activationReason: "route_bound",
+          compilation: activeCompilation,
+        },
+      },
+      nowUtc: PASS3_NOW,
+      sceneVisitId: "opaquevisit000000000006",
+    });
+    expect(routeResult.status).toBe("rejected_invalid");
+
+    const activeHarness = makeActiveHarness({
+      stage: "active_route",
+      routeId: GATE1_CANONICAL_MANIFEST.protectedRouteMap.false_arrival.routeId,
+      sceneIndex: 13,
+    });
+    activeHarness.root.gateRuns["gate-run-1"]!.validation["g1.book_withdrawn"] = {
+      value: true,
+      source: "active_route",
+      routeBindingRevision: 1,
+      updatedAtUtc: PASS3_NOW,
+    };
+    const activeAdapter = new MemoryRitualTransactionalPersistenceAdapter(activeHarness.root);
+    const activeConductor = new Gate1SceneConductor(
+      activeAdapter,
+      activeHarness.mappingProvider,
+      GATE1_CANONICAL_MANIFEST,
+    );
+    const completionResult = await activeConductor.executeProtected({
+      envelope: {
+        schemaVersion: 1,
+        protectedCommandId: "validation-only-completion",
+        expectedStateRevision: 1,
+        issuedAtUtc: PASS3_NOW,
+        command: {
+          kind: "activate_compilation",
+          activationReason: "enter_completion",
+          compilation: compilePass3Stage({ stage: "completion", factoryStart: 400 }),
+        },
+      },
+      nowUtc: PASS3_NOW,
+      sceneVisitId: "opaquevisit000000000007",
+    });
+    expect(completionResult.status).toBe("rejected_invalid");
+  });
+
+  it("makes protected activation and safety commands replay safe", async () => {
+    const compilation = compilePass3Stage({ stage: "pre_route", factoryStart: 500 });
+    const run = createGateRuntime({
+      gateRunId: "gate-run-replay",
+      journeyCycleId: "cycle-replay",
+      nowUtc: PASS3_NOW,
+    });
+    const root = createRuntimeRoot({
+      participantId: "participant-replay",
+      gateRun: run,
+      privacyMode: "full_private_continuity",
+      nowUtc: PASS3_NOW,
+    });
+    const adapter = new MemoryRitualTransactionalPersistenceAdapter(root);
+    const provider = new MemoryProtectedMappingProvider();
+    const conductor = new Gate1SceneConductor(adapter, provider, GATE1_CANONICAL_MANIFEST);
+    const activationEnvelope = {
+      schemaVersion: 1 as const,
+      protectedCommandId: "protected-activation-replay",
+      expectedStateRevision: 0,
+      issuedAtUtc: PASS3_NOW,
+      command: {
+        kind: "activate_compilation" as const,
+        activationReason: "start_pre_route" as const,
+        compilation,
+      },
+    };
+    expect(
+      (
+        await conductor.executeProtected({
+          envelope: activationEnvelope,
+          nowUtc: PASS3_NOW,
+          sceneVisitId: "opaquereplayvisit000001",
+        })
+      ).status,
+    ).toBe("advanced");
+    const replayConductor = new Gate1SceneConductor(adapter, provider, GATE1_CANONICAL_MANIFEST);
+    expect(
+      (
+        await replayConductor.executeProtected({
+          envelope: activationEnvelope,
+          nowUtc: PASS3_NOW,
+          sceneVisitId: "opaquereplayvisit000002",
+        })
+      ).status,
+    ).toBe("duplicate");
+    expect(
+      (
+        await replayConductor.executeProtected({
+          envelope: {
+            ...activationEnvelope,
+            command: { ...activationEnvelope.command, activationReason: "enter_completion" },
+          },
+          nowUtc: PASS3_NOW,
+          sceneVisitId: "opaquereplayvisit000003",
+        })
+      ).status,
+    ).toBe("rejected_invalid");
+
+    const persisted = (await adapter.loadActive())!.gateRuns["gate-run-replay"]!;
+    const safetyEnvelope = {
+      schemaVersion: 1 as const,
+      protectedCommandId: "protected-safety-replay",
+      expectedStateRevision: persisted.stateRevision,
+      issuedAtUtc: PASS3_NOW,
+      command: {
+        kind: "apply_safety_directive" as const,
+        state: "clear" as const,
+        protectedReasonCodes: [] as string[],
+      },
+    };
+    expect(
+      (
+        await replayConductor.executeProtected({
+          envelope: safetyEnvelope,
+          nowUtc: PASS3_NOW,
+          sceneVisitId: "opaquereplayvisit000004",
+        })
+      ).status,
+    ).toBe("accepted");
+    const safetyReplayConductor = new Gate1SceneConductor(
+      adapter,
+      provider,
+      GATE1_CANONICAL_MANIFEST,
+    );
+    expect(
+      (
+        await safetyReplayConductor.executeProtected({
+          envelope: safetyEnvelope,
+          nowUtc: PASS3_NOW,
+          sceneVisitId: "opaquereplayvisit000005",
+        })
+      ).status,
+    ).toBe("duplicate");
+    expect(
+      (
+        await safetyReplayConductor.executeProtected({
+          envelope: {
+            ...safetyEnvelope,
+            command: { ...safetyEnvelope.command, state: "blocked" },
+          },
+          nowUtc: PASS3_NOW,
+          sceneVisitId: "opaquereplayvisit000006",
+        })
+      ).status,
+    ).toBe("rejected_invalid");
+    expect(JSON.stringify((await adapter.loadActive())!.gateRuns["gate-run-replay"])).not.toContain(
+      "protectedCommandId",
+    );
+  });
+
   it("grounds a reflection and applies only authored establishments", async () => {
     const harness = makeActiveHarness({ sceneIndex: 3 });
     const participantEnvelope = makeParticipantEnvelope(harness, {

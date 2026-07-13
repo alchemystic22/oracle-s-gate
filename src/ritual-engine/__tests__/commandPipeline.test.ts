@@ -213,6 +213,81 @@ describe("participant command pipeline", () => {
     expect(await harness.adapter.loadActive()).toEqual(before);
   });
 
+  it("does not advance from a transition without an authored action and prerequisites", async () => {
+    const harness = makeActiveHarness({ sceneIndex: 1 });
+    const before = await harness.adapter.loadActive();
+    const sceneWithoutAction = { ...harness.scene, primaryAction: undefined };
+    const manifestWithoutAction = {
+      ...harness.manifest,
+      scenes: harness.manifest.scenes.map((scene) =>
+        scene.runtimeSceneId === harness.scene.runtimeSceneId ? sceneWithoutAction : scene,
+      ),
+    };
+    const noAction = await harness.conductor.executeParticipant({
+      envelope: makeParticipantEnvelope(harness, {
+        kind: "invoke_scene_action",
+        intent: "continue",
+        runtimeTransitionId: harness.scene.transitions[0]!.runtimeTransitionId,
+      }),
+      participantManifest: manifestWithoutAction,
+      nowUtc: PASS3_NOW,
+      ids: PASS3_IDS,
+    });
+    expect(noAction.status).toBe("rejected_unauthorized");
+
+    harness.root.gateRuns["gate-run-1"]!.validation = {};
+    const adapter = new MemoryRitualTransactionalPersistenceAdapter(harness.root);
+    const conductor = new Gate1SceneConductor(
+      adapter,
+      harness.mappingProvider,
+      GATE1_CANONICAL_MANIFEST,
+    );
+    const noPrerequisite = await conductor.executeParticipant({
+      envelope: makeParticipantEnvelope(harness, {
+        kind: "invoke_scene_action",
+        intent: "continue",
+        runtimeTransitionId: harness.scene.transitions[0]!.runtimeTransitionId,
+      }),
+      participantManifest: harness.manifest,
+      nowUtc: PASS3_NOW,
+      ids: PASS3_IDS,
+    });
+    expect(noPrerequisite.status).toBe("rejected_unauthorized");
+    expect(await harness.adapter.loadActive()).toEqual(before);
+    expect(await adapter.loadActive()).toEqual(harness.root);
+  });
+
+  it("rejects an opaque transition whose protected canonical target was altered", async () => {
+    const harness = makeActiveHarness({});
+    const alteredScene = {
+      ...harness.scene,
+      transitions: [
+        {
+          ...harness.scene.transitions[0]!,
+          targetRuntimeSceneId: harness.manifest.scenes[2]!.runtimeSceneId,
+        },
+      ],
+    };
+    const alteredManifest = {
+      ...harness.manifest,
+      scenes: harness.manifest.scenes.map((scene) =>
+        scene.runtimeSceneId === alteredScene.runtimeSceneId ? alteredScene : scene,
+      ),
+    };
+    const before = await harness.adapter.loadActive();
+    const result = await harness.conductor.executeParticipant({
+      envelope: makeParticipantEnvelope(harness, {
+        kind: "acknowledge_scene",
+        runtimeInteractionId: harness.scene.interaction!.runtimeInteractionId,
+      }),
+      participantManifest: alteredManifest,
+      nowUtc: PASS3_NOW,
+      ids: PASS3_IDS,
+    });
+    expect(result.status).toBe("rejected_invalid");
+    expect(await harness.adapter.loadActive()).toEqual(before);
+  });
+
   it("prevents progression while paused and resumes at the stable scene", async () => {
     const harness = makeActiveHarness({});
     const paused = await harness.conductor.executeParticipant({

@@ -20,7 +20,16 @@ import type { Gate1CanonicalManifest } from "../manifest/sceneTypes";
 import { recoverTransactionalRuntime } from "../persistence/recovery";
 import type { RitualTransactionalPersistenceAdapter } from "../persistence/transactionalAdapter";
 import { RitualTransactionCoordinator } from "../persistence/transactionCoordinator";
-import type { ProtectedMappingProvider } from "../protected-store/mappingProvider.protected";
+import type {
+  ProtectedMappingProvider,
+  ProtectedMappingTransaction,
+} from "../protected-store/mappingProvider.protected";
+import {
+  captureSessionResponses,
+  hydrateSessionResponses,
+  MemorySessionResponseStore,
+  type SessionResponseStore,
+} from "../session/sessionResponseStore";
 import { applyRootPlan } from "./applyPlan";
 import { ConductorAuthorizationError } from "./authorization";
 import { bindParticipantCommand } from "./binding.protected";
@@ -63,6 +72,7 @@ export class Gate1SceneConductor {
     private readonly adapter: RitualTransactionalPersistenceAdapter,
     private readonly mappingProvider: ProtectedMappingProvider,
     private readonly canonicalManifest: Gate1CanonicalManifest,
+    private readonly sessionResponses: SessionResponseStore = new MemorySessionResponseStore(),
   ) {
     this.coordinator = new RitualTransactionCoordinator(adapter);
   }
@@ -71,7 +81,7 @@ export class Gate1SceneConductor {
     root: RitualRuntimeRoot,
     plan: ConductorPlan,
     nowUtc: string,
-  ): Promise<ParticipantCommandResult> {
+  ): Promise<{ result: ParticipantCommandResult; volatileRuntime: RitualRuntimeRoot }> {
     const nextRuntime = applyRootPlan(root, plan);
     const committed = await this.coordinator.commit({
       expectedStateRevision: plan.expectedStateRevision,
@@ -81,12 +91,65 @@ export class Gate1SceneConductor {
       confirmStableScene: plan.sceneChanged,
       confirmedAtUtc: nowUtc,
     });
-    return safeResult({
-      commandId: "internal",
-      status: plan.status,
-      participantMessageCode: plan.participantMessageCode,
-      run: committed.runtime.gateRuns[plan.gateRunId],
-    });
+    return {
+      result: safeResult({
+        commandId: "internal",
+        status: plan.status,
+        participantMessageCode: plan.participantMessageCode,
+        run: committed.runtime.gateRuns[plan.gateRunId],
+      }),
+      volatileRuntime: nextRuntime,
+    };
+  }
+
+  private async commitWithPreparedMapping(input: {
+    persistentRoot: RitualRuntimeRoot;
+    volatileRoot: RitualRuntimeRoot;
+    plan: ConductorPlan;
+    transaction: ProtectedMappingTransaction;
+    proposedManifestInstanceId: string;
+    retiredManifestInstanceId?: string;
+    nowUtc: string;
+  }): Promise<{ result: ParticipantCommandResult; volatileRuntime: RitualRuntimeRoot }> {
+    let committed: Awaited<ReturnType<Gate1SceneConductor["commitPlan"]>>;
+    try {
+      committed = await this.commitPlan(input.volatileRoot, input.plan, input.nowUtc);
+    } catch (error) {
+      await this.adapter.restoreActiveForCompensation(input.persistentRoot);
+      try {
+        input.transaction.rollback();
+      } catch {
+        // Prepared mappings are non-authorizing even when rollback reporting fails.
+      }
+      throw error;
+    }
+
+    try {
+      input.transaction.commit();
+      const proposed = this.mappingProvider.getByManifestInstanceId(
+        input.proposedManifestInstanceId,
+      );
+      if (!proposed || proposed.retiredAtUtc) {
+        throw new Error("Activated runtime mapping is unavailable");
+      }
+      if (input.retiredManifestInstanceId) {
+        const retired = this.mappingProvider.getByManifestInstanceId(
+          input.retiredManifestInstanceId,
+        );
+        if (!retired?.retiredAtUtc) {
+          throw new Error("Prior protected mapping remains active");
+        }
+      }
+      return committed;
+    } catch (error) {
+      await this.adapter.restoreActiveForCompensation(input.persistentRoot);
+      try {
+        input.transaction.rollback();
+      } catch {
+        // Runtime compensation already removed the proposed manifest authority.
+      }
+      throw error;
+    }
   }
 
   async executeParticipant(input: {
@@ -101,20 +164,21 @@ export class Gate1SceneConductor {
         ? String(input.envelope.commandId)
         : "invalid-command";
     const loaded = await this.adapter.loadActive().catch(() => null);
-    const root = RitualRuntimeRootSchema.safeParse(loaded);
-    if (!parsed.success || !root.success) {
+    const persistedRoot = RitualRuntimeRootSchema.safeParse(loaded);
+    if (!parsed.success || !persistedRoot.success) {
       return safeResult({
         commandId,
         status: "rejected_invalid",
         participantMessageCode: "command_invalid",
-        run: root.success ? activeRun(root.data) : undefined,
+        run: persistedRoot.success ? activeRun(persistedRoot.data) : undefined,
       });
     }
+    const root = hydrateSessionResponses(persistedRoot.data, this.sessionResponses);
 
     try {
       const bound = bindParticipantCommand({
         envelope: parsed.data,
-        root: root.data,
+        root,
         participantManifest: input.participantManifest,
         mappingProvider: this.mappingProvider,
         canonicalManifest: this.canonicalManifest,
@@ -128,8 +192,9 @@ export class Gate1SceneConductor {
           run: bound.run,
         });
       }
-      const result = await this.commitPlan(root.data, plan, input.nowUtc);
-      return { ...result, commandId };
+      const committed = await this.commitPlan(root, plan, input.nowUtc);
+      captureSessionResponses(committed.volatileRuntime, this.sessionResponses);
+      return { ...committed.result, commandId };
     } catch (error) {
       const status = error instanceof ConductorAuthorizationError ? error.code : "rejected_invalid";
       return safeResult({
@@ -141,7 +206,7 @@ export class Gate1SceneConductor {
             : status === "rejected_unauthorized"
               ? "command_unauthorized"
               : "command_invalid",
-        run: activeRun(root.data),
+        run: activeRun(root),
       });
     }
   }
@@ -182,8 +247,32 @@ export class Gate1SceneConductor {
         participantMessageCode: "runtime_invalid",
       });
     }
-    const root = loaded.data;
+    const persistentRoot = loaded.data;
+    const root = hydrateSessionResponses(persistentRoot, this.sessionResponses);
     const run = activeRun(root);
+    const replayProtectedCommand = [
+      "activate_compilation",
+      "apply_route_reassessment",
+      "apply_safety_directive",
+    ].includes(parsed.data.command.kind);
+    const protectedCommandDigest = replayProtectedCommand
+      ? deterministicDigest(parsed.data.command, "protected-command")
+      : undefined;
+    if (protectedCommandDigest) {
+      const replay = this.mappingProvider.checkProtectedCommand(
+        protectedCommandId,
+        protectedCommandDigest,
+      );
+      if (replay !== "new") {
+        return safeResult({
+          commandId: protectedCommandId,
+          status: replay === "duplicate" ? "duplicate" : "rejected_invalid",
+          participantMessageCode:
+            replay === "duplicate" ? "protected_command_duplicate" : "protected_command_conflict",
+          run,
+        });
+      }
+    }
     if (run && parsed.data.command.kind === "apply_scene_resolution") {
       const resolutionCommand = parsed.data.command;
       const receipt = run.commandReceipts.find(
@@ -214,17 +303,33 @@ export class Gate1SceneConductor {
     try {
       let plan: ConductorPlan;
       const command: ProtectedCommandEnvelope["command"] = parsed.data.command;
+      let mappingTransaction: ProtectedMappingTransaction | undefined;
+      let proposedManifestId: string | undefined;
       let oldManifestId: string | undefined;
       if (command.kind === "activate_compilation") {
         validateProtectedParticipantManifestMapping(command.compilation, this.canonicalManifest);
-        this.mappingProvider.put(command.compilation.protectedMapping);
+        const currentRecord = run.activeManifest
+          ? this.mappingProvider.getByManifestInstanceId(run.activeManifest.manifestInstanceId)
+          : null;
+        if (run.activeManifest && (!currentRecord || currentRecord.retiredAtUtc)) {
+          throw new Error("Current protected mapping unavailable");
+        }
         plan = planCompilationActivation({
           run,
           compilation: command.compilation,
           canonicalManifest: this.canonicalManifest,
           activationReason: command.activationReason,
+          currentMapping: currentRecord?.mapping,
           nowUtc: input.nowUtc,
           sceneVisitId: input.sceneVisitId,
+        });
+        oldManifestId = run.activeManifest?.manifestInstanceId;
+        proposedManifestId = command.compilation.participantManifest.manifestInstanceId;
+        mappingTransaction = this.mappingProvider.prepare({
+          put: command.compilation.protectedMapping,
+          retire: oldManifestId
+            ? { manifestInstanceId: oldManifestId, retiredAtUtc: input.nowUtc }
+            : undefined,
         });
       } else if (command.kind === "apply_scene_resolution") {
         if (!input.participantManifest) throw new Error("Participant manifest is required");
@@ -255,13 +360,27 @@ export class Gate1SceneConductor {
           this.canonicalManifest,
         );
         oldManifestId = run.activeManifest?.manifestInstanceId;
-        this.mappingProvider.put(command.reassessmentCompilation.protectedMapping);
+        const previousRecord = oldManifestId
+          ? this.mappingProvider.getByManifestInstanceId(oldManifestId)
+          : null;
+        if (!previousRecord || previousRecord.retiredAtUtc) {
+          throw new Error("Previous protected mapping unavailable");
+        }
         plan = planRouteReassessmentApplication({
           run,
           sourceCommandId: command.sourceCommandId,
           reassessmentCompilation: command.reassessmentCompilation,
+          previousMapping: previousRecord.mapping,
           nowUtc: input.nowUtc,
           sceneVisitId: input.sceneVisitId,
+        });
+        proposedManifestId = command.reassessmentCompilation.participantManifest.manifestInstanceId;
+        mappingTransaction = this.mappingProvider.prepare({
+          put: command.reassessmentCompilation.protectedMapping,
+          retire: {
+            manifestInstanceId: oldManifestId!,
+            retiredAtUtc: input.nowUtc,
+          },
         });
       } else {
         plan = planSafetyDirective({
@@ -272,9 +391,23 @@ export class Gate1SceneConductor {
         });
       }
 
-      const result = await this.commitPlan(root, plan, input.nowUtc);
-      if (oldManifestId) this.mappingProvider.retire(oldManifestId, input.nowUtc);
-      return { ...result, commandId: protectedCommandId };
+      const committed =
+        mappingTransaction && proposedManifestId
+          ? await this.commitWithPreparedMapping({
+              persistentRoot,
+              volatileRoot: root,
+              plan,
+              transaction: mappingTransaction,
+              proposedManifestInstanceId: proposedManifestId,
+              retiredManifestInstanceId: oldManifestId,
+              nowUtc: input.nowUtc,
+            })
+          : await this.commitPlan(root, plan, input.nowUtc);
+      captureSessionResponses(committed.volatileRuntime, this.sessionResponses);
+      if (protectedCommandDigest) {
+        this.mappingProvider.recordProtectedCommand(protectedCommandId, protectedCommandDigest);
+      }
+      return { ...committed.result, commandId: protectedCommandId };
     } catch {
       return safeResult({
         commandId: protectedCommandId,

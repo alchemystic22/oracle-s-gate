@@ -8,6 +8,7 @@ import type { RitualReducerAction } from "../runtime/actions";
 import { authoredPrerequisitesSatisfied } from "./prerequisites.protected";
 import type { ConductorPlan } from "./planner";
 import { currentOpenVisitId, planEnterScene } from "./sceneLifecycle";
+import { authoredEstablishmentOperations } from "./establishments.protected";
 
 type SceneResolutionCommand = Extract<ProtectedCommand, { kind: "apply_scene_resolution" }>;
 
@@ -130,18 +131,7 @@ export function planProtectedSceneResolution(input: {
         throw new Error("Scheduled continuation cannot qualify as completed evidence");
       }
     }
-    for (const establishment of canonicalScene.establishes) {
-      operations.push({
-        type: "SET_VALIDATION",
-        key: establishment.key,
-        value: establishment.value,
-        source: canonicalScene.group.includes("shared") ? "shared" : "active_route",
-        routeBindingRevision: canonicalScene.group.includes("shared")
-          ? undefined
-          : run.activeManifest.routeBindingRevision,
-        updatedAtUtc: input.nowUtc,
-      });
-    }
+    operations.push(...authoredEstablishmentOperations(run, canonicalScene, input.nowUtc));
     if (source.responseId) {
       operations.push({
         type: "SET_RESPONSE_STATE",
@@ -164,7 +154,9 @@ export function planProtectedSceneResolution(input: {
       if (
         !transition ||
         !protectedTransition ||
-        protectedTransition.fromCanonicalSceneId !== canonicalScene.canonicalSceneId
+        protectedTransition.fromCanonicalSceneId !== canonicalScene.canonicalSceneId ||
+        protectedTransition.toCanonicalSceneId !==
+          mapping.scenes[transition.targetRuntimeSceneId]?.canonicalSceneId
       ) {
         throw new Error("Protected resolution transition is invalid");
       }

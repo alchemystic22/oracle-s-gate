@@ -10,5 +10,6 @@ export interface RitualTransactionalPersistenceAdapter {
   writePromotionMarker(marker: TransactionPromotionMarker): Promise<void>;
   promotePendingToActive(): Promise<void>;
   restorePreviousToActive(): Promise<void>;
+  restoreActiveForCompensation(runtime: RitualRuntimeRoot): Promise<void>;
   clearPending(): Promise<void>;
 }

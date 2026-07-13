@@ -106,6 +106,18 @@ export function bindParticipantCommand(input: {
   if (!participantScene || !canonicalScene) {
     throw new ConductorAuthorizationError("rejected_invalid", "Scene binding is invalid");
   }
+  for (const transition of participantScene.transitions) {
+    const protectedTransition = mapping.transitions[transition.runtimeTransitionId];
+    const targetCanonicalSceneId =
+      mapping.scenes[transition.targetRuntimeSceneId]?.canonicalSceneId;
+    if (
+      !protectedTransition ||
+      protectedTransition.fromCanonicalSceneId !== canonicalScene.canonicalSceneId ||
+      protectedTransition.toCanonicalSceneId !== targetCanonicalSceneId
+    ) {
+      throw new ConductorAuthorizationError("rejected_invalid", "Transition binding is invalid");
+    }
+  }
 
   if (existingReceipt) {
     if (existingReceipt.payloadDigest !== payloadDigest) {

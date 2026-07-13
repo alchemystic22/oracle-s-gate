@@ -101,6 +101,13 @@ export class MemoryRitualTransactionalPersistenceAdapter implements RitualTransa
     this.active = clone(this.previous);
   }
 
+  async restoreActiveForCompensation(runtime: RitualRuntimeRoot): Promise<void> {
+    this.operationLog.push("compensate_active");
+    this.active = clone(runtime);
+    this.pending = null;
+    this.marker = null;
+  }
+
   async clearPending(): Promise<void> {
     this.operationLog.push("clear_pending");
     this.pending = null;

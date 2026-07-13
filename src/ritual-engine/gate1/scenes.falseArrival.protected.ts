@@ -1,4 +1,4 @@
-import { reassessRouteAction } from "../manifest/interactions";
+import { continueAction, reassessRouteAction } from "../manifest/interactions";
 import type { CanonicalSceneDefinition } from "../manifest/sceneTypes";
 import { FALSE_ARRIVAL_ROUTE_ID } from "./constants";
 import { GATE1_ASSET_KEYS } from "./assets";
@@ -24,6 +24,7 @@ export const GATE1_FALSE_ARRIVAL_SCENES: readonly CanonicalSceneDefinition[] = [
     title: "Visible Chain",
     purpose: "Encounter continued obedience after recognition",
     assetRefs: [GATE1_ASSET_KEYS.symbolA],
+    primaryAction: continueAction(),
     secondaryAction: reassessRouteAction(),
     prerequisites: [requiresShared(V.bookEmerged)],
     establishes: [establishes(V.activeRouteSymbolEncountered)],
@@ -37,6 +38,7 @@ export const GATE1_FALSE_ARRIVAL_SCENES: readonly CanonicalSceneDefinition[] = [
     title: "Sight and Departure",
     purpose: "Distinguish seeing the crack from crossing it",
     narration: [route.symbolicLaw, route.oracleDistinction],
+    primaryAction: continueAction(),
     secondaryAction: reassessRouteAction(),
     prerequisites: [requiresActiveRoute(V.activeRouteSymbolEncountered)],
     establishes: [establishes(V.activeRouteDistinctionEstablished)],

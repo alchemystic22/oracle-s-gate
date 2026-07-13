@@ -63,18 +63,19 @@ describe("runtime route reassessment", () => {
       routeBindingRevision: 2,
       factoryStart: 500,
     });
-    const applied = await conductor.executeProtected({
-      envelope: {
-        schemaVersion: 1,
-        protectedCommandId: "reassessment-apply-1",
-        expectedStateRevision: requested.stateRevision,
-        issuedAtUtc: PASS3_NOW,
-        command: {
-          kind: "apply_route_reassessment",
-          sourceCommandId: requestEnvelope.commandId,
-          reassessmentCompilation: nextCompilation,
-        },
+    const reassessmentEnvelope = {
+      schemaVersion: 1,
+      protectedCommandId: "reassessment-apply-1",
+      expectedStateRevision: requested.stateRevision,
+      issuedAtUtc: PASS3_NOW,
+      command: {
+        kind: "apply_route_reassessment",
+        sourceCommandId: requestEnvelope.commandId,
+        reassessmentCompilation: nextCompilation,
       },
+    } as const;
+    const applied = await conductor.executeProtected({
+      envelope: reassessmentEnvelope,
       nowUtc: PASS3_NOW,
       sceneVisitId: "opaquevisit000000000099",
     });
@@ -97,6 +98,22 @@ describe("runtime route reassessment", () => {
       )!.retiredAtUtc,
     ).toBeUndefined();
 
+    const replay = await conductor.executeProtected({
+      envelope: reassessmentEnvelope,
+      nowUtc: PASS3_NOW,
+      sceneVisitId: "opaquevisit000000000100",
+    });
+    expect(replay.status).toBe("duplicate");
+    const conflict = await conductor.executeProtected({
+      envelope: {
+        ...reassessmentEnvelope,
+        command: { ...reassessmentEnvelope.command, sourceCommandId: "different-command" },
+      },
+      nowUtc: PASS3_NOW,
+      sceneVisitId: "opaquevisit000000000101",
+    });
+    expect(conflict.status).toBe("rejected_invalid");
+
     const stale = await conductor.executeParticipant({
       envelope: requestEnvelope,
       participantManifest: harness.manifest,
@@ -104,5 +121,52 @@ describe("runtime route reassessment", () => {
       ids: PASS3_IDS,
     });
     expect(stale.status).toBe("rejected_stale");
+  });
+
+  it("rejects same-route reassessment despite rotating opaque bindings", async () => {
+    const harness = makeActiveHarness({
+      stage: "active_route",
+      routeId: FALSE_ARRIVAL_ROUTE_ID,
+      sceneIndex: 1,
+    });
+    const requestEnvelope = makeParticipantEnvelope(harness, {
+      kind: "request_route_reassessment",
+    });
+    const requested = await harness.conductor.executeParticipant({
+      envelope: requestEnvelope,
+      participantManifest: harness.manifest,
+      nowUtc: PASS3_NOW,
+      ids: PASS3_IDS,
+    });
+    const sameRouteCompilation = compilePass3Stage({
+      stage: "active_route",
+      routeId: FALSE_ARRIVAL_ROUTE_ID,
+      routeToken: ROUTE_TOKEN_B,
+      routeBindingRevision: 2,
+      factoryStart: 700,
+    });
+    const before = await harness.adapter.loadActive();
+    const result = await harness.conductor.executeProtected({
+      envelope: {
+        schemaVersion: 1,
+        protectedCommandId: "same-route-reassessment",
+        expectedStateRevision: requested.stateRevision,
+        issuedAtUtc: PASS3_NOW,
+        command: {
+          kind: "apply_route_reassessment",
+          sourceCommandId: requestEnvelope.commandId,
+          reassessmentCompilation: sameRouteCompilation,
+        },
+      },
+      nowUtc: PASS3_NOW,
+      sceneVisitId: "opaquevisit000000000102",
+    });
+    expect(result.status).toBe("rejected_invalid");
+    expect(await harness.adapter.loadActive()).toEqual(before);
+    expect(
+      harness.mappingProvider.getByManifestInstanceId(
+        sameRouteCompilation.participantManifest.manifestInstanceId,
+      ),
+    ).toBeNull();
   });
 });
