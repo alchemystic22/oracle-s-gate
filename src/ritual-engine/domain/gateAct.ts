@@ -12,6 +12,11 @@ export const GateActRevisionSchema = z.object({
 
 export const GateActRecordSchema = z.object({
   gateActId: z.string().min(1),
+  runtimeSceneId: z.string().min(1).optional(),
+  runtimeInteractionId: z.string().min(1).optional(),
+  sourceCommandId: z.string().min(1).optional(),
+  routeBindingRevision: z.number().int().nonnegative().optional(),
+  stale: z.boolean().optional(),
   status: z.enum([
     "draft",
     "formed",

@@ -1,4 +1,4 @@
-import { reassessRouteAction } from "../manifest/interactions";
+import { continueAction, reassessRouteAction } from "../manifest/interactions";
 import type { CanonicalSceneDefinition } from "../manifest/sceneTypes";
 import { SPLINTERED_TRUST_ROUTE_ID } from "./constants";
 import { GATE1_ASSET_KEYS } from "./assets";
@@ -24,6 +24,7 @@ export const GATE1_SPLINTERED_TRUST_SCENES: readonly CanonicalSceneDefinition[] 
     title: "Broken Compass",
     purpose: "Encounter a compass no longer pointing to external authority",
     assetRefs: [GATE1_ASSET_KEYS.symbolB],
+    primaryAction: continueAction(),
     secondaryAction: reassessRouteAction(),
     prerequisites: [requiresShared(V.bookEmerged)],
     establishes: [establishes(V.activeRouteSymbolEncountered)],
@@ -37,6 +38,7 @@ export const GATE1_SPLINTERED_TRUST_SCENES: readonly CanonicalSceneDefinition[] 
     title: "Signal Without Authority",
     purpose: "Distinguish discernment from total distrust",
     narration: [route.symbolicLaw, route.oracleDistinction],
+    primaryAction: continueAction(),
     secondaryAction: reassessRouteAction(),
     prerequisites: [requiresActiveRoute(V.activeRouteSymbolEncountered)],
     establishes: [establishes(V.activeRouteDistinctionEstablished)],

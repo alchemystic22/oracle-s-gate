@@ -66,6 +66,18 @@ export function validateCanonicalManifest(manifest: Gate1CanonicalManifest): voi
   validateQuestionPreparation(manifest);
   validateRouteConvergence(manifest, GATE1_ROUTE_IDS);
 
+  for (const scene of manifest.scenes) {
+    if (
+      scene.transitions.length > 0 &&
+      !scene.participant.interaction &&
+      !scene.participant.primaryAction
+    ) {
+      throw new ManifestValidationError(
+        `Deterministic scene ${scene.canonicalSceneId} requires an authored participant action`,
+      );
+    }
+  }
+
   const prompts = new Set(manifest.scenes.map((scene) => scene.participant.prompt));
   for (const question of Object.values(GATE1_QUESTIONS)) {
     if (!prompts.has(question.prompt)) {
