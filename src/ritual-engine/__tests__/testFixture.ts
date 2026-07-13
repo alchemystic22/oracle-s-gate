@@ -46,6 +46,7 @@ export function makeRuntime(): RitualRuntimeRoot {
         ],
         safety: { state: "clear", reasonCodes: [], updatedAtUtc: now },
         validation: {},
+        adaptiveThreads: {},
         commandReceipts: [],
         pendingOutbox: [],
         updatedAtUtc: now,

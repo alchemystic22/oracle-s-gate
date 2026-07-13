@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Gate1SceneConductor } from "../conductor/index.protected";
+import { MemoryProtectedEvaluationLedger } from "../evaluator/index.protected";
 import { FALSE_ARRIVAL_ROUTE_ID, SPLINTERED_TRUST_ROUTE_ID } from "../gate1/constants";
 import { GATE1_CANONICAL_MANIFEST } from "../gate1/manifest";
 import { MemoryRitualTransactionalPersistenceAdapter } from "../persistence/transactionalMemory";
@@ -40,10 +41,42 @@ describe("runtime route reassessment", () => {
       updatedAtUtc: PASS3_NOW,
     };
     const adapter = new MemoryRitualTransactionalPersistenceAdapter(harness.root);
+    const evaluationLedger = new MemoryProtectedEvaluationLedger();
+    evaluationLedger
+      .prepare({
+        schemaVersion: 1,
+        evaluationRequestId: "evalreq-retired-route",
+        evaluationDecisionId: "decision-retired-route",
+        sourceParticipantCommandId: "command-retired-route",
+        manifestInstanceId: harness.manifest.manifestInstanceId,
+        manifestDigest: harness.manifest.digest,
+        manifestStage: "active_route",
+        stateRevisionEvaluated: run.stateRevision,
+        runtimeSceneId: harness.scene.runtimeSceneId,
+        canonicalSceneId: "FA-01" as never,
+        protectedRouteId: FALSE_ARRIVAL_ROUTE_ID,
+        routeBindingRevision: 1,
+        policyId: "gate1.FA-01.v1",
+        policyVersion: 1,
+        inputDigest: "digest-retired-route",
+        decisionDigest: "decision-digest-retired-route",
+        providerId: "gate1-fixture-provider",
+        providerVersion: "1",
+        applicationStatus: "applied",
+        appliedAtUtc: PASS3_NOW,
+        outcome: "satisfied",
+        confidence: "high",
+        reasonCodes: ["directly_answers_prompt"],
+        safetyCodes: [],
+        createdAtUtc: PASS3_NOW,
+      })
+      .commitApplied(PASS3_NOW);
     const conductor = new Gate1SceneConductor(
       adapter,
       harness.mappingProvider,
       GATE1_CANONICAL_MANIFEST,
+      undefined,
+      evaluationLedger,
     );
     const requestEnvelope = makeParticipantEnvelope(harness, {
       kind: "request_route_reassessment",
@@ -97,6 +130,7 @@ describe("runtime route reassessment", () => {
         nextCompilation.participantManifest.manifestInstanceId,
       )!.retiredAtUtc,
     ).toBeUndefined();
+    expect(evaluationLedger.get("evalreq-retired-route")?.applicationStatus).toBe("stale");
 
     const replay = await conductor.executeProtected({
       envelope: reassessmentEnvelope,

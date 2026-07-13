@@ -24,6 +24,7 @@ import type {
   ProtectedMappingProvider,
   ProtectedMappingTransaction,
 } from "../protected-store/mappingProvider.protected";
+import type { ProtectedEvaluationLedger } from "../evaluator/ledger.protected";
 import {
   captureSessionResponses,
   hydrateSessionResponses,
@@ -73,6 +74,7 @@ export class Gate1SceneConductor {
     private readonly mappingProvider: ProtectedMappingProvider,
     private readonly canonicalManifest: Gate1CanonicalManifest,
     private readonly sessionResponses: SessionResponseStore = new MemorySessionResponseStore(),
+    private readonly evaluationLedger?: ProtectedEvaluationLedger,
   ) {
     this.coordinator = new RitualTransactionCoordinator(adapter);
   }
@@ -306,6 +308,7 @@ export class Gate1SceneConductor {
       let mappingTransaction: ProtectedMappingTransaction | undefined;
       let proposedManifestId: string | undefined;
       let oldManifestId: string | undefined;
+      let retiredRouteBindingRevision: number | undefined;
       if (command.kind === "activate_compilation") {
         validateProtectedParticipantManifestMapping(command.compilation, this.canonicalManifest);
         const currentRecord = run.activeManifest
@@ -360,6 +363,7 @@ export class Gate1SceneConductor {
           this.canonicalManifest,
         );
         oldManifestId = run.activeManifest?.manifestInstanceId;
+        retiredRouteBindingRevision = run.activeManifest?.routeBindingRevision;
         const previousRecord = oldManifestId
           ? this.mappingProvider.getByManifestInstanceId(oldManifestId)
           : null;
@@ -406,6 +410,12 @@ export class Gate1SceneConductor {
       captureSessionResponses(committed.volatileRuntime, this.sessionResponses);
       if (protectedCommandDigest) {
         this.mappingProvider.recordProtectedCommand(protectedCommandId, protectedCommandDigest);
+      }
+      if (
+        command.kind === "apply_route_reassessment" &&
+        retiredRouteBindingRevision !== undefined
+      ) {
+        this.evaluationLedger?.markRouteRevisionStale(retiredRouteBindingRevision, input.nowUtc);
       }
       return { ...committed.result, commandId: protectedCommandId };
     } catch {

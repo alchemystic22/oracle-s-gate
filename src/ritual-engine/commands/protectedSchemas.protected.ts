@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { ProtectedParticipantCompilation } from "../compiler/index.protected";
+import { ParticipantAdaptiveThreadSchema } from "../evaluator/adaptiveThreads";
 
 const ActivateCompilationSchema = z
   .object({
@@ -28,6 +29,7 @@ const ApplySceneResolutionSchema = z
       "rescale_required",
       "blocked",
     ]),
+    adaptiveThread: ParticipantAdaptiveThreadSchema.optional(),
   })
   .strict();
 

@@ -232,6 +232,14 @@ export function planProtectedSceneResolution(input: {
     message = "run_blocked";
   }
 
+  if (command.adaptiveThread) {
+    operations.push({
+      type: "UPSERT_ADAPTIVE_THREAD",
+      thread: command.adaptiveThread,
+      updatedAtUtc: input.nowUtc,
+    });
+  }
+
   operations.push(
     {
       type: "RESOLVE_COMMAND_RECEIPT",
