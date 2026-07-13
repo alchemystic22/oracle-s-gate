@@ -1,0 +1,110 @@
+import { z } from "zod";
+import type { CanonicalQuestionId, CanonicalRouteId, CanonicalSceneId } from "../domain/ids";
+import { EvaluationTargetKindSchema } from "./policyTypes.protected";
+
+const RuntimeBindingSchema = z
+  .object({
+    manifestInstanceId: z.string().min(1),
+    manifestDigest: z.string().min(1),
+    gateManifestVersion: z.string().min(1),
+    stage: z.enum(["pre_route", "active_route", "completion"]),
+    routeBinding: z
+      .object({
+        protectedRouteId: z.custom<CanonicalRouteId>((value) => typeof value === "string"),
+        routeToken: z.string().min(1),
+        routeBindingRevision: z.number().int().nonnegative(),
+      })
+      .strict()
+      .optional(),
+  })
+  .strict();
+
+const ReflectionTargetSchema = z
+  .object({
+    kind: z.literal("reflection"),
+    responseId: z.string().min(1),
+    text: z.string().optional(),
+    structuredSummary: z
+      .record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
+      .optional(),
+    storageClass: z.enum(["persistent_private", "structured_only", "session_only"]),
+  })
+  .strict();
+
+const ReadinessTargetSchema = z
+  .object({
+    kind: z.literal("readiness"),
+    responseId: z.string().min(1),
+    text: z.string().optional(),
+    structuredSummary: z
+      .record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
+      .optional(),
+    storageClass: z.enum(["persistent_private", "structured_only", "session_only"]),
+  })
+  .strict();
+
+const StanceTargetSchema = z
+  .object({
+    kind: z.literal("stance_selection"),
+    selectedOptionIndex: z.number().int().nonnegative(),
+  })
+  .strict();
+
+const GateActTargetSchema = z
+  .object({
+    kind: z.literal("gate_act"),
+    gateActId: z.string().min(1),
+    act: z.string(),
+    context: z.string().optional(),
+    immediateMicroAct: z.string(),
+    continuationAction: z.string().optional(),
+    safetySelfReport: z.enum(["safe", "unsure", "not_safe"]),
+  })
+  .strict();
+
+const EvidenceTargetSchema = z
+  .object({
+    kind: z.literal("evidence"),
+    evidenceEventId: z.string().min(1),
+    gateActId: z.string().min(1),
+    eventType: z.enum(["micro_act_completed", "continuation_scheduled"]),
+    participantAttestation: z.enum(["occurred_outside_reflection", "scheduled_only"]),
+    mode: z.enum(["completion_marker", "self_attested_description", "safe_witness"]),
+    description: z.string().optional(),
+  })
+  .strict();
+
+export const ProtectedEvaluationTargetSchema = z.discriminatedUnion("kind", [
+  ReflectionTargetSchema,
+  ReadinessTargetSchema,
+  StanceTargetSchema,
+  GateActTargetSchema,
+  EvidenceTargetSchema,
+]);
+
+export const ProtectedEvaluationRequestSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    evaluationRequestId: z.string().min(1),
+    sourceParticipantCommandId: z.string().min(1),
+    commandKind: z.string().min(1),
+    expectedStateRevision: z.number().int().nonnegative(),
+    runtimeSceneId: z.string().min(1),
+    runtimeInteractionId: z.string().min(1).optional(),
+    runtimeQuestionId: z.string().min(1).optional(),
+    canonicalSceneId: z.custom<CanonicalSceneId>((value) => typeof value === "string"),
+    canonicalQuestionId: z
+      .custom<CanonicalQuestionId>((value) => typeof value === "string")
+      .optional(),
+    policyId: z.string().min(1),
+    policyVersion: z.literal(1),
+    targetKind: EvaluationTargetKindSchema,
+    runtimeBinding: RuntimeBindingSchema,
+    target: ProtectedEvaluationTargetSchema,
+    inputDigest: z.string().min(1),
+    issuedAtUtc: z.string().datetime({ offset: true }),
+  })
+  .strict();
+
+export type ProtectedEvaluationRequest = z.infer<typeof ProtectedEvaluationRequestSchema>;
+export type ProtectedEvaluationTarget = z.infer<typeof ProtectedEvaluationTargetSchema>;
